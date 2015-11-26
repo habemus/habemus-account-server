@@ -67,7 +67,6 @@ signup.addEventListener('submit', function (e) {
   })
   .then(function (res) {
     alert('signup success');
-    _handleLoginStatusChange();
 
     clearSignup();
     console.log('signup successful', res);
@@ -96,7 +95,7 @@ login.addEventListener('submit', function (e) {
   auth.logIn(loginEmail.value, loginPassword.value)
     .then(function (res) {
       alert('login success')
-      _handleLoginStatusChange();
+ 
 
       clearLogin();
       console.log(res);
@@ -112,7 +111,7 @@ var logout = document.querySelector('#logout');
 logout.addEventListener('click', function (e) {
   auth.logOut()
     .then(function (res) {
-      _handleLoginStatusChange();
+ 
     }, function (err) {
 
     });
@@ -121,7 +120,9 @@ logout.addEventListener('click', function (e) {
 // handle login status changes
 var userArea    = document.querySelector('#user-area');
 var loginStatus = document.querySelector('#login-status');
-function _handleLoginStatusChange() {
+
+auth.on('auth-change', _handleAuthStatusChange)
+function _handleAuthStatusChange () {
   if (auth.isAuthenticated()) {
     signup.hidden = true;
     login.hidden = true;
@@ -139,7 +140,7 @@ function _handleLoginStatusChange() {
 
 // initialization
 function _init() {
-  _handleLoginStatusChange();
+  _handleAuthStatusChange();
 }
 
 _init();

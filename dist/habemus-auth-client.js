@@ -1,12 +1,27 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.HabemusAuthClient = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
 // native
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
+
+// CONSTANTS
+var AUTH_STATUS_CHANGE_EVENT = 'auth-status-change';
+
+// auxiliary functions
+function _emitAuthChange(authInstance) {
+  authInstance.emit(AUTH_STATUS_CHANGE_EVENT, {
+    target: authInstance,
+    isAuthenticated: authInstance.isAuthenticated(),
+  });
+} 
 
 /**
  * The constructor.
  * Currently using Parse, but our intentions are to migrate this
  * module to be a standalone authentication server.
+ *
+ * Is an EventEmitter
  * @param {Object} options
  */
 function AuthServiceClient(options) {
@@ -33,6 +48,8 @@ AuthServiceClient.prototype.signUp = function (username, password, userData) {
 
   var signupPromise = user.signUp();
 
+  signupPromise.then(_emitAuthChange.bind(null, this));
+
   return signupPromise;
 };
 
@@ -53,6 +70,9 @@ AuthServiceClient.prototype.getCurrentUser = function () {
 AuthServiceClient.prototype.logIn = function (username, password) {
   var logInPromise = this._parse.User.logIn(username, password);
 
+  logInPromise.then(_emitAuthChange.bind(null, this));
+
+
   return logInPromise;
 };
 
@@ -62,6 +82,8 @@ AuthServiceClient.prototype.logIn = function (username, password) {
  */
 AuthServiceClient.prototype.logOut = function () {
   var logOutPromise = this._parse.User.logOut();
+
+  logOutPromise.then(_emitAuthChange.bind(null, this));
 
   return logOutPromise;
 };
