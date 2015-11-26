@@ -121,7 +121,7 @@ logout.addEventListener('click', function (e) {
 var userArea    = document.querySelector('#user-area');
 var loginStatus = document.querySelector('#login-status');
 
-auth.on('auth-change', _handleAuthStatusChange)
+auth.on('auth-status-change', _handleAuthStatusChange)
 function _handleAuthStatusChange () {
   if (auth.isAuthenticated()) {
     signup.hidden = true;
