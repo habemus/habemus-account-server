@@ -6,9 +6,32 @@
 </head>
 <body>
 
-  demo page for the project
+  <form id="signup">
+    <div>signup</div>
+    <input type="email" id="signup-email" placeholder="email">
 
-  <script src="client.bundle.js"></script>
+    <input type="password" id="signup-password" placeholder="password">
+    <input type="password" id="signup-password-confirm" placeholder="confirm password">
+
+    <button type="submit">signup</button>
+  </form>
+
+  <form id="login">
+    <div>login</div>
+    <input type="email" id="login-email" placeholder="email">
+    <input type="password" id="login-password" placeholder="password">
+
+    <button type="submit">login</button>
+  </form>
+
+  <div id="user-area">
+    <div id="login-status"></div>
+    <button id="logout">logout</button>
+  </div>
+
+  <!-- load parse -->
+  <script src="//www.parsecdn.com/js/parse-1.6.7.min.js"></script>
+  <script src="habemus-auth-client.js"></script>
   <script src="demo.js"></script>
 </body>
 </html>

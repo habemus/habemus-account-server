@@ -1,4 +1,4 @@
-# <%= camelCaseName %>
+# Habemus auth
 
 # development
 `gulp develop`

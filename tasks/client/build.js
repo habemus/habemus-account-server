@@ -23,7 +23,7 @@ module.exports = function (gulp) {
       transform: [],
 
       // standalone global object for main module
-      standalone: 'CLIENT'
+      standalone: 'HabemusAuthClient'
     });
 
     return b.bundle()
@@ -31,7 +31,7 @@ module.exports = function (gulp) {
         gutil.log('Browserify Error', err);
         this.emit('end')
       })
-      .pipe(source('client.bundle.js'))
+      .pipe(source('habemus-auth-client.js'))
       .pipe(buffer())
       // calculate size before writing source maps
       .pipe(gulpSize({
