@@ -1,0 +1,4 @@
+# <%= camelCaseName %>
+
+# development
+`gulp develop`
