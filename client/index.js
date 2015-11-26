@@ -11,7 +11,7 @@ var AUTH_STATUS_CHANGE_EVENT = 'auth-status-change';
 function _emitAuthChange(authInstance) {
   authInstance.emit(AUTH_STATUS_CHANGE_EVENT, {
     target: authInstance,
-    isAuthenticated: authInstance.isAuthenticated(),
+    authenticated: authInstance.isAuthenticated(),
   });
 } 
 
