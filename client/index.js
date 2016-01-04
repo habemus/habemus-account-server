@@ -7,6 +7,8 @@ var EventEmitter = require('events').EventEmitter;
 // CONSTANTS
 var AUTH_STATUS_CHANGE_EVENT = 'auth-status-change';
 
+var retrieveErrorName = require('./lib/parse-com-errors');
+
 // auxiliary functions
 function _emitAuthChange(authInstance) {
   authInstance.emit(AUTH_STATUS_CHANGE_EVENT, {
