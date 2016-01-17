@@ -4,6 +4,9 @@
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
+// third-party
+var Q = require('q');
+
 // CONSTANTS
 var AUTH_STATUS_CHANGE_EVENT = 'auth-status-change';
 
@@ -74,7 +77,7 @@ AuthServiceClient.prototype.logIn = function (username, password) {
   logInPromise.then(_emitAuthChange.bind(null, this));
 
 
-  return logInPromise;
+  return Q(logInPromise);
 };
 
 /**
@@ -86,8 +89,17 @@ AuthServiceClient.prototype.logOut = function () {
 
   logOutPromise.then(_emitAuthChange.bind(null, this));
 
-  return logOutPromise;
+  return Q(logOutPromise);
 };
+
+AuthServiceClient.prototype.changePassword = function (password) {
+
+  var user = this.getCurrentUser();
+
+  user.setPassword(password);
+
+  return Q(user.save());
+}
 
 /**
  * Checks whether the user is authorized to perform
