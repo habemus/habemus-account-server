@@ -87,9 +87,30 @@ AuthServiceClient.prototype.logIn = function (username, password) {
 AuthServiceClient.prototype.logOut = function () {
   var logOutPromise = this._parse.User.logOut();
 
-  logOutPromise.then(_emitAuthChange.bind(null, this));
+  // handle both success and failure cases the same way,
+  // as the main purpose of the logout is to delete the localstorage
+  // session data
+  logOutPromise.then(
+    _emitAuthChange.bind(null, this),
+    _emitAuthChange.bind(null, this)
+  );
 
   return Q(logOutPromise);
+};
+
+AuthServiceClient.prototype.updateCurrentUserData = function (userData) {
+  if (!userData) { throw new Error('userData is required'); }
+  if (userData.password) { throw new Error('userData.password should be set via changePassword'); }
+  if (userData.username) { throw new Error('userData.username cannot be changed'); }
+  if (userData.email) { throw new Error('userData.email cannot be changed'); }
+
+  var user = this.getCurrentUser();
+
+  user.set(userData);
+
+  return Q(user.save()).then(function (u) {
+    return u.toJSON();
+  });
 };
 
 AuthServiceClient.prototype.changePassword = function (password) {
@@ -99,7 +120,19 @@ AuthServiceClient.prototype.changePassword = function (password) {
   user.setPassword(password);
 
   return Q(user.save());
-}
+};
+
+AuthServiceClient.prototype.handleSessionReset = function (err) {
+
+  console.log('handleSessionReset');
+
+  return this.logOut()
+    .then(function () {
+
+    }, function () {
+
+    });
+};
 
 /**
  * Checks whether the user is authorized to perform
