@@ -86,7 +86,7 @@ describe('DELETE /user/:username', function () {
     _logIn({
       username: 'test-user-2',
       password: 'test-password-2'
-    }, function (token) {
+    }, function (err, token) {
 
       superagent
         .delete(testServer.uri + '/user/test-user')
@@ -94,6 +94,7 @@ describe('DELETE /user/:username', function () {
         .end(function (err, res) {
 
           res.statusCode.should.equal(403);
+          res.body.error.code.should.equal('Unauthorized');
 
           done();
         });

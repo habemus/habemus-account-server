@@ -13,7 +13,7 @@ module.exports = function (app, options) {
       app.controllers.auth.generateToken(username, password)
         .then((token) => {
 
-          res.jsonI({ token: token }, {
+          res.status(201).jsonI({ token: token }, {
             token: true
           });
         })
@@ -35,6 +35,8 @@ module.exports = function (app, options) {
           res.jsonI(decoded, {
             username: true,
             createdAt: true,
+            iat: true,
+            exp: true
           });
         })
         .catch((err) => {

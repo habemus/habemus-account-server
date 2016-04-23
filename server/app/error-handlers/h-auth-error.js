@@ -3,20 +3,31 @@ module.exports = function (app, options) {
   app.use(function (err, req, res, next) {
     if (err.name === 'HAuthError') {
 
+      var msg = app.jsonM.response.item();
+
       switch (err.code) {
         case 'UsernameTaken':
-          res.status(400).json({});
+          msg.err(err.code, err.message);
+          res.status(400).json(msg);
           break;
         case 'UsernameNotFound':
         case 'InvalidCredentials':
-          res.status(401).json({});
+          msg.err('InvalidCredentials', '');
+          res.status(401).json(msg);
+          break;
+        case 'TokenMissing':
+          msg.err(err.code, err.message);
+          res.status(400).json(msg);
           break;
         case 'InvalidToken':
         case 'Unauthorized':
-          res.status(403).json({});
+          msg.err(err.code, err.message);
+          res.status(403).json(msg);
           break;
+        case 'UsernameMissing':
         case 'PasswordMissing':
-          res.status(400).json({});
+          msg.err(err.code, err.message);
+          res.status(400).json(msg);
           break;
         default:
           next(err);

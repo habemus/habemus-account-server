@@ -15,12 +15,7 @@ module.exports = function (app, options) {
 
       app.controllers.user.create(req.body)
         .then((createdUser) => {
-
-          var msg = app.jsonM.response.item();
-
-          msg.load(createdUser, USER_DATA);
-
-          res.status(201).json(msg);
+          res.status(201).jsonI(createdUser, USER_DATA);
         }, next);
     }
   );
@@ -39,18 +34,12 @@ module.exports = function (app, options) {
       app.controllers.user.findOne({ username: req.params.username })
         .then((user) => {
 
-          var msg = app.jsonM.response.item();
-
-          if (user) {
-            msg.load(user, USER_DATA);
-
-            res.json(msg);
-          } else {
-
-            msg.err('User not found');
-
-            res.status(404).json(msg);
+          if (!user) {
+            next(new app.Error('UsernameNotFound'));
+            return;
           }
+
+          res.jsonI(user, USER_DATA);
         })
         .catch(next);
     }
@@ -69,12 +58,7 @@ module.exports = function (app, options) {
 
       app.controllers.user.delete(req.params.username)
         .then((deletedUserData) => {
-          var msg = app.jsonM.response.item();
-
-          msg.load(deletedUserData, USER_DATA);
-
-          res.json(msg);
-
+          res.jsonI(deletedUserData, USER_DATA);
         })
         .catch(next);
     }

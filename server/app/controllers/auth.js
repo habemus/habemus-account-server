@@ -1,13 +1,10 @@
 // third-party
 const jwt = require('jsonwebtoken');
-const BPromise = require('bluebird');
 
 const DEFAULT_TOKEN_EXPIRY = '1h';
 
 module.exports = function (app, options) {
-
-  if (!options.secret) { throw new Error('secret is required'); }
-
+  
   const TOKEN_EXPIRY = options.tokenExpiry || DEFAULT_TOKEN_EXPIRY;
   const SECRET = options.secret;
   const User   = app.models.User;
@@ -22,12 +19,12 @@ module.exports = function (app, options) {
    */
   authCtrl.generateToken = function (username, password, options) {
 
-    if (!username) { throw new Error('username is required'); }
-    if (!password) { throw new Error('password is required'); }
+    if (!username) { return Promise.reject(new app.Error('UsernameMissing')); }
+    if (!password) { return Promise.reject(new app.Error('PasswordMissing')); }
 
     var _user;
 
-    return BPromise.resolve(User.findOne({ username: username }))
+    return Promise.resolve(User.findOne({ username: username }))
       .then((user) => {
 
         if (!user) {
@@ -45,7 +42,7 @@ module.exports = function (app, options) {
           throw new app.Error('InvalidCredentials');
         }
 
-        return new BPromise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
 
           var userData = {
             username: _user.username,
@@ -64,9 +61,9 @@ module.exports = function (app, options) {
    */
   authCtrl.decodeToken = function (token) {
 
-    if (!token) { throw new Error('token is required'); }
+    if (!token) { return Promise.reject(new app.Error('TokenMissing')); }
 
-    return new BPromise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       // verifies secret and checks exp
       jwt.verify(token, SECRET, (err, decoded) => {      
         if (err) {

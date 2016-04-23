@@ -20,14 +20,14 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">66.67% </span>
+        <span class="strong">86.96% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>10/15</span>
+        <span class='fraction'>20/23</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">55.56% </span>
+        <span class="strong">81.82% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>5/9</span>
+        <span class='fraction'>9/11</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -35,13 +35,13 @@
         <span class='fraction'>2/2</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">66.67% </span>
+        <span class="strong">86.96% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>10/15</span>
+        <span class='fraction'>20/23</span>
       </div>
     </div>
   </div>
-  <div class='status-line medium'></div>
+  <div class='status-line high'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -72,26 +72,48 @@
 27
 28
 29
-30</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5×</span>
-<span class="cline-any cline-yes">5×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -106,22 +128,33 @@
   app.use(function (err, req, res, next) {
     <span class="missing-if-branch" title="else path not taken" >E</span>if (err.name === 'HAuthError') {
 &nbsp;
+      var msg = app.jsonM.response.item();
+&nbsp;
       switch (err.code) {
         case 'UsernameTaken':
-          res.status(400).json({});
+          msg.err(err.code, err.message);
+          res.status(400).json(msg);
           break;
-<span class="branch-1 cbranch-no" title="branch not covered" >        case 'UsernameNotFound':</span>
-<span class="branch-2 cbranch-no" title="branch not covered" >        case 'InvalidCredentials':</span>
-<span class="cstat-no" title="statement not covered" >          res.status(401).json({});</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
+        case 'UsernameNotFound':
+        case 'InvalidCredentials':
+          msg.err('InvalidCredentials', '');
+          res.status(401).json(msg);
+          break;
+        case 'TokenMissing':
+          msg.err(err.code, err.message);
+          res.status(400).json(msg);
+          break;
         case 'InvalidToken':
         case 'Unauthorized':
-          res.status(403).json({});
+          msg.err(err.code, err.message);
+          res.status(403).json(msg);
           break;
+        case 'UsernameMissing':
         case 'PasswordMissing':
-          res.status(400).json({});
+          msg.err(err.code, err.message);
+          res.status(400).json(msg);
           break;
-<span class="branch-6 cbranch-no" title="branch not covered" >        default:</span>
+<span class="branch-8 cbranch-no" title="branch not covered" >        default:</span>
 <span class="cstat-no" title="statement not covered" >          next(err);</span>
 <span class="cstat-no" title="statement not covered" >          break;</span>
       }
@@ -136,7 +169,7 @@
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Apr 22 2016 22:54:08 GMT-0300 (BRT)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Apr 23 2016 01:23:22 GMT-0300 (BRT)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

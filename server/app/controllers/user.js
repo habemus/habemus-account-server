@@ -29,17 +29,18 @@ module.exports = function (app, options) {
           // TODO: improvement research:
           // for now we infer that any 11000 error (duplicate key)
           // refers to username repetition
-          var error = new app.Error('UsernameTaken', userData.username);
+          
+          // redefine the error object
+          err = new app.Error('UsernameTaken', userData.username);
 
-          throw error;
-        } else if (err.name === 'ValidationError') {
-
-          throw err;
-
-        } else {
-          throw err;
         }
 
+        if (err.name === 'ValidationError') {
+          // throw err;
+        }
+
+        // always throw the error
+        throw err;
       });
   };
 
@@ -51,9 +52,9 @@ module.exports = function (app, options) {
     return User.findOne(query);
   };
 
-  userCtrl.find = function (query) {
-    return User.find(query);
-  };
+  // userCtrl.find = function (query) {
+  //   return User.find(query);
+  // };
 
   return userCtrl;
 };

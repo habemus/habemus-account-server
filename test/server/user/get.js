@@ -113,6 +113,28 @@ describe('GET /user/:username', function () {
 
   });
 
+  it('should return 403 if Authorization header is malformed', function (done) {
+
+    _logIn({
+      username: 'test-user',
+      password: 'test-password',
+    }, function (err, token) {
+      if (err) { return done(err); }
+
+      superagent
+        .get(testServer.uri + '/user/test-user')
+        .set('Authorization', 'Bearer' + token)
+        .end(function (err, res) {
+          res.statusCode.should.equal(403);
+
+          should(res.body.data).be.undefined();
+          res.body.error.code.should.equal('InvalidToken');
+
+          done();
+        });
+    });
+  });
+
   it('should return the user\'s data when using a valid token', function (done) {
 
     _logIn({

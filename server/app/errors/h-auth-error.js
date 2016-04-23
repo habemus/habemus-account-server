@@ -19,11 +19,12 @@ const ERRORS = {
   InvalidToken: echo,
   UsernameNotFound: invalidCredentials,
   Unauthorized: invalidCredentials,
+  TokenMissing: echo,
 };
 
 function HAuthError(code, message) {
   if (!ERRORS[code]) {
-    throw new TypeError('HAuthError not found: ' + code);
+    throw new TypeError('HAuthError not defined: ' + code);
   }
 
   this.code = code;

@@ -17,6 +17,7 @@ var HAuthError = require('./app/errors/h-auth-error');
 function createHabemusAuth(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
   if (!options.mongodbURI) { throw new Error('mongodbURI is required'); }
+  if (!options.secret) { throw new Error('secret is required'); }
 
   // create express app instance
   var app = express();
@@ -31,13 +32,6 @@ function createHabemusAuth(options) {
   app.use(morgan('dev'));
 
   app.use(cors());
-
-  // define description route
-  app.get('/who', function (req, res) {
-    res.json({
-      name: 'h-auth'
-    });
-  });
 
   // create a mongoose mongo db connection
   var conn = mongoose.createConnection(options.mongodbURI);
@@ -70,15 +64,24 @@ function createHabemusAuth(options) {
       res.json(msg);
     };
 
-    res.jsonL = function (sourceData, projection) {
-      var msg = jsonM.response.list();
+    // res.jsonL = function (sourceData, projection) {
+    //   var msg = jsonM.response.list();
 
-      msg.loag(sourceData, projection);
-      res.json(msg);
-    };
+    //   msg.loag(sourceData, projection);
+    //   res.json(msg);
+    // };
 
     next();
 
+  });
+
+  // define description route
+  app.get('/who', function (req, res) {
+    res.jsonI({
+      name: 'h-auth'
+    }, {
+      name: true
+    });
   });
 
   // load routes
