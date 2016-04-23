@@ -61,22 +61,6 @@ module.exports = function (conn, options) {
   };
 
   var User = conn.model('User', userSchema);
-
-  // User.ensureIndexes({ background: false }, (err) => {
-  //   if (err) {
-  //     console.warn('indexing error', err);
-  //   } else {
-  //     console.info('indexing success');
-  //   }
-  // });
   
-  User.on('index', (err) => {
-    if (err) {
-      console.warn('indexing error', err);
-    } else {
-      console.info('indexing success');
-    }
-  });
-
   return User;
 }

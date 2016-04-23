@@ -3,6 +3,10 @@ var gulp        = require('gulp');
 var runSequence = require('run-sequence');
 var gulpNodemon = require('gulp-nodemon');
 
+// tests
+var istanbul    = require('gulp-istanbul');
+var mocha       = require('gulp-mocha');
+
 // browserSync
 var browserSync = require('browser-sync').create();
 
@@ -27,6 +31,23 @@ gulp.task('nodemon', function () {
       'gulpfile.js',
     ],
   })
+});
+
+gulp.task('pre-test', function () {
+  return gulp.src(['server/**/*.js'])
+    // Covering files
+    .pipe(istanbul())
+    // Force `require` to return covered files
+    .pipe(istanbul.hookRequire());
+});
+
+gulp.task('test', ['pre-test'], function () {
+  return gulp.src(['test/server/**/*.js'])
+    .pipe(mocha())
+    // Creating the reports after tests ran
+    .pipe(istanbul.writeReports())
+    // Enforce a coverage of at least 90%
+    .pipe(istanbul.enforceThresholds({ thresholds: { global: 90 } }));
 });
 
 // CLIENT //
