@@ -56,16 +56,27 @@ module.exports = function (app, options) {
     }
   );
 
-  app.delete('/user/:username', function (req, res, next) {
-    app.controllers.user.delete(req.params.username)
-      .then((deletedUserData) => {
-        var msg = app.jsonM.response.item();
+  app.delete('/user/:username',
+    app.middleware.authenticate,
+    function (req, res, next) {
 
-        msg.load(deletedUserData, USER_DATA);
+      // check that the authenticated user
+      // is the one that the request refers to
+      if (req.user.username !== req.params.username) {
+        next(new app.Error('Unauthorized'));
+        return;
+      }
 
-        res.json(msg);
+      app.controllers.user.delete(req.params.username)
+        .then((deletedUserData) => {
+          var msg = app.jsonM.response.item();
 
-      })
-      .catch(next);
-  });
+          msg.load(deletedUserData, USER_DATA);
+
+          res.json(msg);
+
+        })
+        .catch(next);
+    }
+  );
 };
