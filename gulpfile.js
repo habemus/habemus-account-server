@@ -17,7 +17,7 @@ gulp.task('nodemon', function () {
     script: 'cli/start.js',
     env: {
       PORT: '4000',
-      MONGODB_URI: 'mongodb://localhost:27017',
+      MONGODB_URI: 'mongodb://localhost:27017/h-auth-development-db',
       SECRET: 'TEST_SECRET',
     },
     ext: 'js',

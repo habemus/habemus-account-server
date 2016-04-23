@@ -5,6 +5,8 @@ module.exports = function (app, options) {
   function parseToken(req) {
     var authorizationHeader = req.header('Authorization');
 
+    if (!authorizationHeader) { return false; }
+
     var match = authorizationHeader.match(BEARER_TOKEN_RE);
 
     if (!match) {

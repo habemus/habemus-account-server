@@ -19,49 +19,61 @@ var options = {
   secret: 'fake-secret',
 };
 
-// instantiate the app
-var app = createHabemusAuth(options);
-
-// create http server and pass express app as callback
-var server = http.createServer(app);
-
-function clearDb(callback) {   
-  MongoClient.connect(TEST_DB_URI, function(err, db) {
-    if(err) throw err;
-    db.dropDatabase(callback);
-  });
-}
+// set mongoose to debug mode
+require('mongoose').set('debug', true);
 
 module.exports = {
-
   options: options,
 
   uri: 'http://localhost:' + options.port,
 
+  collections: {},
+
+  db: undefined,
+
   start: function (cb) {
 
-    clearDb(function (err) {
-      if (err) {
-        cb(err);
-        return;
-      }
+    // connect
+    MongoClient.connect(TEST_DB_URI)
+      .then((db) => {
+        // setup database for tests
 
-      // start listening
-      server.listen(options.port, function () {
-        // console.log('HabemusAuth listening at port %s', options.port);
+        // set reference to the database
+        this.db = db;
 
-        cb();
-      });
-    });
+        var dropPromise = db.dropDatabase();
+
+        return Promise.all([dropPromise])
+      })
+      .then(() => {
+        // IMPORTANT!
+        // instantiate the app only after the database has been dropped
+        // to avoid weird behaviors
+        var app = createHabemusAuth(options);
+
+        // create http server and pass express app as callback
+        var server = this.server = http.createServer(app);
+
+        // start listening
+        server.listen(options.port, () => {
+          // console.log('HabemusAuth listening at port %s', options.port);
+
+          // setTimeout(cb, 1000);
+          cb();
+        });
+      })
+      .catch(cb);
   },
 
   stop: function (cb) {
     // start listening
-    server.close(function () {
+    this.server.close(() => {
       // console.log('HabemusAuth stoppped');
 
-      cb();
+      this.db.dropDatabase()
+        .then(() => {
+          this.db.close(true, cb);
+        })
     });
-  }
-
+  },
 };

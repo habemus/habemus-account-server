@@ -15,6 +15,9 @@ module.exports = function (app, options) {
         case 'Unauthorized':
           res.status(403).json({});
           break;
+        case 'PasswordMissing':
+          res.status(400).json({});
+          break;
         default:
           next(err);
           break;

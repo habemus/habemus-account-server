@@ -25,20 +25,6 @@ module.exports = function (app, options) {
     }
   );
 
-  app.get('/users', function (req, res, next) {
-
-    app.controllers.user.find()
-      .then((users) => {
-
-        var msg = app.jsonM.response.list();
-
-        msg.load(users, USER_DATA);
-
-        res.json(msg);
-      }, next);
-
-  });
-
   app.get('/user/:username',
     app.middleware.authenticate,
     function (req, res, next) {
