@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "",
   "main": "index.js",
+  "browser": "client/index.js",
   "scripts": {
     "start": "node ./cli/start.js",
     "test": "echo \"Error: no test specified\" && exit 1"

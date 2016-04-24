@@ -1,14 +1,6 @@
-console.log(window.Parse)
-
-// using habemus-hom Parse project
-Parse.initialize(
-  "nYj4MfRfquTGq5z0ffB9rxifivgCiZXZA1gg7SVo",
-  "EngLcPMJ3ZPyKpgEDXuHXhhcbVdDnZ2K2D8eWV50"
-);
-
 // instantiate the service client
-var auth = new HabemusAuthClient({
-  parse: Parse
+var auth = new HAuthClient({
+  serverURI: 'http://localhost:4000/'
 });
 
 // auxiliary functions
@@ -120,27 +112,46 @@ logout.addEventListener('click', function (e) {
 // handle login status changes
 var userArea    = document.querySelector('#user-area');
 var loginStatus = document.querySelector('#login-status');
+var showUsername  = document.querySelector('#show-username');
+var showCreatedAt = document.querySelector('#show-created-at');
 
 auth.on('auth-status-change', _handleAuthStatusChange)
 function _handleAuthStatusChange () {
-  if (auth.isAuthenticated()) {
-    signup.hidden = true;
-    login.hidden = true;
-    userArea.hidden = false;
-    loginStatus.innerHTML = 'logged in';
 
-  } else {
-    signup.hidden = false;
-    login.hidden = false;
-    userArea.hidden = true;
-    loginStatus.innerHTML = 'not logged in';
-  }
+  console.log('handle auth-status-change');
+
+
+  auth.getCurrentUser()
+    .then(function (user) {
+
+      showUsername.innerHTML  = user.username;
+      showCreatedAt.innerHTML = user.createdAt;
+
+      signup.hidden = true;
+      login.hidden = true;
+      userArea.hidden = false;
+      loginStatus.innerHTML = 'logged in';
+    }, function (err) {
+
+      showUsername.innerHTML  = '';
+      showCreatedAt.innerHTML = '';
+
+      signup.hidden = false;
+      login.hidden = false;
+      userArea.hidden = true;
+      loginStatus.innerHTML = 'not logged in';
+    });
+
+  // if (auth.isAuthenticated()) {
+
+  // } else {
+  // }
 }
 
 
-// initialization
-function _init() {
-  _handleAuthStatusChange();
-}
+// // initialization
+// function _init() {
+//   _handleAuthStatusChange();
+// }
 
-_init();
+// _init();

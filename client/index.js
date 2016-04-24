@@ -1,161 +1,166 @@
-'use strict';
-
 // native
-var util = require('util');
-var EventEmitter = require('events').EventEmitter;
+const util         = require('util');
+const EventEmitter = require('events');
 
 // third-party
-var Q = require('q');
+const superagent = require('superagent');
+const Q          = require('q');
 
-// CONSTANTS
-var AUTH_STATUS_CHANGE_EVENT = 'auth-status-change';
+// own dependencies
+const HAuthError = require('../shared/h-auth-error');
 
-var retrieveErrorName = require('./lib/parse-com-errors');
+// constants
+const TRAILING_SLASH_RE = /\/$/;
+const STATUS_LOGGED_IN  = 'logged_in';
+const STATUS_LOGGED_OUT = 'logged_out';
 
-// auxiliary functions
-function _emitAuthChange(authInstance) {
-  authInstance.emit(AUTH_STATUS_CHANGE_EVENT, {
-    target: authInstance,
-    authenticated: authInstance.isAuthenticated(),
-  });
-} 
+function AuthClient(options) {
 
-/**
- * The constructor.
- * Currently using Parse, but our intentions are to migrate this
- * module to be a standalone authentication server.
- *
- * Is an EventEmitter
- * @param {Object} options
- */
-function AuthServiceClient(options) {
+  if (!options.serverURI) { throw new TypeError('serverURI is required'); }
 
-  // internal reference to parse
-  this._parse = options.parse;
+  this.serverURI = TRAILING_SLASH_RE.test(options.serverURI) ?
+    options.serverURI : options.serverURI + '/';
+
+  this.localStoragePrefix = options.localStoragePrefix || 'auth_';
+
+  /**
+   * Indicates the status of the current user.
+   * @type {String}
+   */
+  this.status = undefined;
+
+  // check initial authentication status
+  this.getCurrentUser();
 }
 
-util.inherits(AuthServiceClient, EventEmitter);
+util.inherits(AuthClient, EventEmitter);
 
-/**
- * Creates an user
- * @param  {String} username [description]
- * @param  {String} password [description]
- * @param  {Object} userData [description]
- * @return {Promise}          [description]
- */
-AuthServiceClient.prototype.signUp = function (username, password, userData) {
+// auxiliary methods
+AuthClient.prototype._loadAuthToken = function () {
+  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
-  var user = new this._parse.User(userData);
-
-  user.set('username', username);
-  user.set('password', password);
-
-  var signupPromise = user.signUp();
-
-  signupPromise.then(_emitAuthChange.bind(null, this));
-
-  return signupPromise;
+  return window.localStorage.getItem(tokenStorageKey) || false;
 };
 
-/**
- * Retrieves the current user
- * @type {[type]}
- */
-AuthServiceClient.prototype.getCurrentUser = function () {
-  return this._parse.User.current();
+AuthClient.prototype._saveAuthToken = function (token) {
+  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
+
+  window.localStorage.setItem(tokenStorageKey, token);
 };
 
-/**
- * Logs an user in
- * @param  {String} username [description]
- * @param  {String} password [description]
- * @return {Promise}          [description]
- */
-AuthServiceClient.prototype.logIn = function (username, password) {
-  var logInPromise = this._parse.User.logIn(username, password);
+AuthClient.prototype._destroyAuthToken = function () {
+  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
-  logInPromise.then(_emitAuthChange.bind(null, this));
-
-
-  return Q(logInPromise);
+  window.localStorage.removeItem(tokenStorageKey);
 };
 
-/**
- * Logs the current user out.
- * @return {Promise} [description]
- */
-AuthServiceClient.prototype.logOut = function () {
-  var logOutPromise = this._parse.User.logOut();
+AuthClient.prototype.setAuthStatus = function (status) {
 
-  // handle both success and failure cases the same way,
-  // as the main purpose of the logout is to delete the localstorage
-  // session data
-  logOutPromise.then(
-    _emitAuthChange.bind(null, this),
-    _emitAuthChange.bind(null, this)
-  );
+  var hasChanged = (this.status !== status);
 
-  return Q(logOutPromise);
+  this.status = status;
+
+  if (hasChanged) {
+    this.emit('auth-status-change');
+  }
 };
 
-AuthServiceClient.prototype.updateCurrentUserData = function (userData) {
-  if (!userData) { throw new Error('userData is required'); }
-  if (userData.password) { throw new Error('userData.password should be set via changePassword'); }
-  if (userData.username) { throw new Error('userData.username cannot be changed'); }
-  if (userData.email) { throw new Error('userData.email cannot be changed'); }
+AuthClient.prototype.signUp = function (username, password, userData) {
+  var defer = Q.defer();
 
-  var user = this.getCurrentUser();
+  superagent
+    .post(this.serverURI + 'users')
+    .send({
+      username: username,
+      password: password,
+    })
+    .end(function (err, res) {
+      if (err) {
+        defer.reject(res.body.error);
+        return;
+      }
 
-  user.set(userData);
-
-  return Q(user.save()).then(function (u) {
-    return u.toJSON();
-  });
-};
-
-AuthServiceClient.prototype.changePassword = function (password) {
-
-  var user = this.getCurrentUser();
-
-  user.setPassword(password);
-
-  return Q(user.save());
-};
-
-AuthServiceClient.prototype.handleSessionReset = function (err) {
-
-  console.log('handleSessionReset');
-
-  return this.logOut()
-    .then(function () {
-
-    }, function () {
-
+      defer.resolve(res.body.data);
     });
+
+  return defer.promise;
 };
 
-/**
- * Checks whether the user is authorized to perform
- * a given operation
- *
- * Currently returning true if the user is logged.
- * In the future, when multiple roles and permissions are required
- * we'll implement this.
- * 
- * @param {String|OperationObject} operation [description]
- * @return {Boolean} [description]
- */
-AuthServiceClient.prototype.isAuthorized = function (operation) {
-  // TODO: logic
-  return this.getCurrentUser() ? true : false;
+AuthClient.prototype.getCurrentUser = function (options) {
+  var defer = Q.defer();
+
+  var token = this._loadAuthToken();
+
+  if (!token) {
+    defer.reject(new Error('Not logged in'));
+    this.setAuthStatus(STATUS_LOGGED_OUT);
+  } else {
+    superagent
+      .post(this.serverURI + 'auth/token/decode')
+      .send({
+        token: token
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res.statusCode === 401 || res.statusCode === 403) {
+            // token is invalid, destroy it
+            this._destroyAuthToken();
+            this.setAuthStatus(STATUS_LOGGED_OUT);
+          }
+
+          defer.reject(res.body.error);
+          return;
+        }
+
+        this.setAuthStatus(STATUS_LOGGED_IN);
+        defer.resolve(res.body.data);
+      }.bind(this));
+  }
+
+  return defer.promise;
 };
 
-/**
- * Checks whether the user is authenticated
- * @return {Boolean} [description]
- */
-AuthServiceClient.prototype.isAuthenticated = function () {
-  return this.getCurrentUser() ? true : false;
+AuthClient.prototype.logIn = function (username, password) {
+  var defer = Q.defer();
+
+  superagent
+    .post(this.serverURI + 'auth/token/generate')
+    .send({
+      username: username,
+      password: password
+    })
+    .end(function (err, res) {
+      if (err) {
+        defer.reject(res.body.error);
+
+        this.setAuthStatus(STATUS_LOGGED_OUT);
+        return;
+      }
+
+      // save the token
+      this._saveAuthToken(res.body.data.token);
+
+      defer.resolve(res.body.data);
+
+      // set authentication status
+      this.setAuthStatus(STATUS_LOGGED_IN);
+    }.bind(this));
+
+  return defer.promise;
 };
 
-module.exports = AuthServiceClient;
+AuthClient.prototype.logOut = function () {
+  var defer = Q.defer();
+
+  this._destroyAuthToken();
+
+  defer.resolve();
+
+  return defer.promise.then(function () {
+
+    this.setAuthStatus(STATUS_LOGGED_OUT);
+
+  }.bind(this));
+};
+
+module.exports = AuthClient;
