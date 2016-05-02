@@ -1,13 +1,15 @@
 // third-party
-const jwt = require('jsonwebtoken');
+const jwt  = require('jsonwebtoken');
+const uuid = require('node-uuid');
 
 const DEFAULT_TOKEN_EXPIRY = '1h';
 
 module.exports = function (app, options) {
   
-  const TOKEN_EXPIRY = options.tokenExpiry || DEFAULT_TOKEN_EXPIRY;
-  const SECRET = options.secret;
-  const User   = app.models.User;
+  const TOKEN_EXPIRY         = options.tokenExpiry || DEFAULT_TOKEN_EXPIRY;
+  const SECRET               = options.secret;
+  const User                 = app.models.User;
+  const TokenRevocationEntry = app.models.TokenRevocationEntry;
 
   var authCtrl = {};
 
@@ -49,7 +51,17 @@ module.exports = function (app, options) {
             createdAt: _user.createdAt
           };
 
-          jwt.sign(userData, SECRET, { expiresIn: TOKEN_EXPIRY }, resolve);
+          var signOptions = {
+            // algorithm: 'HS256',
+            expiresIn: TOKEN_EXPIRY,
+            // notBefore: ,
+            // audience: ,
+            issuer: 'h-auth',
+            jwtid: uuid.v4(),
+            // subject: ,
+          };
+
+          jwt.sign(userData, SECRET, signOptions, resolve);
         });
       });
   };
@@ -69,11 +81,35 @@ module.exports = function (app, options) {
         if (err) {
           reject(new app.Error('InvalidToken'));
         } else {
-          resolve(decoded);
+
+          // check if the token has been revoked
+          TokenRevocationEntry.findOne({
+            tokenId: decoded.jti,
+          })
+          .then((err, revocationEntry) => {
+            if (err) {
+              reject(new app.Error('InternalServerError'));
+            } else if (revocationEntry) {
+              reject(new app.Error('InvalidToken'));
+            } else {
+              resolve(decoded);
+            }
+          });
         }
       });
     });
     
+  };
+
+  authCtrl.revokeToken = function (jwtid) {
+
+    if (typeof jwtid !== 'string') { return Promise.reject(new TypeError('jwtid must be a string')); }
+
+    var revocationEntry = new TokenRevocationEntry({
+      tokenId: jwtid,
+    });
+
+    return revocationEntry.save();
   };
 
   return authCtrl;

@@ -20,24 +20,24 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">86.67% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>32/32</span>
+        <span class='fraction'>39/45</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">80% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>14/14</span>
+        <span class='fraction'>16/20</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">75% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>3/3</span>
+        <span class='fraction'>3/4</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">87.8% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>29/29</span>
+        <span class='fraction'>36/41</span>
       </div>
     </div>
   </div>
@@ -123,13 +123,51 @@
 78
 79
 80
-81</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-yes">7×</span>
@@ -186,6 +224,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
@@ -194,7 +242,20 @@
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -203,16 +264,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// third-party
-const jwt = require('jsonwebtoken');
+const jwt  = require('jsonwebtoken');
+const uuid = require('node-uuid');
 &nbsp;
 const DEFAULT_TOKEN_EXPIRY = '1h';
 &nbsp;
 module.exports = function (app, options) {
   
-  const TOKEN_EXPIRY = options.tokenExpiry || DEFAULT_TOKEN_EXPIRY;
-  const SECRET = options.secret;
-  const User   = app.models.User;
+  const TOKEN_EXPIRY         = options.tokenExpiry || DEFAULT_TOKEN_EXPIRY;
+  const SECRET               = options.secret;
+  const User                 = app.models.User;
+  const TokenRevocationEntry = app.models.TokenRevocationEntry;
 &nbsp;
   var authCtrl = {};
 &nbsp;
@@ -254,7 +328,17 @@ module.exports = function (app, options) {
             createdAt: _user.createdAt
           };
 &nbsp;
-          jwt.sign(userData, SECRET, { expiresIn: TOKEN_EXPIRY }, resolve);
+          var signOptions = {
+            // algorithm: 'HS256',
+            expiresIn: TOKEN_EXPIRY,
+            // notBefore: ,
+            // audience: ,
+            issuer: 'h-auth',
+            jwtid: uuid.v4(),
+            // subject: ,
+          };
+&nbsp;
+          jwt.sign(userData, SECRET, signOptions, resolve);
         });
       });
   };
@@ -274,11 +358,35 @@ module.exports = function (app, options) {
         if (err) {
           reject(new app.Error('InvalidToken'));
         } else {
-          resolve(decoded);
+&nbsp;
+          // check if the token has been revoked
+          TokenRevocationEntry.findOne({
+            tokenId: decoded.jti,
+          })
+          .then((err, revocationEntry) =&gt; {
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (err) {
+<span class="cstat-no" title="statement not covered" >              reject(new app.Error('InternalServerError'));</span>
+            } else <span class="missing-if-branch" title="if path not taken" >I</span>if (revocationEntry) {
+<span class="cstat-no" title="statement not covered" >              reject(new app.Error('InvalidToken'));</span>
+            } else {
+              resolve(decoded);
+            }
+          });
         }
       });
     });
     
+  };
+&nbsp;
+  authCtrl.revokeToken = <span class="fstat-no" title="function not covered" >function (jwtid) {</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    if (typeof jwtid !== 'string') { <span class="cstat-no" title="statement not covered" >return Promise.reject(new TypeError('jwtid must be a string')); </span>}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    var revocationEntry = new TokenRevocationEntry({</span>
+      tokenId: jwtid,
+    });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    return revocationEntry.save();</span>
   };
 &nbsp;
   return authCtrl;
@@ -289,7 +397,7 @@ module.exports = function (app, options) {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Apr 23 2016 01:23:22 GMT-0300 (BRT)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon May 02 2016 00:22:45 GMT-0300 (BRT)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

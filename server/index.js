@@ -41,6 +41,7 @@ function createHabemusAuth(options) {
   // load models
   app.models = {};
   app.models.User = require('./app/models/user')(conn, options);
+  app.models.TokenRevocationEntry = require('./app/models/token-revocation-entry')(conn, options);
 
   // instantiate controllers
   app.controllers = {};

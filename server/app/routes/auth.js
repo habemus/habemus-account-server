@@ -44,4 +44,22 @@ module.exports = function (app, options) {
         });
     }
   );
+
+  app.post('/auth/token/revoke',
+    app.middleware.authenticate,
+    bodyParser.json(),
+    function (req, res, next) {
+
+      // revoke the token used to authenticate
+      app.controllers.auth.revokeToken(req.user.jti)
+        .then((revocation) => {
+          res.jsonI(revocation, {
+            tokenId: true
+          });
+        })
+        .catch((err) => {
+          next(err);
+        });
+    }
+  );
 };

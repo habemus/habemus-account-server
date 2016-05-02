@@ -20,6 +20,8 @@ const ERRORS = {
   UsernameNotFound: invalidCredentials,
   Unauthorized: invalidCredentials,
   TokenMissing: echo,
+
+  InternalServerError: echo,
 };
 
 function HAuthError(code, message) {

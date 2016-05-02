@@ -147,8 +147,10 @@ describe('POST /auth/token/generate', function () {
 
         decoded.iat.should.be.a.Number();
         decoded.exp.should.be.a.Number();
+        decoded.jti.should.be.a.String();
+        decoded.iss.should.equal('h-auth');
 
-        Object.keys(decoded).length.should.equal(4);
+        Object.keys(decoded).length.should.equal(6);
 
         done();
       });
