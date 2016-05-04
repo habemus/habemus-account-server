@@ -48,7 +48,8 @@ module.exports = function (app, options) {
 
           var userData = {
             username: _user.username,
-            createdAt: _user.createdAt
+            createdAt: _user.createdAt,
+            verifiedAt: _user.verifiedAt
           };
 
           var signOptions = {

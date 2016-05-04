@@ -10,6 +10,7 @@ function invalidCredentials(arg) {
 }
 
 const ERRORS = {
+  EmailMissing: echo,
   UsernameMissing: echo,
   PasswordMissing: echo,
   UsernameTaken: function (username) {
@@ -22,6 +23,8 @@ const ERRORS = {
   TokenMissing: echo,
 
   InternalServerError: echo,
+
+  InvalidVerificationCode: echo,
 };
 
 function HAuthError(code, message) {

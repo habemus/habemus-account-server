@@ -13,7 +13,11 @@ var options = {
   port: process.env.PORT,
   mongodbURI: process.env.MONGODB_URI,
   secret: process.env.SECRET,
+  sendgridApiKey: process.env.SENDGRID_API_KEY,
+  sendgridFromEmail: process.env.SENDGRID_FROM_EMAIL,
 };
+
+options.host = process.env.HOST || 'localhost:' + options.port;
 
 // instantiate the app
 var app = createHabemusAuth(options);

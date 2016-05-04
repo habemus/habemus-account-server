@@ -4,12 +4,12 @@ var bodyParser = require('body-parser');
 const USER_DATA = {
   username: true,
   createdAt: true,
+  verifiedAt: true,
 };
 
 module.exports = function (app, options) {
   
-  app.post(
-    '/users',
+  app.post('/users',
     bodyParser.json(),
     function (req, res, next) {
 
@@ -19,6 +19,35 @@ module.exports = function (app, options) {
         }, next);
     }
   );
+
+  app.post('/user/:username/verify',
+    bodyParser.json(),
+    function (req, res, next) {
+
+      app.controllers.user.validateAccountVerificationCode(
+        req.params.username,
+        req.body.code
+      ).then((user) => {
+        res.jsonI(user, USER_DATA);
+      })
+      .catch((err) => {
+        next(err);
+      });
+    }
+  );
+
+  app.get('/user/:username/verify', function (req, res, next) {
+
+    app.controllers.user.validateAccountVerificationCode(
+      req.params.username,
+      req.query.code
+    ).then((user) => {
+      res.jsonI(user, USER_DATA);
+    })
+    .catch((err) => {
+      next(err);
+    });
+  });
 
   app.get('/user/:username',
     app.middleware.authenticate,

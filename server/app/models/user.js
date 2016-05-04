@@ -1,16 +1,25 @@
 // third-party
-var mongoose = require('mongoose');
-var bcrypt   = require('bcrypt');
-var BPromise = require('bluebird');
+const mongoose = require('mongoose');
+const bcrypt   = require('bcrypt');
+const BPromise = require('bluebird');
+const uuid     = require('node-uuid');
 
 // constants
 const DEFAULT_SALT_ROUNDS = 10;
 const Schema = mongoose.Schema;
 
+// promisified methods
+var _bcryptHash    = BPromise.promisify(bcrypt.hash);
+var _bcryptCompare = BPromise.promisify(bcrypt.compare);
+
 var userSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+
+  verifiedAt: {
+    type: Date
   },
 
   username: {
@@ -19,7 +28,17 @@ var userSchema = new Schema({
     unique: true,
   },
 
-  hash: {
+  email: {
+    type: String,
+    required: true,
+  },
+
+  pwdHash: {
+    type: String,
+    required: true
+  },
+
+  accVerifHash: {
     type: String,
     required: true
   }
@@ -27,7 +46,7 @@ var userSchema = new Schema({
 
 userSchema.methods.validatePassword = function (plainTextPwd) {
 
-  var hash = this.hash;
+  var hash = this.pwdHash;
 
   return new BPromise((resolve, reject) => {
     bcrypt.compare(plainTextPwd, hash, (err, result) => {
@@ -41,22 +60,45 @@ userSchema.methods.validatePassword = function (plainTextPwd) {
   });
 };
 
+userSchema.methods.validateAccountVerificationCode = function (plainTextVerificationCode) {
+
+  var hash = this.accVerifHash;
+
+  return _bcryptCompare(plainTextVerificationCode, hash);
+};
+
 module.exports = function (conn, options) {
 
   var saltRounds = options.saltRounds || DEFAULT_SALT_ROUNDS;
 
+  /**
+   * Hashes a password
+   * @param  {[type]} plainTextPwd [description]
+   * @return {[type]}              [description]
+   */
   userSchema.statics.encryptPassword = function (plainTextPwd) {
+    return _bcryptHash(plainTextPwd, saltRounds);
+  };
 
-    return new BPromise((resolve, reject) => {
-      bcrypt.hash(plainTextPwd, saltRounds, (err, hash) => {
+  /**
+   * Generates a confirmation code
+   * @return {Object}
+   *         - code: should never be stored anywhere
+   *         - hash: bcrypt hashed code
+   */
+  userSchema.statics.generateAccountConfirmationCode = function () {
+    // generate a code
+    var code = uuid.v4();
 
-        if (err) {
-          reject(err);
-          return;
-        }
+    return _bcryptHash(code, saltRounds).then((hash) => {
 
-        resolve(hash);
-      });
+      return {
+        code: code,
+        hash: hash
+      };
+
+    }, (err) => {
+      throw err;
     });
   };
 

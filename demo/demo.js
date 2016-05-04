@@ -114,6 +114,7 @@ var userArea    = document.querySelector('#user-area');
 var loginStatus = document.querySelector('#login-status');
 var showUsername  = document.querySelector('#show-username');
 var showCreatedAt = document.querySelector('#show-created-at');
+var showVerifiedAt = document.querySelector('#show-verified-at');
 
 auth.on('auth-status-change', _handleAuthStatusChange)
 function _handleAuthStatusChange () {
@@ -126,6 +127,7 @@ function _handleAuthStatusChange () {
 
       showUsername.innerHTML  = user.username;
       showCreatedAt.innerHTML = user.createdAt;
+      showVerifiedAt.innerHTML = user.verifiedAt;
 
       signup.hidden = true;
       login.hidden = true;

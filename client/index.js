@@ -65,14 +65,15 @@ AuthClient.prototype.setAuthStatus = function (status) {
   }
 };
 
-AuthClient.prototype.signUp = function (username, password, userData) {
+AuthClient.prototype.signUp = function (email, password, userData) {
   var defer = Q.defer();
 
   superagent
     .post(this.serverURI + 'users')
     .send({
-      username: username,
+      username: email,
       password: password,
+      email: email,
     })
     .end(function (err, res) {
       if (err) {

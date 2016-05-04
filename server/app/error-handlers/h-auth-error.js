@@ -21,10 +21,12 @@ module.exports = function (app, options) {
           break;
         case 'InvalidToken':
         case 'Unauthorized':
+        case 'InvalidVerificationCode':
           msg.err(err.code, err.message);
           res.status(403).json(msg);
           break;
         case 'UsernameMissing':
+        case 'EmailMissing':
         case 'PasswordMissing':
           msg.err(err.code, err.message);
           res.status(400).json(msg);

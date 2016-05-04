@@ -35,6 +35,7 @@ module.exports = function (app, options) {
           res.jsonI(decoded, {
             username: true,
             createdAt: true,
+            verifiedAt: true,
             iat: true,
             exp: true
           });
