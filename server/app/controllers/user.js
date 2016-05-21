@@ -64,8 +64,6 @@ module.exports = function (app, options) {
         }),
       };
 
-      console.log(payload);
-
       return new Promise((resolve, reject) => {
         app.services.sendgrid.send(payload, function (err, json) {
           if (err) { reject(err); }
@@ -102,8 +100,6 @@ module.exports = function (app, options) {
       // something bad happened.
       // if there is a user, remove it
 
-      console.error(err);
-
       if (_user) {
         return _user.remove().then(() => {
           return Promise.reject(err);
@@ -114,12 +110,12 @@ module.exports = function (app, options) {
     });
   };
 
-  userCtrl.validateAccountVerificationCode = function (username, accVerifCode) {
+  userCtrl.validateAccountVerificationCode = function (userId, accVerifCode) {
 
     var _user;
 
     return User.findOne({
-      username: username
+      _id: userId
     })
     .then((user) => {
 
@@ -147,13 +143,13 @@ module.exports = function (app, options) {
     });
   };
 
-  userCtrl.delete = function (username) {
-    return User.findOneAndRemove({ username: username });
+  userCtrl.delete = function (userId) {
+    return User.findOneAndRemove({ _id: userId });
   };
 
-  userCtrl.findOne = function (query) {
-    return User.findOne(query);
-  };
+  userCtrl.getById = function (userId) {
+    return User.findOne({ _id: userId });
+  }
 
   // userCtrl.find = function (query) {
   //   return User.find(query);

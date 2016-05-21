@@ -5,9 +5,7 @@ const superagent = require('superagent');
 // test-specific dependencies
 const testServer = require('../../auxiliary/server');
 
-describe('GET /user/:username', function () {
-
-  const URI = testServer.uri + '/user/:username';
+describe('GET /user/:userId', function () {
 
   function _logIn(credentials, callback) {
 
@@ -24,7 +22,13 @@ describe('GET /user/:username', function () {
       });
   }
 
+  var USER_1;
+  var USER_2;
+
   before(function (done) {
+
+    this.timeout(10000);
+
     // start listening
     testServer.start(function () {
       // create 2 users
@@ -34,10 +38,13 @@ describe('GET /user/:username', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user',
+            email: 'test@dev.habem.us',
             password: 'test-password'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_1 = res.body.data;
 
             resolve();
           });
@@ -48,10 +55,13 @@ describe('GET /user/:username', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user-2',
+            email: 'test2@dev.habem.us',
             password: 'test-password-2'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_2 = res.body.data;
 
             resolve();
           });
@@ -144,17 +154,18 @@ describe('GET /user/:username', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(testServer.uri + '/user/test-user')
+        .get(testServer.uri + '/user/' + USER_1._id)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
           if (err) { return done(err); }
 
           res.statusCode.should.equal(200);
+          res.body.data._id.should.equal(USER_1._id);
           res.body.data.username.should.equal('test-user');
           res.body.data.createdAt.should.be.a.String();
 
           // make sure the user data only returns 2 properties
-          Object.keys(res.body.data).length.should.equal(2);
+          Object.keys(res.body.data).length.should.equal(3);
 
           done();
         });

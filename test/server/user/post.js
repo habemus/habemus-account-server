@@ -52,7 +52,7 @@ describe('POST /users', function () {
       .post(URI)
       .send({
         username: 'test-user',
-        email: 'testemail@habem.us',
+        email: 'testemail@dev.habem.us',
         password: 'test-password'
       })
       .end(function (err, res) {

@@ -8,7 +8,13 @@ const testServer = require('../../auxiliary/server');
 
 describe('POST /auth/token/generate', function () {
 
+  var USER_1;
+  var USER_2;
+
   before(function (done) {
+
+    this.timeout(10000);
+
     // start listening
     testServer.start(function () {
 
@@ -19,10 +25,13 @@ describe('POST /auth/token/generate', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user',
+            email: 'test1@dev.habem.us',
             password: 'test-password'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_1 = res.body.data;
 
             resolve();
           });
@@ -33,10 +42,13 @@ describe('POST /auth/token/generate', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user-2',
+            email: 'test2@dev.habem.us',
             password: 'test-password-2'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_2 = res.body.data;
 
             resolve();
           });
@@ -142,7 +154,7 @@ describe('POST /auth/token/generate', function () {
         var decoded = jwt.verify(res.body.data.token, testServer.options.secret);
 
         // be sure that all properties are known
-        decoded.username.should.equal('test-user');
+        decoded.sub.should.equal(USER_1._id);
         decoded.createdAt.should.be.a.String();
 
         decoded.iat.should.be.a.Number();
@@ -159,6 +171,10 @@ describe('POST /auth/token/generate', function () {
 });
 
 describe('POST /auth/token/decode', function () {
+
+  var USER_1;
+  var USER_2;
+
   before(function (done) {
     // start listening
     testServer.start(function () {
@@ -170,10 +186,13 @@ describe('POST /auth/token/decode', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user',
+            email: 'test1@dev.habem.us',
             password: 'test-password'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_1 = res.body.data;
 
             resolve();
           });
@@ -184,10 +203,13 @@ describe('POST /auth/token/decode', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user-2',
+            email: 'test2@dev.habem.us',
             password: 'test-password-2'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_2 = res.body.data;
 
             resolve();
           });
@@ -270,7 +292,7 @@ describe('POST /auth/token/decode', function () {
 
             res.statusCode.should.equal(200);
 
-            res.body.data.username.should.equal('test-user');
+            res.body.data.sub.should.equal(USER_1._id);
             res.body.data.createdAt.should.be.a.String();
 
             res.body.data.iat.should.be.a.Number();

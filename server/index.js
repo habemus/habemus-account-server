@@ -30,18 +30,12 @@ function createHabemusAuth(options) {
   // make the error constructor available throughout the application
   app.Error = HAuthError;
 
-  // make the response builder available throughout the application
-  var jsonM = app.jsonM = jsonMessage(options.apiVersion);
 
   // logging
-  app.use(morgan('dev'));
-
-  app.use(cors());
+  require('./app/setup/logger')(app, options);
 
   // create a mongoose mongo db connection
   var conn = mongoose.createConnection(options.mongodbURI);
-  
-  app.set('json spaces', 2);
 
   // services
   app.services = {};
@@ -61,33 +55,11 @@ function createHabemusAuth(options) {
   app.middleware = {};
   app.middleware.authenticate = require('./app/middleware/authenticate')(app, options);
 
-  // global middleware
-  // IN STUDY:
-  app.use(function (req, res, next) {
-
-    // define response methods
-    res.jsonI = function (sourceData, projection) {
-      var msg = jsonM.response.item();
-
-      msg.load(sourceData, projection);
-
-      res.json(msg);
-    };
-
-    // res.jsonL = function (sourceData, projection) {
-    //   var msg = jsonM.response.list();
-
-    //   msg.loag(sourceData, projection);
-    //   res.json(msg);
-    // };
-
-    next();
-
-  });
+  require('./app/setup/middleware')(app, options);
 
   // define description route
   app.get('/who', function (req, res) {
-    res.jsonI({
+    res.json.item({
       name: 'h-auth'
     }, {
       name: true

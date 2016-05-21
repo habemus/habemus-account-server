@@ -22,6 +22,9 @@ describe('DELETE /user/:username', function () {
       });
   }
 
+  var USER_1;
+  var USER_2;
+
   before(function (done) {
     // start listening
     testServer.start(function () {
@@ -33,10 +36,13 @@ describe('DELETE /user/:username', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user',
+            email: 'test1@dev.habem.us',
             password: 'test-password'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_1 = res.body.data;
 
             resolve();
           });
@@ -47,10 +53,13 @@ describe('DELETE /user/:username', function () {
           .post(testServer.uri + '/users')
           .send({
             username: 'test-user-2',
+            email: 'test2@dev.habem.us',
             password: 'test-password-2'
           })
           .end(function (err, res) {
             if (err) { return reject(err); }
+
+            USER_2 = res.body.data;
 
             resolve();
           });
@@ -108,7 +117,7 @@ describe('DELETE /user/:username', function () {
     }, function (err, token) {
 
       superagent
-        .delete(testServer.uri + '/user/test-user')
+        .delete(testServer.uri + '/user/' + USER_1._id)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 

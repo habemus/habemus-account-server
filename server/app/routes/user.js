@@ -1,11 +1,7 @@
 // third-party
 var bodyParser = require('body-parser');
 
-const USER_DATA = {
-  username: true,
-  createdAt: true,
-  verifiedAt: true,
-};
+const USER_DATA = require('../interfaces/user-data');
 
 module.exports = function (app, options) {
   
@@ -15,20 +11,29 @@ module.exports = function (app, options) {
 
       app.controllers.user.create(req.body)
         .then((createdUser) => {
-          res.status(201).jsonI(createdUser, USER_DATA);
-        }, next);
+
+          var msg = app.format.item(createdUser, USER_DATA);
+
+          res.status(201).json(msg);
+        })
+        .catch((err) => {
+          next(err);
+        });
     }
   );
 
-  app.post('/user/:username/verify',
+  app.post('/user/:userId/verify',
     bodyParser.json(),
     function (req, res, next) {
 
       app.controllers.user.validateAccountVerificationCode(
-        req.params.username,
+        req.params.userId,
         req.body.code
       ).then((user) => {
-        res.jsonI(user, USER_DATA);
+
+        var msg = app.format.item(user, USER_DATA);
+
+        res.json(msg);
       })
       .catch((err) => {
         next(err);
@@ -36,31 +41,32 @@ module.exports = function (app, options) {
     }
   );
 
-  app.get('/user/:username/verify', function (req, res, next) {
+  app.get('/user/:usereId/verify', function (req, res, next) {
 
     app.controllers.user.validateAccountVerificationCode(
-      req.params.username,
+      req.params.usereId,
       req.query.code
     ).then((user) => {
-      res.jsonI(user, USER_DATA);
+      var msg = app.format.item(user, USER_DATA);
+      res.json(msg);
     })
     .catch((err) => {
       next(err);
     });
   });
 
-  app.get('/user/:username',
+  app.get('/user/:userId',
     app.middleware.authenticate,
     function (req, res, next) {
 
       // check that the authenticated user
       // is the one that the request refers to
-      if (req.user.username !== req.params.username) {
+      if (req.token.sub !== req.params.userId) {
         next(new app.Error('Unauthorized'));
         return;
       }
 
-      app.controllers.user.findOne({ username: req.params.username })
+      app.controllers.user.getById(req.params.userId)
         .then((user) => {
 
           if (!user) {
@@ -68,26 +74,28 @@ module.exports = function (app, options) {
             return;
           }
 
-          res.jsonI(user, USER_DATA);
+          var msg = app.format.item(user, USER_DATA);
+          res.json(msg);
         })
         .catch(next);
     }
   );
 
-  app.delete('/user/:username',
+  app.delete('/user/:userId',
     app.middleware.authenticate,
     function (req, res, next) {
 
       // check that the authenticated user
       // is the one that the request refers to
-      if (req.user.username !== req.params.username) {
+      if (req.token.sub !== req.params.userId) {
         next(new app.Error('Unauthorized'));
         return;
       }
 
-      app.controllers.user.delete(req.params.username)
+      app.controllers.user.delete(req.params.userId)
         .then((deletedUserData) => {
-          res.jsonI(deletedUserData, USER_DATA);
+          var msg = app.format.item(deletedUserData, USER_DATA);
+          res.json(msg);
         })
         .catch(next);
     }

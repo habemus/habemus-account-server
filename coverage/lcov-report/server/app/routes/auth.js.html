@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">82.35% </span>
+        <span class="strong">83.33% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>14/17</span>
+        <span class='fraction'>20/24</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>3/4</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">82.35% </span>
+        <span class="strong">83.33% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>14/17</span>
+        <span class='fraction'>20/24</span>
       </div>
     </div>
   </div>
@@ -107,8 +107,24 @@
 62
 63
 64
-65</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+65
+66
+67
+68
+69</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -121,10 +137,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
@@ -140,13 +154,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2×</span>
@@ -163,8 +172,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -172,7 +180,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// third-party
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
+&nbsp;
+const USER_DATA = require('../interfaces/user-data');
+&nbsp;
+var TOKEN_DATA = {
+  sub: true,
+  iat: true,
+  exp: true,
+};
+&nbsp;
+for (prop in USER_DATA) {
+  TOKEN_DATA[prop] = USER_DATA[prop];
+}
 &nbsp;
 module.exports = function (app, options) {
 &nbsp;
@@ -185,10 +205,8 @@ module.exports = function (app, options) {
 &nbsp;
       app.controllers.auth.generateToken(username, password)
         .then((token) =&gt; {
-&nbsp;
-          res.status(201).jsonI({ token: token }, {
-            token: true
-          });
+          var msg = app.format.item({ token: token }, { token: true });
+          res.status(201).json(msg);
         })
         .catch((err) =&gt; {
           next(err);
@@ -204,13 +222,8 @@ module.exports = function (app, options) {
 &nbsp;
       app.controllers.auth.decodeToken(token)
         .then((decoded) =&gt; {
-&nbsp;
-          res.jsonI(decoded, {
-            username: true,
-            createdAt: true,
-            iat: true,
-            exp: true
-          });
+          var msg = app.format.item(decoded, TOKEN_DATA);
+          res.json(msg);
         })
         .catch((err) =&gt; {
           next(err);
@@ -226,9 +239,8 @@ module.exports = function (app, options) {
       // revoke the token used to authenticate
 <span class="cstat-no" title="statement not covered" >      app.controllers.auth.revokeToken(req.user.jti)</span>
         .then((revocation) =&gt; {
-<span class="cstat-no" title="statement not covered" >          res.jsonI(revocation, {</span>
-            tokenId: true
-          });
+<span class="cstat-no" title="statement not covered" >          var msg = app.format.item(revocation, { tokenId: true });</span>
+<span class="cstat-no" title="statement not covered" >          res.json(msg);</span>
         })
         .catch((err) =&gt; {
 <span class="cstat-no" title="statement not covered" >          next(err);</span>
@@ -241,7 +253,7 @@ module.exports = function (app, options) {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon May 02 2016 00:22:45 GMT-0300 (BRT)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat May 21 2016 20:50:38 GMT-0300 (BRT)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

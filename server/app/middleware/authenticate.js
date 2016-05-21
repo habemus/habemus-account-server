@@ -27,7 +27,7 @@ module.exports = function (app, options) {
     app.controllers.auth.decodeToken(token)
       .then(function (decoded) {
         // make the user data available to middleware after
-        req.user = decoded;
+        req.token = decoded;
 
         next();
       }, next);
