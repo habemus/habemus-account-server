@@ -52,6 +52,7 @@ describe('POST /users', function () {
       .post(URI)
       .send({
         username: 'test-user',
+        email: 'testemail@habem.us',
         password: 'test-password'
       })
       .end(function (err, res) {
@@ -67,7 +68,7 @@ describe('POST /users', function () {
           users.length.should.equal(1);
 
           users[0].username.should.equal('test-user');
-          users[0].hash.should.be.a.String();
+          users[0].pwdHash.should.be.a.String();
 
           done();
         });

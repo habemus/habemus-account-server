@@ -18,7 +18,7 @@ function createHabemusAuth(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
   if (!options.mongodbURI) { throw new Error('mongodbURI is required'); }
   if (!options.secret) { throw new Error('secret is required'); }
-  if (!options.host) { throw new Error('host is required'); }
+  // if (!options.host) { throw new Error('host is required'); }
 
   // sendgrid
   if (!options.sendgridApiKey) { throw new Error('sendgridApiKey is required'); }

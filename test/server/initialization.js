@@ -47,6 +47,8 @@ describe('server initialization', function () {
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
       secret: 'fake-secret',
+      sendgridApiKey: 'fake-key',
+      sendgridFromEmail: 'fake@email.com',
     });
 
     app.should.be.a.Function();
@@ -59,6 +61,11 @@ describe('server initialization', function () {
       superagent
         .get(testServer.uri + '/who')
         .end(function (err, res) {
+
+          if (err) {
+            return done(err);
+          }
+
           res.statusCode.should.equal(200);
           res.body.data.name.should.equal('h-auth');
 

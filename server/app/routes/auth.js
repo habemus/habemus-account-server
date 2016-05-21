@@ -33,9 +33,7 @@ module.exports = function (app, options) {
         .then((decoded) => {
 
           res.jsonI(decoded, {
-            username: true,
-            createdAt: true,
-            verifiedAt: true,
+            sub: true,
             iat: true,
             exp: true
           });

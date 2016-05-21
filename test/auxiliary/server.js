@@ -17,6 +17,8 @@ var options = {
   port: process.env.PORT || 4000,
   mongodbURI: TEST_DB_URI,
   secret: 'fake-secret',
+  sendgridApiKey: process.env.SENDGRID_API_KEY,
+  sendgridFromEmail: 'fake@email.com',
 };
 
 // set mongoose to debug mode

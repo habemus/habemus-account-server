@@ -27,7 +27,6 @@ describe('GET /user/:username', function () {
   before(function (done) {
     // start listening
     testServer.start(function () {
-
       // create 2 users
       
       var u1Promise = new Promise((resolve, reject) => {

@@ -46,11 +46,17 @@ module.exports = function (app, options) {
 
         return new Promise((resolve, reject) => {
 
+          // var userData = {
+          //   username: _user.username,
+          //   createdAt: _user.createdAt,
+          //   verifiedAt: _user.verifiedAt
+          // };
+          
           var userData = {
-            username: _user.username,
-            createdAt: _user.createdAt,
-            verifiedAt: _user.verifiedAt
-          };
+
+          }
+
+          console.log(_user);
 
           var signOptions = {
             // algorithm: 'HS256',
@@ -59,7 +65,7 @@ module.exports = function (app, options) {
             // audience: ,
             issuer: 'h-auth',
             jwtid: uuid.v4(),
-            // subject: ,
+            subject: _user._id,
           };
 
           jwt.sign(userData, SECRET, signOptions, resolve);
