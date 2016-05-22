@@ -56,29 +56,4 @@ module.exports = function (app, options) {
 
     return msg;
   };
-
-  // global middleware
-  // IN STUDY:
-  app.use(function (req, res, next) {
-
-    // define response methods
-    res.json.item = function (sourceData, projection) {
-      var msg = jsonM.response.item();
-
-      msg.load(sourceData, projection);
-
-      res.json(msg);
-    };
-
-    res.json.list = function (sourceData, projection) {
-      var msg = jsonM.response.list();
-
-      msg.load(sourceData, projection);
-      res.json(msg);
-    };
-
-    next();
-
-  });
-
 };

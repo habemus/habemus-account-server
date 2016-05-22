@@ -59,11 +59,8 @@ function createHabemusAuth(options) {
 
   // define description route
   app.get('/who', function (req, res) {
-    res.json.item({
-      name: 'h-auth'
-    }, {
-      name: true
-    });
+    var msg = app.format.item({ name: 'h-auth' }, { name: true });
+    res.json(msg);
   });
 
   // load routes
