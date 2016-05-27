@@ -47,6 +47,21 @@ describe('POST /users', function () {
   it('should create a new user', function (done) {
 
     this.timeout(5000);
+    // TODO: implement verification code automated tests
+    // var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
+
+    // // add listener to the log event of the node mailer stub transport
+    // testServer.options.nodemailerTransport.on('log', function (log) {
+
+
+    //   if (log.type === 'message') {
+    //     var match = log.message.match(confirmationCodeRe);
+
+    //     if (match) {
+    //       console.log(match[1]);
+    //     }
+    //   }
+    // });
 
     superagent
       .post(URI)

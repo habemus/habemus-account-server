@@ -53,10 +53,10 @@ module.exports = function (app, options) {
       // save reference to the user
       _user = user;
 
-      // send email
-      var payload = {
+      // setup e-mail data
+      var mailOptions = {
+        from: options.senderEmail,
         to: user.get('email'),
-        from: options.sendgridFromEmail,
         subject: 'Welcome to Habemus',
         html: mustache.render(verifyAccountEmailTemplate, {
           email: user.get('email'),
@@ -65,10 +65,10 @@ module.exports = function (app, options) {
       };
 
       return new Promise((resolve, reject) => {
-        app.services.sendgrid.send(payload, function (err, json) {
+        app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
           if (err) { reject(err); }
 
-          resolve(json);
+          resolve(sentEmailInfo);
         });
       });
 
@@ -150,10 +150,6 @@ module.exports = function (app, options) {
   userCtrl.getById = function (userId) {
     return User.findOne({ _id: userId });
   }
-
-  // userCtrl.find = function (query) {
-  //   return User.find(query);
-  // };
 
   return userCtrl;
 };

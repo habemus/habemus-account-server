@@ -4,6 +4,8 @@ const http = require('http');
 
 // third-party dependencies
 const MongoClient = require('mongodb').MongoClient;
+const stubTransport = require('nodemailer-stub-transport');
+
 
 // internal dependencies
 const pkg = require('../../package.json');
@@ -17,9 +19,13 @@ var options = {
   port: process.env.PORT || 4000,
   mongodbURI: TEST_DB_URI,
   secret: 'fake-secret',
-  sendgridApiKey: process.env.SENDGRID_API_KEY,
-  sendgridFromEmail: 'fake@email.com',
+
+  nodemailerTransport: stubTransport(),
+  senderEmail: 'test@dev.habem.us',
 };
+
+// set the host
+options.host = 'http://localhost:' + options.port;
 
 // set mongoose to debug mode
 require('mongoose').set('debug', true);
@@ -48,10 +54,20 @@ module.exports = {
         return Promise.all([dropPromise])
       })
       .then(() => {
-        // IMPORTANT!
-        // instantiate the app only after the database has been dropped
-        // to avoid weird behaviors
-        var app = createHabemusAuth(options);
+
+        try {
+
+          // IMPORTANT!
+          // instantiate the app only after the database has been dropped
+          // to avoid weird behaviors
+          var app = createHabemusAuth(options);
+        } catch (e) {
+
+          console.log(e);
+
+          cb(e);
+          return;
+        }
 
         // create http server and pass express app as callback
         var server = this.server = http.createServer(app);

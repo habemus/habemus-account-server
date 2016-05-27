@@ -1,15 +1,16 @@
 // native dependencies
-var http    = require('http');
+const http    = require('http');
 
 // external dependencies
-var express  = require('express');
-var morgan   = require('morgan');
-var cors     = require('cors');
-var mongoose = require('mongoose');
-var jsonMessage = require('json-message');
+const express  = require('express');
+const morgan   = require('morgan');
+const cors     = require('cors');
+const mongoose = require('mongoose');
+const jsonMessage = require('json-message');
+const nodemailer  = require('nodemailer');
 
 // own dependencies
-var HAuthError = require('./app/errors/h-auth-error');
+const HAuthError = require('./app/errors/h-auth-error');
 
 /**
  * Function that starts the host server
@@ -18,11 +19,17 @@ function createHabemusAuth(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
   if (!options.mongodbURI) { throw new Error('mongodbURI is required'); }
   if (!options.secret) { throw new Error('secret is required'); }
-  // if (!options.host) { throw new Error('host is required'); }
+
+  // host is used for the account verification email
+  if (!options.host) { throw new Error('host is required'); }
+  // 
+  
+  // nodemailer
+  if (!options.nodemailerTransport) { throw new Error('nodemailerTransport is required'); }
 
   // sendgrid
-  if (!options.sendgridApiKey) { throw new Error('sendgridApiKey is required'); }
-  if (!options.sendgridFromEmail) { throw new Error('sendgridFromEmail is required'); }
+  // if (!options.sendgridApiKey) { throw new Error('sendgridApiKey is required'); }
+  // if (!options.sendgridFromEmail) { throw new Error('sendgridFromEmail is required'); }
 
   // create express app instance
   var app = express();
@@ -39,7 +46,8 @@ function createHabemusAuth(options) {
 
   // services
   app.services = {};
-  app.services.sendgrid = require('sendgrid')(options.sendgridApiKey);
+  // app.services.sendgrid = require('sendgrid')(options.sendgridApiKey);
+  app.services.nodemailer = nodemailer.createTransport(options.nodemailerTransport);
 
   // load models
   app.models = {};

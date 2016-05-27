@@ -27,7 +27,6 @@ module.exports = function (app, options) {
   app.options('*', _corsMiddleware);
   app.use(_corsMiddleware);
 
-
   ////
   // JSON MESSAGE
   var jsonM = jsonMessage(options.apiVersion);

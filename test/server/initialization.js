@@ -4,6 +4,7 @@ const assert = require('assert');
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 
 // testServer
 const testServer = require('../auxiliary/server');
@@ -18,6 +19,11 @@ describe('server initialization', function () {
         // apiVersion: '0.0.0',
         mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
         secret: 'fake-secret',
+
+        nodemailerTransport: stubTransort(),
+        fromEmail: 'from@dev.habem.us',
+
+        host: 'http://localhost'
       });
     });
   });
@@ -28,6 +34,11 @@ describe('server initialization', function () {
         apiVersion: '0.0.0',
         // mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
         secret: 'fake-secret',
+
+        nodemailerTransport: stubTransort(),
+        fromEmail: 'from@dev.habem.us',
+
+        host: 'http://localhost'
       });
     });
   });
@@ -38,6 +49,12 @@ describe('server initialization', function () {
         apiVersion: '0.0.0',
         mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
         // secret: 'fake-secret',
+        // 
+
+        nodemailerTransport: stubTransort(),
+        fromEmail: 'from@dev.habem.us',
+
+        host: 'http://localhost'
       });
     });
   });
@@ -47,8 +64,10 @@ describe('server initialization', function () {
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
       secret: 'fake-secret',
-      sendgridApiKey: 'fake-key',
-      sendgridFromEmail: 'fake@email.com',
+      nodemailerTransport: stubTransort(),
+      fromEmail: 'from@dev.habem.us',
+
+      host: 'http://localhost'
     });
 
     app.should.be.a.Function();

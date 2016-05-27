@@ -1,20 +1,27 @@
 // native dependencies
-var path = require('path');
-var http = require('http');
+const path = require('path');
+const http = require('http');
+
+// third-party dependencies
+const sgTransport = require('nodemailer-sendgrid-transport');
 
 // internal dependencies
-var pkg = require('../package.json');
-
-// internal dependencies
-var createHabemusAuth = require('../');
+const pkg = require('../package.json');
+const createHabemusAuth = require('../');
 
 var options = {
   apiVersion: pkg.version,
   port: process.env.PORT,
   mongodbURI: process.env.MONGODB_URI,
   secret: process.env.SECRET,
-  sendgridApiKey: process.env.SENDGRID_API_KEY,
-  sendgridFromEmail: process.env.SENDGRID_FROM_EMAIL,
+  host: process.env.HOST,
+
+  nodemailerTransport: sgTransport({
+    auth: {
+      api_key: process.env.SENDGRID_API_KEY
+    }
+  }),
+  senderEmail: process.env.SENDER_EMAIL,
 };
 
 options.host = process.env.HOST || 'localhost:' + options.port;

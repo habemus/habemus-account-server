@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">95.24% </span>
+        <span class="strong">95.35% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>40/42</span>
+        <span class='fraction'>41/43</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">80% </span>
@@ -37,7 +37,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>37/37</span>
+        <span class='fraction'>38/38</span>
       </div>
     </div>
   </div>
@@ -119,10 +119,19 @@
 74
 75
 76
-77</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+77
+78
+79
+80
+81
+82
+83
+84
+85</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
@@ -141,14 +150,6 @@
 <span class="cline-any cline-yes">8×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,10 +157,25 @@
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -196,17 +212,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span></td><td class="text"><pre class="prettyprint lang-js">// native dependencies
-var http    = require('http');
+const http    = require('http');
 &nbsp;
 // external dependencies
-var express  = require('express');
-var morgan   = require('morgan');
-var cors     = require('cors');
-var mongoose = require('mongoose');
-var jsonMessage = require('json-message');
+const express  = require('express');
+const morgan   = require('morgan');
+const cors     = require('cors');
+const mongoose = require('mongoose');
+const jsonMessage = require('json-message');
+const nodemailer  = require('nodemailer');
 &nbsp;
 // own dependencies
-var HAuthError = require('./app/errors/h-auth-error');
+const HAuthError = require('./app/errors/h-auth-error');
 &nbsp;
 /**
  * Function that starts the host server
@@ -215,11 +232,17 @@ function createHabemusAuth(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
   if (!options.mongodbURI) { throw new Error('mongodbURI is required'); }
   if (!options.secret) { throw new Error('secret is required'); }
-  // if (!options.host) { throw new Error('host is required'); }
+&nbsp;
+  // host is used for the account verification email
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!options.host) { <span class="cstat-no" title="statement not covered" >throw new Error('host is required'); </span>}
+  // 
+  
+  // nodemailer
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!options.nodemailerTransport) { <span class="cstat-no" title="statement not covered" >throw new Error('nodemailerTransport is required'); </span>}
 &nbsp;
   // sendgrid
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!options.sendgridApiKey) { <span class="cstat-no" title="statement not covered" >throw new Error('sendgridApiKey is required'); </span>}
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!options.sendgridFromEmail) { <span class="cstat-no" title="statement not covered" >throw new Error('sendgridFromEmail is required'); </span>}
+  // if (!options.sendgridApiKey) { throw new Error('sendgridApiKey is required'); }
+  // if (!options.sendgridFromEmail) { throw new Error('sendgridFromEmail is required'); }
 &nbsp;
   // create express app instance
   var app = express();
@@ -236,7 +259,8 @@ function createHabemusAuth(options) {
 &nbsp;
   // services
   app.services = {};
-  app.services.sendgrid = require('sendgrid')(options.sendgridApiKey);
+  // app.services.sendgrid = require('sendgrid')(options.sendgridApiKey);
+  app.services.nodemailer = nodemailer.createTransport(options.nodemailerTransport);
 &nbsp;
   // load models
   app.models = {};
@@ -277,7 +301,7 @@ module.exports = createHabemusAuth;</pre></td></tr>
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat May 21 2016 21:00:47 GMT-0300 (BRT)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue May 24 2016 18:05:17 GMT-0300 (BRT)
 </div>
 </div>
 <script src="../prettify.js"></script>
