@@ -5,6 +5,7 @@ const path = require('path');
 // third-party dependencies
 const uuid     = require('node-uuid');
 const mustache = require('mustache');
+const mongoose = require('mongoose');
 
 // 
 const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/verify-account.html'), 'utf8');
@@ -111,6 +112,11 @@ module.exports = function (app, options) {
   };
 
   userCtrl.validateAccountVerificationCode = function (userId, accVerifCode) {
+
+    // check the validity of the userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return Promise.reject(new app.Error('UsernameNotFound'));
+    }
 
     var _user;
 

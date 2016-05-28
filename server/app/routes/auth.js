@@ -61,7 +61,7 @@ module.exports = function (app, options) {
     bodyParser.json(),
     function (req, res, next) {
       // revoke the token used to authenticate
-      app.controllers.auth.revokeToken(req.rawToken)
+      app.controllers.auth.revokeToken(req.token.jti)
         .then((revocation) => {
           var msg = app.format.item(revocation, { tokenId: true });
           res.json(msg);

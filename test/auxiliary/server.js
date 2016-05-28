@@ -27,8 +27,10 @@ var options = {
 // set the host
 options.host = 'http://localhost:' + options.port;
 
-// set mongoose to debug mode
-require('mongoose').set('debug', true);
+if (process.env.DEBUG === 'TRUE') {
+  // set mongoose to debug mode
+  require('mongoose').set('debug', true);
+}
 
 module.exports = {
   options: options,

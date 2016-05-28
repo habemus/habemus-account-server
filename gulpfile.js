@@ -34,7 +34,7 @@ gulp.task('nodemon', function () {
 });
 
 gulp.task('pre-test', function () {
-  return gulp.src(['server/**/*.js'])
+  return gulp.src(['server/**/*.js', 'shared/**/*.js'])
     // Covering files
     .pipe(istanbul())
     // Force `require` to return covered files

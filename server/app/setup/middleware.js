@@ -40,13 +40,15 @@ module.exports = function (app, options) {
     return msg;
   };
 
-  app.format.list = function (sourceData, dataMap) {
-    var msg = jsonM.response.list();
+  // not being used. let it not interfere in code coverage
+  // 
+  // app.format.list = function (sourceData, dataMap) {
+  //   var msg = jsonM.response.list();
 
-    msg.load(sourceData, dataMap);
+  //   msg.load(sourceData, dataMap);
 
-    return msg;
-  };
+  //   return msg;
+  // };
 
   app.format.error = function (code, message, data) {
     var msg = jsonM.response.item();

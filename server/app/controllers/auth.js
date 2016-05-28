@@ -80,19 +80,8 @@ module.exports = function (app, options) {
       });
   };
 
-  authCtrl.revokeToken = function (token) {
-    return app.services.token.revoke(token)
-      .then((blacklistEntry) => {
-
-        return blacklistEntry;
-
-      }, (err) => {
-        if (err instanceof hToken.errors.InvalidTokenError) {
-          return Promise.reject(new app.Error('InvalidToken'));
-        } else {
-          return Promise.reject(new app.Error('InternalServerError'));
-        }
-      });
+  authCtrl.revokeToken = function (tokenId) {
+    return app.services.token.revoke(tokenId);
   };
 
   return authCtrl;

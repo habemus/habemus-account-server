@@ -5,7 +5,7 @@ const assert = require('assert');
 const should = require('should');
 
 // own dependencies
-const HAuthError = require('../../../server/app/errors/h-auth-error');
+const HAuthError = require('../../../shared/errors');
 
 describe('HAuthError', function () {
 

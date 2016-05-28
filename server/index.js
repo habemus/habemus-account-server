@@ -13,7 +13,7 @@ const nodemailer  = require('nodemailer');
 const hToken = require('h-token');
 
 // own dependencies
-const HAuthError = require('./app/errors/h-auth-error');
+const HAuthError = require('../shared/errors');
 
 /**
  * Function that starts the host server

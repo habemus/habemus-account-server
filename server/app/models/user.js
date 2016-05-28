@@ -9,8 +9,8 @@ const DEFAULT_SALT_ROUNDS = 10;
 const Schema = mongoose.Schema;
 
 // promisified methods
-var _bcryptHash    = BPromise.promisify(bcrypt.hash);
-var _bcryptCompare = BPromise.promisify(bcrypt.compare);
+const _bcryptHash    = BPromise.promisify(bcrypt.hash);
+const _bcryptCompare = BPromise.promisify(bcrypt.compare);
 
 var userSchema = new Schema({
   createdAt: {
@@ -48,16 +48,7 @@ userSchema.methods.validatePassword = function (plainTextPwd) {
 
   var hash = this.pwdHash;
 
-  return new BPromise((resolve, reject) => {
-    bcrypt.compare(plainTextPwd, hash, (err, result) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(result);
-    });
-  });
+  return _bcryptCompare(plainTextPwd, hash);
 };
 
 userSchema.methods.validateAccountVerificationCode = function (plainTextVerificationCode) {
@@ -97,8 +88,6 @@ module.exports = function (conn, options) {
         hash: hash
       };
 
-    }, (err) => {
-      throw err;
     });
   };
 
