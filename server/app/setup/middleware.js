@@ -29,11 +29,11 @@ module.exports = function (app, options) {
 
   ////
   // JSON MESSAGE
-  var jsonM = jsonMessage(options.apiVersion);
+  var messageApi = jsonMessage(options.apiVersion);
 
   app.format = {};
   app.format.item = function (sourceData, dataMap) {
-    var msg = jsonM.response.item();
+    var msg = messageApi.response.item();
 
     msg.load(sourceData, dataMap);
 
@@ -43,17 +43,19 @@ module.exports = function (app, options) {
   // not being used. let it not interfere in code coverage
   // 
   // app.format.list = function (sourceData, dataMap) {
-  //   var msg = jsonM.response.list();
+  //   var msg = messageApi.response.list();
 
   //   msg.load(sourceData, dataMap);
 
   //   return msg;
   // };
 
-  app.format.error = function (code, message, data) {
-    var msg = jsonM.response.item();
+  app.format.error = function (sourceData, dataMap) {
+    var msg = messageApi.response.error();
 
-    msg.err(code, message, data);
+    if (sourceData) {
+      msg.load(sourceData, dataMap);
+    }
 
     return msg;
   };

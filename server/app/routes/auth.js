@@ -24,16 +24,11 @@ module.exports = function (app, options) {
 
       app.controllers.auth.generateToken(username, password)
         .then((token) => {
-
-          console.log(token);
-
+          
           var msg = app.format.item({ token: token }, { token: true });
           res.status(201).json(msg);
         })
         .catch((err) => {
-
-          console.log(err);
-
           next(err);
         });
     }

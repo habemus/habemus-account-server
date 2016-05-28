@@ -11,51 +11,73 @@ const testServer = require('../auxiliary/server');
 
 const createHAuthApp = require('../../');
 
+const REQUIRED_OPTIONS = {
+  apiVersion: '0.0.0',
+  mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
+  secret: 'fake-secret',
+
+  nodemailerTransport: stubTransort(),
+  fromEmail: 'from@dev.habem.us',
+
+  host: 'http://localhost'
+};
+
+function clone(obj) {
+  var cloneObj = {};
+
+  for (prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+      cloneObj[prop] = obj[prop];
+    }
+  }
+
+  return cloneObj;
+}
+
 describe('server initialization', function () {
 
   it('should require apiVersion option', function () {
+    var options = clone(REQUIRED_OPTIONS);
+    delete options.apiVersion;
+
     assert.throws(function () {
-      createHAuthApp({
-        // apiVersion: '0.0.0',
-        mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
-        secret: 'fake-secret',
-
-        nodemailerTransport: stubTransort(),
-        fromEmail: 'from@dev.habem.us',
-
-        host: 'http://localhost'
-      });
+      createHAuthApp(options);
     });
   });
 
   it('should require mongodbURI', function () {
+    var options = clone(REQUIRED_OPTIONS);
+    delete options.mongodbURI;
+
     assert.throws(function () {
-      createHAuthApp({
-        apiVersion: '0.0.0',
-        // mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
-        secret: 'fake-secret',
-
-        nodemailerTransport: stubTransort(),
-        fromEmail: 'from@dev.habem.us',
-
-        host: 'http://localhost'
-      });
+      createHAuthApp(options);
     });
   });
 
   it('should require secret', function () {
+    var options = clone(REQUIRED_OPTIONS);
+    delete options.secret;
+
     assert.throws(function () {
-      createHAuthApp({
-        apiVersion: '0.0.0',
-        mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
-        // secret: 'fake-secret',
-        // 
+      createHAuthApp(options);
+    });
+  });
 
-        nodemailerTransport: stubTransort(),
-        fromEmail: 'from@dev.habem.us',
+  it('should require host', function () {
+    var options = clone(REQUIRED_OPTIONS);
+    delete options.host;
 
-        host: 'http://localhost'
-      });
+    assert.throws(function () {
+      createHAuthApp(options);
+    });
+  });
+
+  it('should require nodemailerTransport', function () {
+    var options = clone(REQUIRED_OPTIONS);
+    delete options.nodemailerTransport;
+
+    assert.throws(function () {
+      createHAuthApp(options);
     });
   });
 

@@ -6,7 +6,7 @@ const superagent = require('superagent');
 const testServer = require('../../auxiliary/server');
 
 
-describe('POST /users', function () {
+describe('User Account verification', function () {
 
   const URI = testServer.uri + '/users';
 
@@ -72,8 +72,6 @@ describe('POST /users', function () {
 
         if (err) { return done(err); }
 
-        console.log(res.body.data);
-
         res.statusCode.should.equal(201);
 
         res.body.data.username.should.equal('test-user');
@@ -88,7 +86,7 @@ describe('POST /users', function () {
           .end((err, res) => {
             if (err) {
               // we expect an error!
-              res.statusCode.should.equal(403);
+              res.statusCode.should.equal(401);
               done();
             } else {
               done(new Error('invalid verification code should have been rejected'));
@@ -107,8 +105,6 @@ describe('POST /users', function () {
 
     // add listener to the log event of the node mailer stub transport
     testServer.options.nodemailerTransport.on('log', function (log) {
-
-
       if (log.type === 'message') {
         var match = log.message.match(confirmationCodeRe);
 
@@ -140,15 +136,89 @@ describe('POST /users', function () {
         userVerificationCode.should.be.a.String();
 
         superagent
-          .post(testServer.uri + '/user/' + res.body.data._id + '/verify')
+          .get(testServer.uri + '/user/' + res.body.data._id + '/verify')
+          .query({
+            code: userVerificationCode,
+          })
+          .end((err, res) => {
+            if (err) { return done(err); }
+
+            // verification should be successful
+            res.statusCode.should.equal(200);
+            done();
+          });
+      });
+  });
+
+
+  it('verifying an already verified account should be rejected', function (done) {
+
+    // var to hold userVerificationCode
+    var userVerificationCode;
+
+    // TODO: this is very hacky
+    var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
+
+    // add listener to the log event of the node mailer stub transport
+    testServer.options.nodemailerTransport.on('log', function (log) {
+      if (log.type === 'message') {
+        var match = log.message.match(confirmationCodeRe);
+
+        if (match) {
+
+          userVerificationCode = match[1];
+        }
+      }
+    });
+
+    superagent
+      .post(testServer.uri + '/users')
+      .send({
+        username: 'test-user-3',
+        email: 'testemail3@dev.habem.us',
+        password: 'test-password'
+      })
+      .end(function (err, res) {
+
+        if (err) { return done(err); }
+
+        res.statusCode.should.equal(201);
+
+        res.body.data.username.should.equal('test-user-3');
+
+        userData = res.body.data;
+
+        // make sure the confirmation code is already available
+        userVerificationCode.should.be.a.String();
+
+        var _userId = res.body.data._id;
+
+        superagent
+          .post(testServer.uri + '/user/' + _userId + '/verify')
           .send({
             code: userVerificationCode,
           })
           .end((err, res) => {
             if (err) { return done(err); }
 
+            // verification should be successful
             res.statusCode.should.equal(200);
-            done();
+
+            superagent
+              .post(testServer.uri + '/user/' + _userId + '/verify')
+              .send({
+                code: userVerificationCode,
+              })
+              .end(function (err, res) {
+                if (err) {
+                  res.statusCode.should.equal(401);
+                  res.body.error.code.should.equal('InvalidCredentials');
+                  done();
+
+                } else {
+                  done(new Error('error is expected'));
+                }
+              })
           });
       });
   });

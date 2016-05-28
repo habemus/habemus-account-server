@@ -123,7 +123,6 @@ describe('POST /auth/token/revoke', function () {
         })
       })
       .then((responseData) => {
-        console.log(responseData);
 
         // try to use the revoked token
         return new Promise((resolve, reject) => {

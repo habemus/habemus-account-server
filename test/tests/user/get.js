@@ -5,7 +5,7 @@ const superagent = require('superagent');
 // test-specific dependencies
 const testServer = require('../../auxiliary/server');
 
-describe('GET /user/:userId', function () {
+describe('User Account read', function () {
 
   function _logIn(credentials, callback) {
 

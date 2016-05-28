@@ -7,6 +7,9 @@ const uuid     = require('node-uuid');
 const mustache = require('mustache');
 const mongoose = require('mongoose');
 
+const ValidationError = mongoose.Error.ValidationError;
+const ValidatorError  = mongoose.Error.ValidatorError;
+
 // 
 const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/verify-account.html'), 'utf8');
 
@@ -20,8 +23,22 @@ module.exports = function (app, options) {
 
     // this specific validation must be run manually,
     // as the password is not defined at the User Model
+    // 
+    // following guide at
+    // http://stackoverflow.com/questions/15012250/handling-mongoose-validation-errors-where-and-how#17024166
     if (!userData.password) {
-      var err = new app.Error('PasswordMissing');
+
+      var err = new ValidationError();
+      err.errors.password = new ValidatorError({
+        path: 'password',
+        message: '`password` is required',
+
+        // type maps to kind internally by mongoose...
+        // https://github.com/Automattic/mongoose/blob/4.4.19/lib/error/validator.js
+        type: 'required',
+        value: userData.password
+      });
+
       return Promise.reject(err);
     }
 
@@ -103,7 +120,7 @@ module.exports = function (app, options) {
 
       if (_user) {
         return _user.remove().then(() => {
-          return Promise.reject(err);
+          return Promise.reject(new app.Error('AccountVerificationEmailNotSent'));
         });
       } else {
         return Promise.reject(err);

@@ -5,7 +5,7 @@ const superagent = require('superagent');
 // test-specific dependencies
 const testServer = require('../../auxiliary/server');
 
-describe('DELETE /user/:username', function () {
+describe('User Account deletion', function () {
 
   function _logIn(credentials, callback) {
 
