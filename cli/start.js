@@ -21,7 +21,8 @@ var options = {
       api_key: process.env.SENDGRID_API_KEY
     }
   }),
-  senderEmail: process.env.SENDER_EMAIL,
+  fromEmail: process.env.FROM_EMAIL,
+  corsWhitelist: process.env.CORS_WHITELIST,
 };
 
 options.host = process.env.HOST || 'localhost:' + options.port;

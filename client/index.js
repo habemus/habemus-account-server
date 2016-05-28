@@ -5,9 +5,7 @@ const EventEmitter = require('events');
 // third-party
 const superagent = require('superagent');
 const Q          = require('q');
-
-// own dependencies
-const HAuthError = require('../shared/h-auth-error');
+const jwt        = require('jsonwebtoken');
 
 // constants
 const TRAILING_SLASH_RE = /\/$/;
@@ -68,21 +66,41 @@ AuthClient.prototype.setAuthStatus = function (status) {
 AuthClient.prototype.signUp = function (email, password, userData) {
   var defer = Q.defer();
 
-  superagent
-    .post(this.serverURI + 'users')
-    .send({
-      username: email,
-      password: password,
-      email: email,
-    })
-    .end(function (err, res) {
-      if (err) {
-        defer.reject(res.body.error);
-        return;
-      }
+  if (!email) {
 
-      defer.resolve(res.body.data);
+    defer.reject({
+      code: 'ValidationError',
+      path: 'email',
+      kind: 'required',
+      value: email,
     });
+
+  } else if (!password) {
+
+    defer.reject({
+      code: 'ValidationError',
+      path: 'password',
+      kind: 'required',
+      value: password,
+    });
+
+  } else {
+    superagent
+      .post(this.serverURI + 'users')
+      .send({
+        username: email,
+        password: password,
+        email: email,
+      })
+      .end(function (err, res) {
+        if (err) {
+          defer.reject(res.body.error);
+          return;
+        }
+
+        defer.resolve(res.body.data);
+      });
+  }
 
   return defer.promise;
 };
@@ -96,10 +114,13 @@ AuthClient.prototype.getCurrentUser = function (options) {
     defer.reject(new Error('Not logged in'));
     this.setAuthStatus(STATUS_LOGGED_OUT);
   } else {
+
+    var tokenData = jwt.decode(token);
+
     superagent
-      .post(this.serverURI + 'auth/token/decode')
-      .send({
-        token: token
+      .get(this.serverURI + 'user/' + tokenData.sub)
+      .set({
+        'Authorization': 'Bearer ' + token
       })
       .end(function (err, res) {
         if (err) {

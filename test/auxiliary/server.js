@@ -21,7 +21,7 @@ var options = {
   secret: 'fake-secret',
 
   nodemailerTransport: stubTransport(),
-  senderEmail: 'test@dev.habem.us',
+  fromEmail: 'test@dev.habem.us',
 };
 
 // set the host

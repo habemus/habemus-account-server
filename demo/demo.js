@@ -36,17 +36,17 @@ signup.addEventListener('submit', function (e) {
   var passowrdValid     = _validatePassword(signupPassword.value);
   var passowrdConfirmed = _validatePasswordConfirm(signupPassword.value, signupPasswordConfirm.value);
 
-  if (!emailValid) {
-    alert('email invalid');
+  // if (!emailValid) {
+  //   alert('email invalid');
 
-    return;
-  }
+  //   return;
+  // }
 
-  if (!passowrdValid) {
-    alert('password invalid');
+  // if (!passowrdValid) {
+  //   alert('password invalid');
 
-    return;
-  }
+  //   return;
+  // }
 
   if (!passowrdConfirmed) {
     alert('password not confirmed');

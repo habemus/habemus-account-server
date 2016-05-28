@@ -23,6 +23,8 @@ gulp.task('nodemon', function () {
       PORT: '4000',
       MONGODB_URI: 'mongodb://localhost:27017/h-auth-development-db',
       SECRET: 'TEST_SECRET',
+      CORS_WHITELIST: 'http://localhost:3000',
+      FROM_EMAIL: 'simon.fan@habem.us',
     },
     ext: 'js',
     ignore: [

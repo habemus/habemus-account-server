@@ -25,14 +25,10 @@ function createHabemusAuth(options) {
 
   // host is used for the account verification email
   if (!options.host) { throw new Error('host is required'); }
-  // 
   
   // nodemailer
   if (!options.nodemailerTransport) { throw new Error('nodemailerTransport is required'); }
-
-  // sendgrid
-  // if (!options.sendgridApiKey) { throw new Error('sendgridApiKey is required'); }
-  // if (!options.sendgridFromEmail) { throw new Error('sendgridFromEmail is required'); }
+  if (!options.fromEmail) { throw new Error('fromEmail is required'); }
 
   // create express app instance
   var app = express();
@@ -85,6 +81,7 @@ function createHabemusAuth(options) {
   // load error-handlers
   require('./app/error-handlers/validation-error')(app, options);
   require('./app/error-handlers/h-auth-error')(app, options);
+  require('./app/error-handlers/internal')(app, options);
 
   return app;
 }

@@ -73,7 +73,7 @@ module.exports = function (app, options) {
 
       // setup e-mail data
       var mailOptions = {
-        from: options.senderEmail,
+        from: options.fromEmail,
         to: user.get('email'),
         subject: 'Welcome to Habemus',
         html: mustache.render(verifyAccountEmailTemplate, {
@@ -117,6 +117,8 @@ module.exports = function (app, options) {
     }, function (err) {
       // something bad happened.
       // if there is a user, remove it
+
+      console.log(err);
 
       if (_user) {
         return _user.remove().then(() => {

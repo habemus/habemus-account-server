@@ -81,6 +81,16 @@ describe('server initialization', function () {
     });
   });
 
+
+  it('should require fromEmail', function () {
+    var options = clone(REQUIRED_OPTIONS);
+    delete options.fromEmail;
+
+    assert.throws(function () {
+      createHAuthApp(options);
+    });
+  });
+
   it('should instantiate an express app', function () {
     var app = createHAuthApp({
       apiVersion: '0.0.0',
