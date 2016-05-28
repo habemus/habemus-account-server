@@ -2,6 +2,8 @@
 const jwt  = require('jsonwebtoken');
 const uuid = require('node-uuid');
 
+const hToken = require('h-token');
+
 const DEFAULT_TOKEN_EXPIRY = '1h';
 
 module.exports = function (app, options) {
@@ -44,24 +46,14 @@ module.exports = function (app, options) {
           throw new app.Error('InvalidCredentials');
         }
 
-        return new Promise((resolve, reject) => {
-          
-          var userData = {            
-            createdAt: _user.createdAt,
-            verifiedAt: _user.verifiedAt
-          }
-          
-          var signOptions = {
-            // algorithm: 'HS256',
-            expiresIn: TOKEN_EXPIRY,
-            // notBefore: ,
-            // audience: ,
-            issuer: 'h-auth',
-            jwtid: uuid.v4(),
-            subject: _user._id,
-          };
+        var userData = {            
+          createdAt: _user.createdAt,
+          verifiedAt: _user.verifiedAt
+        }
 
-          jwt.sign(userData, SECRET, signOptions, resolve);
+        return app.services.token.generate(userData, {
+          expiresIn: TOKEN_EXPIRY,
+          subject: _user._id.toString(),
         });
       });
   };
@@ -72,44 +64,35 @@ module.exports = function (app, options) {
    * @return {Object}       [description]
    */
   authCtrl.decodeToken = function (token) {
-
     if (!token) { return Promise.reject(new app.Error('TokenMissing')); }
 
-    return new Promise((resolve, reject) => {
-      // verifies secret and checks exp
-      jwt.verify(token, SECRET, (err, decoded) => {      
-        if (err) {
-          reject(new app.Error('InvalidToken'));
-        } else {
+    return app.services.token.verify(token)
+      .then((decoded) => {
 
-          // check if the token has been revoked
-          TokenRevocationEntry.findOne({
-            tokenId: decoded.jti,
-          })
-          .then((err, revocationEntry) => {
-            if (err) {
-              reject(new app.Error('InternalServerError'));
-            } else if (revocationEntry) {
-              reject(new app.Error('InvalidToken'));
-            } else {
-              resolve(decoded);
-            }
-          });
+        return decoded;
+
+      }, (err) => {
+        if (err instanceof hToken.errors.InvalidTokenError) {
+          return Promise.reject(new app.Error('InvalidToken'));
+        } else {
+          return Promise.reject(new app.Error('InternalServerError'));
         }
       });
-    });
-    
   };
 
-  authCtrl.revokeToken = function (jwtid) {
+  authCtrl.revokeToken = function (token) {
+    return app.services.token.revoke(token)
+      .then((blacklistEntry) => {
 
-    if (typeof jwtid !== 'string') { return Promise.reject(new TypeError('jwtid must be a string')); }
+        return blacklistEntry;
 
-    var revocationEntry = new TokenRevocationEntry({
-      tokenId: jwtid,
-    });
-
-    return revocationEntry.save();
+      }, (err) => {
+        if (err instanceof hToken.errors.InvalidTokenError) {
+          return Promise.reject(new app.Error('InvalidToken'));
+        } else {
+          return Promise.reject(new app.Error('InternalServerError'));
+        }
+      });
   };
 
   return authCtrl;

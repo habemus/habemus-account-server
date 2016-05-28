@@ -24,10 +24,16 @@ module.exports = function (app, options) {
 
       app.controllers.auth.generateToken(username, password)
         .then((token) => {
+
+          console.log(token);
+
           var msg = app.format.item({ token: token }, { token: true });
           res.status(201).json(msg);
         })
         .catch((err) => {
+
+          console.log(err);
+
           next(err);
         });
     }
@@ -54,9 +60,8 @@ module.exports = function (app, options) {
     app.middleware.authenticate,
     bodyParser.json(),
     function (req, res, next) {
-
       // revoke the token used to authenticate
-      app.controllers.auth.revokeToken(req.user.jti)
+      app.controllers.auth.revokeToken(req.rawToken)
         .then((revocation) => {
           var msg = app.format.item(revocation, { tokenId: true });
           res.json(msg);

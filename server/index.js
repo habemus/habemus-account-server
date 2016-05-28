@@ -9,6 +9,9 @@ const mongoose = require('mongoose');
 const jsonMessage = require('json-message');
 const nodemailer  = require('nodemailer');
 
+// h-dependencies
+const hToken = require('h-token');
+
 // own dependencies
 const HAuthError = require('./app/errors/h-auth-error');
 
@@ -46,13 +49,17 @@ function createHabemusAuth(options) {
 
   // services
   app.services = {};
-  // app.services.sendgrid = require('sendgrid')(options.sendgridApiKey);
   app.services.nodemailer = nodemailer.createTransport(options.nodemailerTransport);
+  app.services.token = hToken({
+    tokenModelName: 'HAuthToken',
+    issuer: 'h-auth',
+    mongooseConnection: conn,
+    secret: options.secret
+  });
 
   // load models
   app.models = {};
   app.models.User = require('./app/models/user')(conn, options);
-  app.models.TokenRevocationEntry = require('./app/models/token-revocation-entry')(conn, options);
 
   // instantiate controllers
   app.controllers = {};

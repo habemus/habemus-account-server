@@ -63,81 +63,84 @@ describe('POST /auth/token/revoke', function () {
     // start listening
     testServer.stop(done);
   });
+  
+  it('should make the token useless', function (done) {
 
-  it('should require a token to be sent for decoding', function (done) {
+    var token1 = new Promise(function (resolve, reject) {
 
-    superagent
-      .post(testServer.uri + '/auth/token/decode')
-      .send({})
-      .end(function (err, res) {
-        res.statusCode.should.equal(400);
-
-        should(res.body.data).be.undefined();
-        res.body.error.code.should.equal('TokenMissing');
-
-        done();
-      });
-
-  });
-
-  it('should return 403 for false token', function (done) {
-
-    var deceitfulUserData = {
-      username: 'deceitful-user',
-      createdAt: '2016-04-20'
-    };
-
-    var deceitfulToken = jwt.sign(deceitfulUserData, 'DECEITFUL-SECRET', {
-      expiresIn: '1h',
+      superagent
+        .post(testServer.uri + '/auth/token/generate')
+        .send({
+          username: 'test-user',
+          password: 'test-password'
+        })
+        .end((err, response) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(response.body.data.token);
+          }
+        });
     });
 
-    superagent
-      .post(testServer.uri + '/auth/token/decode')
-      .send({
-        token: deceitfulToken,
+    var token2 = new Promise(function (resolve, reject) {
+      superagent
+        .post(testServer.uri + '/auth/token/generate')
+        .send({
+          username: 'test-user-2',
+          password: 'test-password-2'
+        })
+        .end((err, response) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(response.body.data.token);
+          }
+        })
+    });
+
+    var _tokens;
+
+    Promise.all([token1, token2])
+      .then((tokens) => {
+
+        // save tokens for later usage
+        _tokens = tokens;
+
+        return new Promise((resolve, reject) => {
+          superagent
+            .post(testServer.uri + '/auth/token/revoke')
+            .set({
+              'Authorization': 'Bearer ' + tokens[0]
+            })
+            .end((err, response) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(response.body.data);
+              }
+            })
+        })
       })
-      .end(function (err, res) {
-        res.statusCode.should.equal(403);
-        res.body.error.code.should.equal('InvalidToken');
-        should(res.body.data).be.undefined();
+      .then((responseData) => {
+        console.log(responseData);
 
-        done();
-      });
-  });
-
-  it('should properly decode a valid token', function (done) {
-    // first create the token
-    superagent
-      .post(testServer.uri + '/auth/token/generate')
-      .send({
-        username: 'test-user',
-        password: 'test-password'
+        // try to use the revoked token
+        return new Promise((resolve, reject) => {
+          superagent
+            .post(testServer.uri + '/auth/token/decode')
+            .send({ token: _tokens[0] })
+            .end((err, response) => {
+              if (err) {
+                // we expect an error!
+                response.statusCode.should.equal(403);
+                done();
+              } else {
+                done(new Error('error expected: the token should have been revoked'));
+              }
+            })
+        });
       })
-      .end(function (err, res) {
-        if (err) { return done(err); }
-
-        var token = res.body.data.token;
-
-        superagent
-          .post(testServer.uri + '/auth/token/decode')
-          .send({
-            token: token
-          })
-          .end(function (err, res) {
-            if (err) { return done(err); }
-
-            res.statusCode.should.equal(200);
-
-            res.body.data.sub.should.equal(USER_1._id);
-            res.body.data.createdAt.should.be.a.String();
-
-            res.body.data.iat.should.be.a.Number();
-            res.body.data.exp.should.be.a.Number();
-
-            Object.keys(res.body.data).length.should.equal(4);
-
-            done();
-          });
-      });
+      .catch(done);
   });
 });
