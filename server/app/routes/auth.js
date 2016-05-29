@@ -2,12 +2,7 @@
 const bodyParser = require('body-parser');
 
 const USER_DATA = require('../interfaces/user-data');
-
-var TOKEN_DATA = {
-  sub: true,
-  iat: true,
-  exp: true,
-};
+const TOKEN_DATA = require('../interfaces/token-data');
 
 for (prop in USER_DATA) {
   TOKEN_DATA[prop] = USER_DATA[prop];

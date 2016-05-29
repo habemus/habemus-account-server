@@ -52,6 +52,19 @@ gulp.task('test', ['pre-test'], function () {
     .pipe(istanbul.enforceThresholds({ thresholds: { global: 90 } }));
 });
 
+// MOCK SERVER
+gulp.task('mock', function () {
+  gulpNodemon({
+    script: 'mock/cli.js',
+    ext: 'js',
+    ignore: [
+      'client/**/*',
+      'dist/**/*',
+      'gulpfile.js',
+    ],
+  });
+});
+
 // CLIENT //
 require('./tasks/client/build')(gulp);
 // Static server
