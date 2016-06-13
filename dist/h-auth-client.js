@@ -13,6 +13,10 @@ const TRAILING_SLASH_RE = /\/$/;
 const STATUS_LOGGED_IN  = 'logged_in';
 const STATUS_LOGGED_OUT = 'logged_out';
 
+/**
+ * Auth client constructor
+ * @param {Object} options
+ */
 function AuthClient(options) {
 
   if (!options.serverURI) { throw new TypeError('serverURI is required'); }
@@ -20,7 +24,7 @@ function AuthClient(options) {
   this.serverURI = TRAILING_SLASH_RE.test(options.serverURI) ?
     options.serverURI : options.serverURI + '/';
 
-  this.localStoragePrefix = options.localStoragePrefix || 'auth_';
+  this.localStoragePrefix = options.localStoragePrefix || 'h_auth_';
 
   /**
    * Indicates the status of the current user.
@@ -35,24 +39,39 @@ function AuthClient(options) {
 util.inherits(AuthClient, EventEmitter);
 
 // auxiliary methods
+/**
+ * Loads the auth token from the browser's localstorage
+ * @return {String|Boolean}
+ */
 AuthClient.prototype._loadAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   return window.localStorage.getItem(tokenStorageKey) || false;
 };
 
+/**
+ * Saves the token to the browser localstorage
+ * @param  {String} token
+ */
 AuthClient.prototype._saveAuthToken = function (token) {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.setItem(tokenStorageKey, token);
 };
 
+/**
+ * Deletes the token from the browser's localstorage
+ */
 AuthClient.prototype._destroyAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.removeItem(tokenStorageKey);
 };
 
+/**
+ * Changes the authentication status and emits `auth-status-change` event
+ * if the auth-status has effectively been changed by the new value setting.
+ */
 AuthClient.prototype.setAuthStatus = function (status) {
 
   var hasChanged = (this.status !== status);
@@ -64,6 +83,13 @@ AuthClient.prototype.setAuthStatus = function (status) {
   }
 };
 
+/**
+ * Creates a new user account.
+ * @param  {String} email   
+ * @param  {String} password
+ * @param  {Object} userData
+ * @return {Promise->userData}         
+ */
 AuthClient.prototype.signUp = function (email, password, userData) {
   var defer = Q.defer();
 
@@ -106,6 +132,11 @@ AuthClient.prototype.signUp = function (email, password, userData) {
   return defer.promise;
 };
 
+/**
+ * Retrieves the current user data from the server
+ * @param  {Object} options
+ * @return {Promise->userData}        
+ */
 AuthClient.prototype.getCurrentUser = function (options) {
   var defer = Q.defer();
 
@@ -143,6 +174,12 @@ AuthClient.prototype.getCurrentUser = function (options) {
   return defer.promise;
 };
 
+/**
+ * Logs user in
+ * @param  {String} username
+ * @param  {String} password
+ * @return {Promise -> userData}         
+ */
 AuthClient.prototype.logIn = function (username, password) {
   var defer = Q.defer();
 
@@ -172,6 +209,10 @@ AuthClient.prototype.logIn = function (username, password) {
   return defer.promise;
 };
 
+/**
+ * Logs currently logged in user out.
+ * @return {Promise}
+ */
 AuthClient.prototype.logOut = function () {
   var defer = Q.defer();
 

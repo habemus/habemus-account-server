@@ -63,7 +63,14 @@ signup.addEventListener('submit', function (e) {
     clearSignup();
     console.log('signup successful', res);
   }, function (err) {
-    console.log('signup error', err);
+
+    if (err.code === 'UsernameTaken') {
+      alert(err.message);
+    } else {
+      alert('signup error. check console')
+
+      console.log('signup error', err);
+    }
   });
 
 });

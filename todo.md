@@ -1,0 +1,1 @@
+- update test auxiliary functions to match those implemented at h-project-manager and h-dev

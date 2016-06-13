@@ -9,6 +9,8 @@ const sgTransport = require('nodemailer-sendgrid-transport');
 const pkg = require('../package.json');
 const createHabemusAuth = require('../');
 
+if (!process.env.SENDGRID_API_KEY) { throw new Error('SENDGRID_API_KEY is required'); }
+
 var options = {
   apiVersion: pkg.version,
   port: process.env.PORT,
