@@ -103,7 +103,7 @@ describe('User Account creation', function () {
           users.length.should.equal(1);
 
           users[0].username.should.equal('test-user');
-          users[0].pwdHash.should.be.a.String();
+          users[0]._accLockId.should.be.a.String();
 
           done();
         });

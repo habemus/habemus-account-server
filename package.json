@@ -36,6 +36,7 @@
     "body-parser": "^1.15.0",
     "cors": "^2.7.1",
     "express": "^4.13.3",
+    "h-lock": "git+ssh://git@bitbucket.org/habemus-tutti/h-lock.git",
     "h-token": "git+ssh://git@bitbucket.org/habemus-tutti/h-token.git",
     "json-message": "^2.0.0-beta.2",
     "jsonwebtoken": "^5.7.0",

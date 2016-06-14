@@ -11,6 +11,7 @@ const nodemailer  = require('nodemailer');
 
 // h-dependencies
 const hToken = require('h-token');
+const hLock  = require('h-lock');
 
 // own dependencies
 const HAuthError = require('../shared/errors');
@@ -51,6 +52,19 @@ function createHabemusAuth(options) {
     issuer: 'h-auth',
     mongooseConnection: conn,
     secret: options.secret
+  });
+
+  // locks
+  app.services.accountLock = hLock({
+    lockModelName: 'HAuthAccountLock',
+    mongooseConnection: conn,
+  });
+  app.services.verificationCodeLock = hLock({
+    lockModelName: 'HAuthAccountVerificationLock',
+    mongooseConnection: conn,
+    
+    // locks are destroyed after successful usage
+    useOnce: true
   });
 
   // load models

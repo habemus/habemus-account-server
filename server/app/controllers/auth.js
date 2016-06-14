@@ -3,8 +3,11 @@ const jwt  = require('jsonwebtoken');
 const uuid = require('node-uuid');
 
 const hToken = require('h-token');
+const hLock  = require('h-lock');
 
 const DEFAULT_TOKEN_EXPIRY = '1h';
+
+const ATTEMPTER_ID = 'h-auth-attempter';
 
 module.exports = function (app, options) {
   
@@ -38,23 +41,32 @@ module.exports = function (app, options) {
         // store user in outside var for later usage
         _user = user;
 
-        return _user.validatePassword(password);
-      })
-      .then((isValid) => {
+        // get the _accLockId
+        var _accLockId = _user.get('_accLockId');
 
-        if (!isValid) {
-          throw new app.Error('InvalidCredentials');
-        }
+        return app.services.accountLock.unlock(_accLockId, password, ATTEMPTER_ID);
+
+        // return _user.validatePassword(password);
+      })
+      .then(() => {
 
         var userData = {            
           createdAt: _user.createdAt,
           verifiedAt: _user.verifiedAt
-        }
+        };
 
         return app.services.token.generate(userData, {
           expiresIn: TOKEN_EXPIRY,
           subject: _user._id.toString(),
         });
+      })
+      .catch((err) => {
+        if (err instanceof hLock.errors.InvalidSecret) {
+          return Promise.reject(new app.Error('InvalidCredentials'));
+        }
+
+        // always reject
+        return Promise.reject(err);
       });
   };
 

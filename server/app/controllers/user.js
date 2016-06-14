@@ -10,8 +10,11 @@ const mongoose = require('mongoose');
 const ValidationError = mongoose.Error.ValidationError;
 const ValidatorError  = mongoose.Error.ValidatorError;
 
+const hLock = require('h-lock');
+
 // 
 const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/verify-account.html'), 'utf8');
+const ATTEMPTER_ID = 'h-auth-attempter';
 
 module.exports = function (app, options) {
 
@@ -45,22 +48,20 @@ module.exports = function (app, options) {
     // variable to hold reference to data needed throughout multiple 
     // steps
     var _user;
-    var _accVerifCode;
+    var _accVerifCode = '12345';
 
-    // encrypt password and generate account confirmation code
+    // create two locks, one for the user account
+    // and one for the accountVerificationCode
     return Promise.all([
-      User.encryptPassword(userData.password),
-      User.generateAccountConfirmationCode()
-    ]).then(function (values) {
+      app.services.accountLock.create(userData.password),
+      app.services.verificationCodeLock.create(_accVerifCode)
+    ])
+    .then(function (lockIds) {
+      var accountLockId          = lockIds[0];
+      var verificationCodeLockId = lockIds[1];
 
-      var pwdHash  = values[0];
-      var accVerif = values[1];
-
-      _accVerifCode = accVerif.code;
-
-      // set the pwdHash and the accVerifirmationHash
-      userData.pwdHash      = pwdHash;
-      userData.accVerifHash = accVerif.hash;
+      userData._accLockId      = accountLockId;
+      userData._accVerifLockId = verificationCodeLockId;
 
       var user = new User(userData);
 
@@ -117,9 +118,6 @@ module.exports = function (app, options) {
     }, function (err) {
       // something bad happened.
       // if there is a user, remove it
-
-      console.log(err);
-
       if (_user) {
         return _user.remove().then(() => {
           return Promise.reject(new app.Error('AccountVerificationEmailNotSent'));
@@ -139,41 +137,45 @@ module.exports = function (app, options) {
 
     var _user;
 
-    return User.findOne({
-      _id: userId
-    })
-    .then((user) => {
+    return Promise.resolve(User.findOne({ _id: userId }))
+      .then((user) => {
 
-      if (!user) {
-        return Promise.reject(new app.Error('UsernameNotFound'));
-      } else if (user.verifiedAt) {
-        // user has already been verified
-        return Promise.reject(new app.Error('InvalidVerificationCode'));
+        if (!user) {
+          return Promise.reject(new app.Error('UsernameNotFound'));
+        } else if (user.verifiedAt) {
+          // user has already been verified
+          return Promise.reject(new app.Error('InvalidVerificationCode'));
 
-      } else {
-        _user = user;
+        } else {
+          _user = user;
 
-        return user.validateAccountVerificationCode(accVerifCode);
-      }
-    })
-    .then((isValid) => {
-      if (!isValid) {
-        return Promise.reject(new app.Error('InvalidVerificationCode'));
-      } else {
+          // get the lock
+          var _accVerifLockId = user.get('_accVerifLockId');
+
+          return app.services.verificationCodeLock.unlock(_accVerifLockId, accVerifCode, ATTEMPTER_ID);
+        }
+      })
+      .then((isValid) => {
         _user.set('verifiedAt', Date.now());
         _user.set('accVerifHash', 'VERIFIED');
 
         return _user.save();
-      }
-    });
+      })
+      .catch((err) => {
+        if (err instanceof hLock.errors.InvalidSecret) {
+          return Promise.reject(new app.Error('InvalidVerificationCode'));
+        }
+
+        return Promise.reject(err);
+      });
   };
 
   userCtrl.delete = function (userId) {
-    return User.findOneAndRemove({ _id: userId });
+    return Promise.resolve(User.findOneAndRemove({ _id: userId }));
   };
 
   userCtrl.getById = function (userId) {
-    return User.findOne({ _id: userId });
+    return Promise.resolve(User.findOne({ _id: userId }));
   }
 
   return userCtrl;
