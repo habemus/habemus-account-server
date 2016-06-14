@@ -6,6 +6,7 @@ const path = require('path');
 const uuid     = require('node-uuid');
 const mustache = require('mustache');
 const mongoose = require('mongoose');
+const Bluebird = require('bluebird');
 
 const ValidationError = mongoose.Error.ValidationError;
 const ValidatorError  = mongoose.Error.ValidatorError;
@@ -42,7 +43,7 @@ module.exports = function (app, options) {
         value: userData.password
       });
 
-      return Promise.reject(err);
+      return Bluebird.reject(err);
     }
 
     // variable to hold reference to data needed throughout multiple 
@@ -52,7 +53,7 @@ module.exports = function (app, options) {
 
     // create two locks, one for the user account
     // and one for the accountVerificationCode
-    return Promise.all([
+    return Bluebird.all([
       app.services.accountLock.create(userData.password),
       app.services.verificationCodeLock.create(_accVerifCode)
     ])
@@ -83,7 +84,7 @@ module.exports = function (app, options) {
         }),
       };
 
-      return new Promise((resolve, reject) => {
+      return new Bluebird((resolve, reject) => {
         app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
           if (err) { reject(err); }
 
@@ -109,7 +110,7 @@ module.exports = function (app, options) {
       }
 
       // always throw the error
-      return Promise.reject(err);
+      return Bluebird.reject(err);
     })
     .then(function (sentEmail) {
 
@@ -120,10 +121,10 @@ module.exports = function (app, options) {
       // if there is a user, remove it
       if (_user) {
         return _user.remove().then(() => {
-          return Promise.reject(new app.Error('AccountVerificationEmailNotSent'));
+          return Bluebird.reject(new app.Error('AccountVerificationEmailNotSent'));
         });
       } else {
-        return Promise.reject(err);
+        return Bluebird.reject(err);
       }
     });
   };
@@ -132,19 +133,19 @@ module.exports = function (app, options) {
 
     // check the validity of the userId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return Promise.reject(new app.Error('UsernameNotFound'));
+      return Bluebird.reject(new app.Error('UsernameNotFound'));
     }
 
     var _user;
 
-    return Promise.resolve(User.findOne({ _id: userId }))
+    return Bluebird.resolve(User.findOne({ _id: userId }))
       .then((user) => {
 
         if (!user) {
-          return Promise.reject(new app.Error('UsernameNotFound'));
+          return Bluebird.reject(new app.Error('UsernameNotFound'));
         } else if (user.verifiedAt) {
           // user has already been verified
-          return Promise.reject(new app.Error('InvalidVerificationCode'));
+          return Bluebird.reject(new app.Error('InvalidVerificationCode'));
 
         } else {
           _user = user;
@@ -163,19 +164,19 @@ module.exports = function (app, options) {
       })
       .catch((err) => {
         if (err instanceof hLock.errors.InvalidSecret) {
-          return Promise.reject(new app.Error('InvalidVerificationCode'));
+          return Bluebird.reject(new app.Error('InvalidVerificationCode'));
         }
 
-        return Promise.reject(err);
+        return Bluebird.reject(err);
       });
   };
 
   userCtrl.delete = function (userId) {
-    return Promise.resolve(User.findOneAndRemove({ _id: userId }));
+    return User.findOneAndRemove({ _id: userId });
   };
 
   userCtrl.getById = function (userId) {
-    return Promise.resolve(User.findOne({ _id: userId }));
+    return User.findOne({ _id: userId });
   }
 
   return userCtrl;

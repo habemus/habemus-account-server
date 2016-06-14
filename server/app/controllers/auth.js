@@ -1,6 +1,7 @@
 // third-party
 const jwt  = require('jsonwebtoken');
 const uuid = require('node-uuid');
+const Bluebird = require('bluebird');
 
 const hToken = require('h-token');
 const hLock  = require('h-lock');
@@ -26,12 +27,12 @@ module.exports = function (app, options) {
    */
   authCtrl.generateToken = function (username, password, options) {
 
-    if (!username) { return Promise.reject(new app.Error('UsernameMissing')); }
-    if (!password) { return Promise.reject(new app.Error('PasswordMissing')); }
+    if (!username) { return Bluebird.reject(new app.Error('UsernameMissing')); }
+    if (!password) { return Bluebird.reject(new app.Error('PasswordMissing')); }
 
     var _user;
 
-    return Promise.resolve(User.findOne({ username: username }))
+    return Bluebird.resolve(User.findOne({ username: username }))
       .then((user) => {
 
         if (!user) {
@@ -62,11 +63,11 @@ module.exports = function (app, options) {
       })
       .catch((err) => {
         if (err instanceof hLock.errors.InvalidSecret) {
-          return Promise.reject(new app.Error('InvalidCredentials'));
+          return Bluebird.reject(new app.Error('InvalidCredentials'));
         }
 
         // always reject
-        return Promise.reject(err);
+        return Bluebird.reject(err);
       });
   };
 
@@ -76,7 +77,7 @@ module.exports = function (app, options) {
    * @return {Object}       [description]
    */
   authCtrl.decodeToken = function (token) {
-    if (!token) { return Promise.reject(new app.Error('TokenMissing')); }
+    if (!token) { return Bluebird.reject(new app.Error('TokenMissing')); }
 
     return app.services.token.verify(token)
       .then((decoded) => {
@@ -85,9 +86,9 @@ module.exports = function (app, options) {
 
       }, (err) => {
         if (err instanceof hToken.errors.InvalidTokenError) {
-          return Promise.reject(new app.Error('InvalidToken'));
+          return Bluebird.reject(new app.Error('InvalidToken'));
         } else {
-          return Promise.reject(new app.Error('InternalServerError'));
+          return Bluebird.reject(new app.Error('InternalServerError'));
         }
       });
   };

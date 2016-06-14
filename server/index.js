@@ -51,7 +51,8 @@ function createHabemusAuth(options) {
     tokenModelName: 'HAuthToken',
     issuer: 'h-auth',
     mongooseConnection: conn,
-    secret: options.secret
+    secret: options.secret,
+    defaultTokenExpiry: '30d',
   });
 
   // locks
