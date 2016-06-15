@@ -1,23 +1,48 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 
-// test-specific dependencies
-const testServer = require('../../auxiliary/server');
+// auxiliary
+const aux = require('../../auxiliary');
 
+const createHAuth = require('../../../server');
 
 describe('User Account verification', function () {
 
-  const URI = testServer.uri + '/users';
+  var ASSETS;
 
-  before(function (done) {
-    // start listening
-    testServer.start(done);
+  beforeEach(function (done) {
+    aux.setup()
+      .then((assets) => {
+        ASSETS = assets;
+
+        ASSETS.nodemailerTransport = stubTransort();
+
+        var options = {
+          apiVersion: '0.0.0',
+          mongodbURI: assets.dbURI,
+          secret: 'fake-secret',
+
+          nodemailerTransport: ASSETS.nodemailerTransport,
+          fromEmail: 'from@dev.habem.us',
+
+          host: 'http://localhost'
+        };
+
+        ASSETS.authApp = createHAuth(options);
+        ASSETS.authURI = 'http://localhost:4000';
+
+        return aux.startServer(4000, ASSETS.authApp);
+      })
+      .then(() => {
+        done();
+      })
+      .catch(done);
   });
 
-  after(function (done) {
-    // start listening
-    testServer.stop(done);
+  afterEach(function (done) {
+    aux.teardown().then(done).catch(done);
   });
 
   it('should reject verifying users that do not exist', function (done) {
@@ -25,7 +50,7 @@ describe('User Account verification', function () {
     var FAKE_USER_ID = '57493bb407b079902681fe0d';
 
     superagent
-      .post(testServer.uri + '/user/' + FAKE_USER_ID + '/verify')
+      .post(ASSETS.authURI + '/user/' + FAKE_USER_ID + '/verify')
       .send({
         code: 'fake-code'
       })
@@ -42,7 +67,7 @@ describe('User Account verification', function () {
 
   it('should reject verifying users that have no valid ids', function (done) {
     superagent
-      .post(testServer.uri + '/user/INVALID/verify')
+      .post(ASSETS.authURI + '/user/INVALID/verify')
       .send({
         code: 'fake-code'
       })
@@ -62,7 +87,7 @@ describe('User Account verification', function () {
   it('should reject invalid verification code', function (done) {
 
     superagent
-      .post(testServer.uri + '/users')
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
@@ -79,7 +104,7 @@ describe('User Account verification', function () {
         userData = res.body.data;
 
         superagent
-          .post(testServer.uri + '/user/' + res.body.data._id + '/verify')
+          .post(ASSETS.authURI + '/user/' + res.body.data._id + '/verify')
           .send({
             code: 'INVALID-VERIFICATION-CODE',
           })
@@ -104,7 +129,7 @@ describe('User Account verification', function () {
     var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
 
     // add listener to the log event of the node mailer stub transport
-    testServer.options.nodemailerTransport.on('log', function (log) {
+    ASSETS.nodemailerTransport.on('log', function (log) {
       if (log.type === 'message') {
         var match = log.message.match(confirmationCodeRe);
 
@@ -116,7 +141,7 @@ describe('User Account verification', function () {
     });
 
     superagent
-      .post(testServer.uri + '/users')
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user-2',
         email: 'testemail2@dev.habem.us',
@@ -136,7 +161,7 @@ describe('User Account verification', function () {
         userVerificationCode.should.be.a.String();
 
         superagent
-          .get(testServer.uri + '/user/' + res.body.data._id + '/verify')
+          .get(ASSETS.authURI + '/user/' + res.body.data._id + '/verify')
           .query({
             code: userVerificationCode,
           })
@@ -160,7 +185,7 @@ describe('User Account verification', function () {
     var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
 
     // add listener to the log event of the node mailer stub transport
-    testServer.options.nodemailerTransport.on('log', function (log) {
+    ASSETS.nodemailerTransport.on('log', function (log) {
       if (log.type === 'message') {
         var match = log.message.match(confirmationCodeRe);
 
@@ -172,7 +197,7 @@ describe('User Account verification', function () {
     });
 
     superagent
-      .post(testServer.uri + '/users')
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user-3',
         email: 'testemail3@dev.habem.us',
@@ -194,7 +219,7 @@ describe('User Account verification', function () {
         var _userId = res.body.data._id;
 
         superagent
-          .post(testServer.uri + '/user/' + _userId + '/verify')
+          .post(ASSETS.authURI + '/user/' + _userId + '/verify')
           .send({
             code: userVerificationCode,
           })
@@ -205,7 +230,7 @@ describe('User Account verification', function () {
             res.statusCode.should.equal(200);
 
             superagent
-              .post(testServer.uri + '/user/' + _userId + '/verify')
+              .post(ASSETS.authURI + '/user/' + _userId + '/verify')
               .send({
                 code: userVerificationCode,
               })

@@ -1,28 +1,51 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 
-// test-specific dependencies
-const testServer = require('../../auxiliary/server');
+// auxiliary
+const aux = require('../../auxiliary');
 
+const createHAuth = require('../../../server');
 
 describe('User Account creation', function () {
 
-  const URI = testServer.uri + '/users';
+  var ASSETS;
 
-  before(function (done) {
-    // start listening
-    testServer.start(done);
+  beforeEach(function (done) {
+    aux.setup()
+      .then((assets) => {
+        ASSETS = assets;
+
+        var options = {
+          apiVersion: '0.0.0',
+          mongodbURI: assets.dbURI,
+          secret: 'fake-secret',
+
+          nodemailerTransport: stubTransort(),
+          fromEmail: 'from@dev.habem.us',
+
+          host: 'http://localhost'
+        };
+
+        ASSETS.authApp = createHAuth(options);
+        ASSETS.authURI = 'http://localhost:4000';
+
+        return aux.startServer(4000, ASSETS.authApp);
+      })
+      .then(() => {
+        done();
+      })
+      .catch(done);
   });
 
-  after(function (done) {
-    // start listening
-    testServer.stop(done);
+  afterEach(function (done) {
+    aux.teardown().then(done).catch(done);
   });
 
   it('should require a username', function (done) {
     superagent
-      .post(URI)
+      .post(ASSETS.authURI + '/users')
       .send({
         // username: 'test-user',
         email: 'test-user@dev.habem.us',
@@ -42,7 +65,7 @@ describe('User Account creation', function () {
 
   it('should require an email', function (done) {
     superagent
-      .post(URI)
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user',
         // email: 'test-user@dev.habem.us',
@@ -63,7 +86,7 @@ describe('User Account creation', function () {
 
   it('should require a password', function (done) {
     superagent
-      .post(URI)
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
@@ -84,7 +107,7 @@ describe('User Account creation', function () {
   it('should create a new user', function (done) {
 
     superagent
-      .post(URI)
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
@@ -99,7 +122,7 @@ describe('User Account creation', function () {
         res.body.data.username.should.equal('test-user');
         res.body.data.createdAt.should.be.a.String();
 
-        testServer.db.collection('users').find().toArray((err, users) => {
+        ASSETS.db.collection('users').find().toArray((err, users) => {
           users.length.should.equal(1);
 
           users[0].username.should.equal('test-user');
@@ -111,22 +134,37 @@ describe('User Account creation', function () {
   });
 
   it('should enforce username uniqueness', function (done) {
-    // IMPORTANT: depends on the previous test! ('should create a new user')
 
     superagent
-      .post(testServer.uri + '/users')
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
-        password: 'test-password',
+        password: 'test-password'
       })
       .end(function (err, res) {
-        res.statusCode.should.equal(400);
 
-        done();
+        if (err) { return done(err); }
+
+        superagent
+          .post(ASSETS.authURI + '/users')
+          .send({
+            username: 'test-user',
+            email: 'testemail@dev.habem.us',
+            password: 'test-password',
+          })
+          .end(function (err, res) {
+            res.statusCode.should.equal(400);
+
+            done();
+          });
       });
   });
 
+  // TODO:
+  // SKIPPING: it should not fail anymore
+  // since we implemented isolated user verification feature.
+  // Leave it as is while this is solidified
   it.skip('should not create the user if sending verification email fails', function (done) {
 
     // set an error onto the stub transport,
@@ -135,7 +173,7 @@ describe('User Account creation', function () {
     testServer.options.nodemailerTransport.options.error = new Error('Fake email failure');
 
     superagent
-      .post(testServer.uri + '/users')
+      .post(ASSETS.authURI + '/users')
       .send({
         username: 'test-user-2',
         email: 'testemail@dev.habem.us',
@@ -155,7 +193,7 @@ describe('User Account creation', function () {
 
           // check that the user was not inserted into the database
 
-          testServer.db.collection('users').find({
+          ASSETS.db.collection('users').find({
             username: 'test-user-2'
           }).toArray((err, users) => {
             users.length.should.equal(0);

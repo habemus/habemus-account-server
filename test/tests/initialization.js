@@ -6,8 +6,8 @@ const should = require('should');
 const superagent = require('superagent');
 const stubTransort = require('nodemailer-stub-transport');
 
-// testServer
-const testServer = require('../auxiliary/server');
+// auxiliary
+const aux = require('../auxiliary');
 
 const createHAuthApp = require('../../');
 
@@ -91,7 +91,7 @@ describe('server initialization', function () {
     });
   });
 
-  it('should instantiate an express app', function () {
+  it('should instantiate an express app', function (done) {
     var app = createHAuthApp({
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
@@ -103,27 +103,21 @@ describe('server initialization', function () {
     });
 
     app.should.be.a.Function();
-  });
 
-  it('should have a route that describes the api', function (done) {
+    // make sure the server responds to the /who route
+    aux.startServer(4000, app)
+      .then(() => {
+        superagent
+          .get('http://localhost:4000/who')
+          .end((err, res) => {
+            res.statusCode.should.equal(200);
 
-    testServer.start(function () {
+            res.body.data.name.should.equal('h-auth');
 
-      superagent
-        .get(testServer.uri + '/who')
-        .end(function (err, res) {
-
-          if (err) {
-            return done(err);
-          }
-
-          res.statusCode.should.equal(200);
-          res.body.data.name.should.equal('h-auth');
-
-          testServer.stop(done);
-        });
-
-    });
+            aux.teardown()
+              .then(done);
+          });
+      });
   });
 
 });

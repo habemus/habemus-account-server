@@ -1,17 +1,22 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 
-// test-specific dependencies
-const testServer = require('../../auxiliary/server');
+// auxiliary
+const aux = require('../../auxiliary');
+
+const createHAuth = require('../../../server');
 
 describe('User Account read', function () {
+
+  var ASSETS;
 
   function _logIn(credentials, callback) {
 
     // first retrieve the token
     superagent
-      .post(testServer.uri + '/auth/token/generate')
+      .post(ASSETS.authURI + '/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -22,67 +27,79 @@ describe('User Account read', function () {
       });
   }
 
-  var USER_1;
-  var USER_2;
+  beforeEach(function (done) {
+    aux.setup()
+      .then((assets) => {
+        ASSETS = assets;
 
-  before(function (done) {
+        var options = {
+          apiVersion: '0.0.0',
+          mongodbURI: assets.dbURI,
+          secret: 'fake-secret',
 
-    this.timeout(10000);
+          nodemailerTransport: stubTransort(),
+          fromEmail: 'from@dev.habem.us',
 
-    // start listening
-    testServer.start(function () {
-      // create 2 users
-      
-      var u1Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user',
-            email: 'test@dev.habem.us',
-            password: 'test-password'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+          host: 'http://localhost'
+        };
 
-            USER_1 = res.body.data;
+        ASSETS.authApp = createHAuth(options);
+        ASSETS.authURI = 'http://localhost:4000';
 
-            resolve();
-          });
-      });
+        return aux.startServer(4000, ASSETS.authApp);
+      })
+      .then(() => {
+        // create 2 users
+        
+        var u1Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user',
+              email: 'test1@dev.habem.us',
+              password: 'test-password'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
 
-      var u2Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user-2',
-            email: 'test2@dev.habem.us',
-            password: 'test-password-2'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+              resolve(res.body.data);
+            });
+        });
 
-            USER_2 = res.body.data;
+        var u2Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user-2',
+              email: 'test2@dev.habem.us',
+              password: 'test-password-2'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
 
-            resolve();
-          });
-      });
+              resolve(res.body.data);
+            });
+        });
 
-      // wait for both users to be created before starting tests
-      Promise.all([u1Promise, u2Promise]).then(() => {
+        return Promise.all([u1Promise, u2Promise]);
+      })
+      .then((users) => {
+
+        // store the users for test use
+        ASSETS.users = users;
+
         done();
       })
       .catch(done);
-    });
   });
 
-  after(function (done) {
-    // start listening
-    testServer.stop(done);
+  afterEach(function (done) {
+    aux.teardown().then(done).catch(done);
   });
 
   it('should return 403 when given no credentials', function (done) {
     superagent
-      .get(testServer.uri + '/user/test-user')
+      .get(ASSETS.authURI + '/user/test-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -92,7 +109,7 @@ describe('User Account read', function () {
 
   it('should return 403 when given no credentials even if the username does not exist', function (done) {
     superagent
-      .get(testServer.uri + '/user/test-unexistent-user')
+      .get(ASSETS.authURI + '/user/test-unexistent-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -110,7 +127,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(testServer.uri + '/user/test-user')
+        .get(ASSETS.authURI + '/user/test-user')
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
@@ -131,7 +148,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(testServer.uri + '/user/test-user')
+        .get(ASSETS.authURI + '/user/test-user')
         .set('Authorization', 'Bearer' + token)
         .end(function (err, res) {
           res.statusCode.should.equal(403);
@@ -154,13 +171,13 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(testServer.uri + '/user/' + USER_1._id)
+        .get(ASSETS.authURI + '/user/' + ASSETS.users[0]._id)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
           if (err) { return done(err); }
 
           res.statusCode.should.equal(200);
-          res.body.data._id.should.equal(USER_1._id);
+          res.body.data._id.should.equal(ASSETS.users[0]._id);
           res.body.data.username.should.equal('test-user');
           res.body.data.createdAt.should.be.a.String();
 

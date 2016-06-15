@@ -1,67 +1,86 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 const jwt        = require('jsonwebtoken');
 
-// test-specific dependencies
-const testServer = require('../../auxiliary/server');
+// auxiliary
+const aux = require('../../auxiliary');
 
-describe('POST /auth/token/revoke', function () {
+const createHAuth = require('../../../server');
 
-  var USER_1;
-  var USER_2;
+describe('POST /auth/token/decode', function () {
 
-  before(function (done) {
-    // start listening
-    testServer.start(function () {
+  var ASSETS;
 
-      // create 2 users
-      
-      var u1Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user',
-            email: 'test1@dev.habem.us',
-            password: 'test-password'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+  beforeEach(function (done) {
+    aux.setup()
+      .then((assets) => {
+        ASSETS = assets;
 
-            USER_1 = res.body.data;
+        var options = {
+          apiVersion: '0.0.0',
+          mongodbURI: assets.dbURI,
+          secret: 'fake-secret',
 
-            resolve();
-          });
-      });
+          nodemailerTransport: stubTransort(),
+          fromEmail: 'from@dev.habem.us',
 
-      var u2Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user-2',
-            email: 'test2@dev.habem.us',
-            password: 'test-password-2'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+          host: 'http://localhost'
+        };
 
-            USER_2 = res.body.data;
+        ASSETS.authApp = createHAuth(options);
+        ASSETS.authURI = 'http://localhost:4000';
 
-            resolve();
-          });
-      });
+        return aux.startServer(4000, ASSETS.authApp);
+      })
+      .then(() => {
+        // create 2 users
+        
+        var u1Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user',
+              email: 'test1@dev.habem.us',
+              password: 'test-password'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
 
-      // wait for both users to be created before starting tests
-      Promise.all([u1Promise, u2Promise]).then(() => {
+              resolve(res.body.data);
+            });
+        });
+
+        var u2Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user-2',
+              email: 'test2@dev.habem.us',
+              password: 'test-password-2'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
+
+              resolve(res.body.data);
+            });
+        });
+
+        return Promise.all([u1Promise, u2Promise]);
+      })
+      .then((users) => {
+
+        // store the users for test use
+        ASSETS.users = users;
+
         done();
       })
       .catch(done);
-    });
   });
 
-  after(function (done) {
-    // start listening
-    testServer.stop(done);
+  afterEach(function (done) {
+    aux.teardown().then(done).catch(done);
   });
   
   it('should make the token useless', function (done) {
@@ -69,7 +88,7 @@ describe('POST /auth/token/revoke', function () {
     var token1 = new Promise(function (resolve, reject) {
 
       superagent
-        .post(testServer.uri + '/auth/token/generate')
+        .post(ASSETS.authURI + '/auth/token/generate')
         .send({
           username: 'test-user',
           password: 'test-password'
@@ -85,7 +104,7 @@ describe('POST /auth/token/revoke', function () {
 
     var token2 = new Promise(function (resolve, reject) {
       superagent
-        .post(testServer.uri + '/auth/token/generate')
+        .post(ASSETS.authURI + '/auth/token/generate')
         .send({
           username: 'test-user-2',
           password: 'test-password-2'
@@ -109,7 +128,7 @@ describe('POST /auth/token/revoke', function () {
 
         return new Promise((resolve, reject) => {
           superagent
-            .post(testServer.uri + '/auth/token/revoke')
+            .post(ASSETS.authURI + '/auth/token/revoke')
             .set({
               'Authorization': 'Bearer ' + tokens[0]
             })
@@ -127,7 +146,7 @@ describe('POST /auth/token/revoke', function () {
         // try to use the revoked token
         return new Promise((resolve, reject) => {
           superagent
-            .post(testServer.uri + '/auth/token/decode')
+            .post(ASSETS.authURI + '/auth/token/decode')
             .send({ token: _tokens[0] })
             .end((err, response) => {
               if (err) {

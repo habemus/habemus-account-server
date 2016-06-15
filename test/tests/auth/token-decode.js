@@ -1,73 +1,92 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 const jwt        = require('jsonwebtoken');
 
-// test-specific dependencies
-const testServer = require('../../auxiliary/server');
+// auxiliary
+const aux = require('../../auxiliary');
+
+const createHAuth = require('../../../server');
 
 describe('POST /auth/token/decode', function () {
 
-  var USER_1;
-  var USER_2;
+  var ASSETS;
 
-  before(function (done) {
-    // start listening
-    testServer.start(function () {
+  beforeEach(function (done) {
+    aux.setup()
+      .then((assets) => {
+        ASSETS = assets;
 
-      // create 2 users
-      
-      var u1Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user',
-            email: 'test1@dev.habem.us',
-            password: 'test-password'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+        var options = {
+          apiVersion: '0.0.0',
+          mongodbURI: assets.dbURI,
+          secret: 'fake-secret',
 
-            USER_1 = res.body.data;
+          nodemailerTransport: stubTransort(),
+          fromEmail: 'from@dev.habem.us',
 
-            resolve();
-          });
-      });
+          host: 'http://localhost'
+        };
 
-      var u2Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user-2',
-            email: 'test2@dev.habem.us',
-            password: 'test-password-2'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+        ASSETS.authApp = createHAuth(options);
+        ASSETS.authURI = 'http://localhost:4000';
 
-            USER_2 = res.body.data;
+        return aux.startServer(4000, ASSETS.authApp);
+      })
+      .then(() => {
+        // create 2 users
+        
+        var u1Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user',
+              email: 'test1@dev.habem.us',
+              password: 'test-password'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
 
-            resolve();
-          });
-      });
+              resolve(res.body.data);
+            });
+        });
 
-      // wait for both users to be created before starting tests
-      Promise.all([u1Promise, u2Promise]).then(() => {
+        var u2Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user-2',
+              email: 'test2@dev.habem.us',
+              password: 'test-password-2'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
+
+              resolve(res.body.data);
+            });
+        });
+
+        return Promise.all([u1Promise, u2Promise]);
+      })
+      .then((users) => {
+
+        // store the users for test use
+        ASSETS.users = users;
+
         done();
       })
       .catch(done);
-    });
   });
 
-  after(function (done) {
-    // start listening
-    testServer.stop(done);
+  afterEach(function (done) {
+    aux.teardown().then(done).catch(done);
   });
 
   it('should require a token to be sent for decoding', function (done) {
 
     superagent
-      .post(testServer.uri + '/auth/token/decode')
+      .post(ASSETS.authURI + '/auth/token/decode')
       .send({})
       .end(function (err, res) {
         res.statusCode.should.equal(400);
@@ -92,7 +111,7 @@ describe('POST /auth/token/decode', function () {
     });
 
     superagent
-      .post(testServer.uri + '/auth/token/decode')
+      .post(ASSETS.authURI + '/auth/token/decode')
       .send({
         token: deceitfulToken,
       })
@@ -108,7 +127,7 @@ describe('POST /auth/token/decode', function () {
   it('should properly decode a valid token', function (done) {
     // first create the token
     superagent
-      .post(testServer.uri + '/auth/token/generate')
+      .post(ASSETS.authURI + '/auth/token/generate')
       .send({
         username: 'test-user',
         password: 'test-password'
@@ -119,7 +138,7 @@ describe('POST /auth/token/decode', function () {
         var token = res.body.data.token;
 
         superagent
-          .post(testServer.uri + '/auth/token/decode')
+          .post(ASSETS.authURI + '/auth/token/decode')
           .send({
             token: token
           })
@@ -128,7 +147,7 @@ describe('POST /auth/token/decode', function () {
 
             res.statusCode.should.equal(200);
 
-            res.body.data.sub.should.equal(USER_1._id);
+            res.body.data.sub.should.equal(ASSETS.users[0]._id);
             res.body.data.createdAt.should.be.a.String();
 
             res.body.data.iat.should.be.a.Number();

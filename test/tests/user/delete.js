@@ -1,17 +1,22 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
+const stubTransort = require('nodemailer-stub-transport');
 
-// test-specific dependencies
-const testServer = require('../../auxiliary/server');
+// auxiliary
+const aux = require('../../auxiliary');
+
+const createHAuth = require('../../../server');
 
 describe('User Account deletion', function () {
+
+  var ASSETS;
 
   function _logIn(credentials, callback) {
 
     // first retrieve the token
     superagent
-      .post(testServer.uri + '/auth/token/generate')
+      .post(ASSETS.authURI + '/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -22,67 +27,80 @@ describe('User Account deletion', function () {
       });
   }
 
-  var USER_1;
-  var USER_2;
+  beforeEach(function (done) {
+    aux.setup()
+      .then((assets) => {
+        ASSETS = assets;
 
-  before(function (done) {
-    // start listening
-    testServer.start(function () {
+        var options = {
+          apiVersion: '0.0.0',
+          mongodbURI: assets.dbURI,
+          secret: 'fake-secret',
 
-      // create 2 users
-      
-      var u1Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user',
-            email: 'test1@dev.habem.us',
-            password: 'test-password'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+          nodemailerTransport: stubTransort(),
+          fromEmail: 'from@dev.habem.us',
 
-            USER_1 = res.body.data;
+          host: 'http://localhost'
+        };
 
-            resolve();
-          });
-      });
+        ASSETS.authApp = createHAuth(options);
+        ASSETS.authURI = 'http://localhost:4000';
 
-      var u2Promise = new Promise((resolve, reject) => {
-        superagent
-          .post(testServer.uri + '/users')
-          .send({
-            username: 'test-user-2',
-            email: 'test2@dev.habem.us',
-            password: 'test-password-2'
-          })
-          .end(function (err, res) {
-            if (err) { return reject(err); }
+        return aux.startServer(4000, ASSETS.authApp);
+      })
+      .then(() => {
+        // create 2 users
+        
+        var u1Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user',
+              email: 'test1@dev.habem.us',
+              password: 'test-password'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
 
-            USER_2 = res.body.data;
+              resolve(res.body.data);
+            });
+        });
 
-            resolve();
-          });
-      });
+        var u2Promise = new Promise((resolve, reject) => {
+          superagent
+            .post(ASSETS.authURI + '/users')
+            .send({
+              username: 'test-user-2',
+              email: 'test2@dev.habem.us',
+              password: 'test-password-2'
+            })
+            .end(function (err, res) {
+              if (err) { return reject(err); }
 
-      // wait for both users to be created before starting tests
-      Promise.all([u1Promise, u2Promise]).then(() => {
+              resolve(res.body.data);
+            });
+        });
+
+        return Promise.all([u1Promise, u2Promise]);
+      })
+      .then((users) => {
+
+        // store the users for test use
+        ASSETS.users = users;
+
         done();
       })
       .catch(done);
-
-    });
   });
 
-  after(function (done) {
-    // start listening
-    testServer.stop(done);
+  afterEach(function (done) {
+    aux.teardown().then(done).catch(done);
   });
 
   it('should not allow delete without any authentication', function (done) {
 
     superagent
-      .delete(testServer.uri + '/user/test-user')
+      .delete(ASSETS.authURI + '/user/test-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -98,7 +116,7 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(testServer.uri + '/user/test-user')
+        .delete(ASSETS.authURI + '/user/test-user')
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
@@ -117,14 +135,14 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(testServer.uri + '/user/' + USER_1._id)
+        .delete(ASSETS.authURI + '/user/' + ASSETS.users[0]._id)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
           res.statusCode.should.equal(200);
 
           // check if the user still exists
-          testServer.db.collection('users').findOne({
+          ASSETS.db.collection('users').findOne({
             username: 'test-user'
           })
           .then((user) => {
