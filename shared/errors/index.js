@@ -24,8 +24,10 @@ const ERRORS = {
 
   InternalServerError: echo,
 
-  InvalidVerificationCode: echo,
+  InvalidVerificationCode: invalidCredentials,
   AccountVerificationEmailNotSent: echo,
+
+  InvalidPasswordResetCode: invalidCredentials,
 };
 
 function HAuthError(code, message) {

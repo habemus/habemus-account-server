@@ -4,39 +4,76 @@ const mongoose = require('mongoose');
 // constants
 const Schema = mongoose.Schema;
 
-var userSchema = new Schema({
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
+module.exports = function (conn, app, options) {
 
-  verifiedAt: {
-    type: Date
-  },
+  var userSchema = new Schema({
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
 
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-  },
+    accountStatus: {
+      status: {
+        type: String,
+        default: app.constants.ACCOUNT_STATUSES.unverified,
+      },
+      reason: {
+        type: String,
+      },
+      updatedAt: {
+        type: Date,
+      }
+    },
 
-  email: {
-    type: String,
-    required: true,
-  },
+    verifiedAt: {
+      type: Date
+    },
 
-  _accLockId: {
-    type: String,
-    required: true
-  },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
-  _accVerifLockId: {
-    type: String,
-    required: true
-  },
-});
+    email: {
+      type: String,
+      required: true,
+    },
 
-module.exports = function (conn, options) {
+    _accLockId: {
+      type: String,
+      required: true
+    },
+  });
+
+  /**
+   * Sets the user account status to 'active';
+   * @param {String} reason
+   */
+  userSchema.methods.setAccountActive = function (reason) {
+    if (!reason) { throw new Error('reason is required'); }
+
+    this.accountStatus = {
+      status: app.constants.ACCOUNT_STATUSES.active,
+      updatedAt: Date.now(),
+      reason: reason,
+    };
+  };
+
+  /**
+   * Sets the user account status to 'cancelled';
+   * @param {String} reason
+   */
+  userSchema.methods.setAccountCancelled = function (reason) {
+    if (!reason) { throw new Error('reason is required'); }
+    
+    this.accountStatus = {
+      status: 'verified',
+      updatedAt: Date.now(),
+      reason: reason,
+    };
+  };
+
   var User = conn.model('User', userSchema);
   
   return User;

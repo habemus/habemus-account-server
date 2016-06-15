@@ -127,7 +127,7 @@ describe('User Account creation', function () {
       });
   });
 
-  it('should not create the user if sending verification email fails', function (done) {
+  it.skip('should not create the user if sending verification email fails', function (done) {
 
     // set an error onto the stub transport,
     // as recommended by docs

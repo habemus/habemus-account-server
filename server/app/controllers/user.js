@@ -49,125 +49,45 @@ module.exports = function (app, options) {
     // variable to hold reference to data needed throughout multiple 
     // steps
     var _user;
-    var _accVerifCode = '12345';
+    
+    return Bluebird.resolve(app.services.accountLock.create(userData.password))
+      .then((accountLockId) => {
+        userData._accLockId = accountLockId;
 
-    // create two locks, one for the user account
-    // and one for the accountVerificationCode
-    return Bluebird.all([
-      app.services.accountLock.create(userData.password),
-      app.services.verificationCodeLock.create(_accVerifCode)
-    ])
-    .then(function (lockIds) {
-      var accountLockId          = lockIds[0];
-      var verificationCodeLockId = lockIds[1];
+        var user = new User(userData);
 
-      userData._accLockId      = accountLockId;
-      userData._accVerifLockId = verificationCodeLockId;
-
-      var user = new User(userData);
-
-      return user.save();
-    })
-    .then(function (user) {
-
-      // save reference to the user
-      _user = user;
-
-      // setup e-mail data
-      var mailOptions = {
-        from: options.fromEmail,
-        to: user.get('email'),
-        subject: 'Welcome to Habemus',
-        html: mustache.render(verifyAccountEmailTemplate, {
-          email: user.get('email'),
-          code: _accVerifCode,
-        }),
-      };
-
-      return new Bluebird((resolve, reject) => {
-        app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
-          if (err) { reject(err); }
-
-          resolve(sentEmailInfo);
-        });
-      });
-
-    }, function (err) {
-      // failed to save user
-      
-      if (err.name === 'MongoError' && err.code === 11000) {
-        // TODO: improvement research:
-        // for now we infer that any 11000 error (duplicate key)
-        // refers to username repetition
-        
-        // redefine the error object
-        err = new app.Error('UsernameTaken', userData.username);
-
-      }
-
-      if (err.name === 'ValidationError') {
-        // throw err;
-      }
-
-      // always throw the error
-      return Bluebird.reject(err);
-    })
-    .then(function (sentEmail) {
-
-      return _user;
-
-    }, function (err) {
-      // something bad happened.
-      // if there is a user, remove it
-      if (_user) {
-        return _user.remove().then(() => {
-          return Bluebird.reject(new app.Error('AccountVerificationEmailNotSent'));
-        });
-      } else {
-        return Bluebird.reject(err);
-      }
-    });
-  };
-
-  userCtrl.validateAccountVerificationCode = function (userId, accVerifCode) {
-
-    // check the validity of the userId
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return Bluebird.reject(new app.Error('UsernameNotFound'));
-    }
-
-    var _user;
-
-    return Bluebird.resolve(User.findOne({ _id: userId }))
-      .then((user) => {
-
-        if (!user) {
-          return Bluebird.reject(new app.Error('UsernameNotFound'));
-        } else if (user.verifiedAt) {
-          // user has already been verified
-          return Bluebird.reject(new app.Error('InvalidVerificationCode'));
-
-        } else {
-          _user = user;
-
-          // get the lock
-          var _accVerifLockId = user.get('_accVerifLockId');
-
-          return app.services.verificationCodeLock.unlock(_accVerifLockId, accVerifCode, ATTEMPTER_ID);
-        }
-      })
-      .then((isValid) => {
-        _user.set('verifiedAt', Date.now());
-        _user.set('accVerifHash', 'VERIFIED');
-
-        return _user.save();
+        return user.save();
       })
       .catch((err) => {
-        if (err instanceof hLock.errors.InvalidSecret) {
-          return Bluebird.reject(new app.Error('InvalidVerificationCode'));
+        // failed to save user
+        
+        if (err.name === 'MongoError' && err.code === 11000) {
+          // TODO: improvement research:
+          // for now we infer that any 11000 error (duplicate key)
+          // refers to username repetition
+          
+          // redefine the error object
+          return Bluebird.reject(new app.Error('UsernameTaken', userData.username));
+
         }
 
+        if (err instanceof ValidationError) {
+          return Bluebird.reject(err);
+        }
+
+        // by default reject using the original error
         return Bluebird.reject(err);
+      })
+      .then((user) => {
+        // user was successfully saved to the database
+        _user = user;
+        var userId = user.get('_id').toString();
+
+        // initiate request to verify the user's account
+        return app.controllers.accVerification.createRequest(userId);
+      })
+      .then((sentEmailInfo) => {
+        return _user;
       });
   };
 

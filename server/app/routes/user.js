@@ -26,7 +26,7 @@ module.exports = function (app, options) {
     bodyParser.json(),
     function (req, res, next) {
 
-      app.controllers.user.validateAccountVerificationCode(
+      app.controllers.accVerification.verifyUserAccount(
         req.params.userId,
         req.body.code
       ).then((user) => {
@@ -43,7 +43,7 @@ module.exports = function (app, options) {
 
   app.get('/user/:usereId/verify', function (req, res, next) {
 
-    app.controllers.user.validateAccountVerificationCode(
+    app.controllers.accVerification.verifyUserAccount(
       req.params.usereId,
       req.query.code
     ).then((user) => {

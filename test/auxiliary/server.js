@@ -6,7 +6,6 @@ const http = require('http');
 const MongoClient = require('mongodb').MongoClient;
 const stubTransport = require('nodemailer-stub-transport');
 
-
 // internal dependencies
 const pkg = require('../../package.json');
 const createHabemusAuth = require('../../');

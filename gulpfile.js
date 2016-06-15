@@ -1,15 +1,17 @@
-'use strict';
-var gulp        = require('gulp');
-var runSequence = require('run-sequence');
-var gulpNodemon = require('gulp-nodemon');
+// third-party dependencies
+const MongoClient = require('mongodb').MongoClient;
+const gulp        = require('gulp');
+const runSequence = require('run-sequence');
+const gulpNodemon = require('gulp-nodemon');
 
 // tests
-var istanbul    = require('gulp-istanbul');
-var mocha       = require('gulp-mocha');
+const istanbul    = require('gulp-istanbul');
+const mocha       = require('gulp-mocha');
 
 // browserSync
-var browserSync = require('browser-sync').create();
+const browserSync = require('browser-sync').create();
 
+const DEV_DB_URI = 'mongodb://localhost:27017/h-auth-development-db';
 
 // SERVER //
 
@@ -21,7 +23,7 @@ gulp.task('nodemon', function () {
     script: 'cli/start.js',
     env: {
       PORT: '4000',
-      MONGODB_URI: 'mongodb://localhost:27017/h-auth-development-db',
+      MONGODB_URI: DEV_DB_URI,
       SECRET: 'TEST_SECRET',
       CORS_WHITELIST: 'http://localhost:3000',
       FROM_EMAIL: 'simon.fan@habem.us',
@@ -33,6 +35,21 @@ gulp.task('nodemon', function () {
       'gulpfile.js',
     ],
   })
+});
+
+gulp.task('drop-db', function (done) {
+  // connect
+  var _db;
+
+  MongoClient.connect(DEV_DB_URI)
+    .then((db) => {
+      _db = db;
+      return db.dropDatabase();
+    })
+    .then(() => {
+      return _db.close(true, done);
+    })
+    .catch(done);
 });
 
 gulp.task('pre-test', function () {

@@ -1,21 +1,15 @@
 // third-party
 const jwt  = require('jsonwebtoken');
-const uuid = require('node-uuid');
 const Bluebird = require('bluebird');
 
 const hToken = require('h-token');
 const hLock  = require('h-lock');
 
-const DEFAULT_TOKEN_EXPIRY = '1h';
-
 const ATTEMPTER_ID = 'h-auth-attempter';
 
 module.exports = function (app, options) {
-  
-  const TOKEN_EXPIRY         = options.tokenExpiry || DEFAULT_TOKEN_EXPIRY;
-  const SECRET               = options.secret;
-  const User                 = app.models.User;
-  const TokenRevocationEntry = app.models.TokenRevocationEntry;
+
+  const User = app.models.User;
 
   var authCtrl = {};
 
@@ -57,7 +51,6 @@ module.exports = function (app, options) {
         };
 
         return app.services.token.generate(userData, {
-          expiresIn: TOKEN_EXPIRY,
           subject: _user._id.toString(),
         });
       })

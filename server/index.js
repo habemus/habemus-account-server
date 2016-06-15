@@ -44,6 +44,9 @@ function createHabemusAuth(options) {
   // create a mongoose mongo db connection
   var conn = mongoose.createConnection(options.mongodbURI);
 
+  // constants
+  app.constants = require('../shared/constants');
+
   // services
   app.services = {};
   app.services.nodemailer = nodemailer.createTransport(options.nodemailerTransport);
@@ -60,6 +63,16 @@ function createHabemusAuth(options) {
     lockModelName: 'HAuthAccountLock',
     mongooseConnection: conn,
   });
+  app.services._auxiliaryLock = hLock({
+    lockModelName: 'HAuthAuxiliaryLock',
+    mongooseConnection: conn,
+
+    /**
+     * Let the lock be discarded once it has been successfully unlocked
+     * @type {Boolean}
+     */
+    discardAfterUnlock: true
+  });
   app.services.verificationCodeLock = hLock({
     lockModelName: 'HAuthAccountVerificationLock',
     mongooseConnection: conn,
@@ -70,12 +83,16 @@ function createHabemusAuth(options) {
 
   // load models
   app.models = {};
-  app.models.User = require('./app/models/user')(conn, options);
+  app.models.User = require('./app/models/user')(conn, app, options);
+  app.models.ProtectedActionRequest = require('./app/models/protected-action-request')(conn, app, options);
 
   // instantiate controllers
   app.controllers = {};
   app.controllers.user = require('./app/controllers/user')(app, options);
   app.controllers.auth = require('./app/controllers/auth')(app, options);
+  app.controllers.protectedRequest = require('./app/controllers/protected-request')(app, options);
+  app.controllers.accVerification = require('./app/controllers/acc-verification')(app, options);
+  app.controllers.pwdReset = require('./app/controllers/pwd-reset')(app, options);
 
   // instantiate middleware for usage in routes
   app.middleware = {};
