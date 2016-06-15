@@ -1,7 +1,7 @@
 // third-party
 var bodyParser = require('body-parser');
 
-const USER_DATA = require('../interfaces/user-data');
+const USER_DATA = require('../../interfaces/user-data');
 
 module.exports = function (app, options) {
   
@@ -21,39 +21,6 @@ module.exports = function (app, options) {
         });
     }
   );
-
-  app.post('/user/:userId/verify',
-    bodyParser.json(),
-    function (req, res, next) {
-
-      app.controllers.accVerification.verifyUserAccount(
-        req.params.userId,
-        req.body.code
-      ).then((user) => {
-
-        var msg = app.format.item(user, USER_DATA);
-
-        res.json(msg);
-      })
-      .catch((err) => {
-        next(err);
-      });
-    }
-  );
-
-  app.get('/user/:usereId/verify', function (req, res, next) {
-
-    app.controllers.accVerification.verifyUserAccount(
-      req.params.usereId,
-      req.query.code
-    ).then((user) => {
-      var msg = app.format.item(user, USER_DATA);
-      res.json(msg);
-    })
-    .catch((err) => {
-      next(err);
-    });
-  });
 
   app.get('/user/:userId',
     app.middleware.authenticate,
@@ -100,4 +67,7 @@ module.exports = function (app, options) {
         .catch(next);
     }
   );
+
+  require('./account-verification')(app, options);
+  require('./password-reset')(app, options);
 };

@@ -8,6 +8,7 @@ const uuid     = require('node-uuid');
 const ms       = require('ms');
 
 const ACTION_NAME = 'verifyUserAccount';
+const CODE_LENGTH = 5;
 
 /**
  * Emailing stuff.
@@ -15,21 +16,6 @@ const ACTION_NAME = 'verifyUserAccount';
  */
 const mustache = require('mustache');
 const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/verify-account.html'), 'utf8');
-
-/**
- * Auxiliary function that generates a random code of given length
- * @param  {Number} length
- * @return {String}
- */
-function _genCode(length) {
-  var code = uuid.v4().replace(/-/g, '').toUpperCase();
-
-  if (length > code.length) {
-    throw new Error(length + ' is not supported');
-  }
-
-  return code.substr(0, length);
-}
 
 module.exports = function (app, options) {
 
@@ -56,7 +42,7 @@ module.exports = function (app, options) {
 
         return app.controllers.protectedRequest.create(userId, ACTION_NAME, {
           expiresIn: '1d',
-          codeLength: 7,
+          codeLength: CODE_LENGTH,
         });
       })
       .then((confirmationCode) => {
@@ -76,12 +62,10 @@ module.exports = function (app, options) {
           app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
             if (err) { reject(err); }
 
-            resolve(sentEmailInfo);
+            // make sure to return nothing
+            resolve();
           });
         });
-      })
-      .catch((err) => {
-        console.log(err);
       });
   };
 

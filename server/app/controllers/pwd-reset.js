@@ -10,7 +10,6 @@ const ms       = require('ms');
 const hLock  = require('h-lock');
 
 const ACTION_NAME = 'resetPassword';
-const DEFAULT_PASSWORD_RESET_EXPIRY = ms('1h');
 const CODE_LENGTH = 15;
 
 /**
@@ -19,21 +18,6 @@ const CODE_LENGTH = 15;
  */
 const mustache = require('mustache');
 const resetPasswordEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/reset-password.html'), 'utf8');
-
-/**
- * Auxiliary function that generates a random code of given length
- * @param  {Number} length
- * @return {String}
- */
-function _genCode(length) {
-  var code = uuid.v4().replace(/-/g, '').toUpperCase();
-
-  if (length > code.length) {
-    throw new Error(length + ' is not supported');
-  }
-
-  return code.substr(0, length);
-}
 
 module.exports = function (app, options) {
 
@@ -49,39 +33,26 @@ module.exports = function (app, options) {
    * @param  {String} userId
    * @return {Bluebird}
    */
-  pwdResetCtrl.createRequest = function (userId) {
-    // generate a code
-    var pwdResetCode = _genCode(CODE_LENGTH);
+  pwdResetCtrl.createRequest = function (username) {
+
+    if (!username) { return Bluebird.reject(new app.Error('UsernameMissing')); }
 
     var _user;
 
     // load user
-    return app.controllers.user.getById(userId)
+    return app.controllers.user.getByUsername(username)
       .then((user) => {
         // save the user for later usage
         _user = user;
 
-        // cancel all previous reset requests
-        return pwdResetCtrl.cancelAllRequests(userId, 'NewRequestMade');
-      })
-      .then(() => {
-        // create a lock using the pwdResetCode
-        return app.services._auxiliaryLock.create(pwdResetCode);
-      })
-      .then((lockId) => {
+        var userId = user.get('_id').toString();
 
-        // create a ProtectedActionRequest
-        var actionRequest = new ProtectedActionRequest({
-          userId: _user.get('_id').toString(),
-          action: ACTION_NAME,
-          lockId: lockId,
-          status: app.constants.REQUEST_STATUSES.pending,
-          expiresAt: Date.now() + DEFAULT_PASSWORD_RESET_EXPIRY,
+        return app.controllers.protectedRequest.create(userId, ACTION_NAME, {
+          expiresIn: '1h',
+          codeLength: CODE_LENGTH,
         });
-
-        return actionRequest.save();
       })
-      .then((actionRequest) => {
+      .then((confirmationCode) => {
 
         // setup e-mail data
         var mailOptions = {
@@ -90,7 +61,7 @@ module.exports = function (app, options) {
           subject: 'Habemus password reset',
           html: mustache.render(resetPasswordEmailTemplate, {
             email: _user.get('email'),
-            code: pwdResetCode,
+            code: confirmationCode,
           }),
         };
 
@@ -98,129 +69,41 @@ module.exports = function (app, options) {
           app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
             if (err) { reject(err); }
 
-            resolve(sentEmailInfo);
+            // make sure returns nothing
+            resolve();
           });
         });
-      })
-      .catch((err) => {
-        console.log(err);
       });
   };
 
   /**
-   * Cancel all password reset requests 
-   * for a given user and 
-   * for a given reason
-   * @param  {String} userId
-   * @param  {String} reason
-   * @return {Bluebird -> void}
-   */
-  pwdResetCtrl.cancelAllRequests = function (userId, reason) {
-
-    var requestQuery = {
-      // load all requests of a given user
-      userId: userId,
-      // for the reset action
-      action: ACTION_NAME,
-      // whose status is at pending
-      status: app.constants.REQUEST_STATUSES.pending,
-    };
-
-    return Bluebird.resolve(ProtectedActionRequest.update(requestQuery, {
-      status: app.constants.REQUEST_STATUSES.cancelled,
-      cancelReason: reason,
-    }))
-    .then(() => {
-      return;
-    });
-
-  };
-
-  /**
-   * Attempt to verify a user with a resetCode
-   * @param  {String} userId
+   * Attempt to reset a user's password with a resetCode
+   * @param  {String} username
    * @param  {String} pwdResetCode
    * @return {Bluebird}
    */
-  pwdResetCtrl.resetPassword = function (userId, pwdResetCode, newPwd) {
-
-    var requestQuery = {
-      // request for the userId
-      userId: userId,
-      // for the reset action
-      action: ACTION_NAME,
-      // which status is at pending (was not cancelled nor fulfilled)
-      status: app.constants.REQUEST_STATUSES.pending,
-
-      // let the expiry reset be made at the application
-      // level so that we may inform the user about the expiry
-      // expiresAt:
-    }
-
-    /**
-     * These options are to guarantee that only the latest
-     * request will be checked against, so that if any inconsistencies
-     * in the database happen, the latest request prevails.
-     * @type {Object}
-     */
-    var requestFindOptions = {
-      sort: {
-        // load latest
-        createdAt: -1
-      }
-    }
+  pwdResetCtrl[ACTION_NAME] = function (username, confirmationCode, newPwd) {
 
     var _user;
 
-    // load the request that originated the reset flow
-    return Bluebird.resolve(ProtectedActionRequest.findOne(requestQuery))
-      .then((request) => {
+    return app.controllers.user.getByUsername(username)
+      .then((user) => {
+        _user = user;
 
-        if (!request) {
-          // request was not even found
-          // reset code must be invalid
-          // 
-          // this is a very special situation,
-          // when someone is trying to verify against non-existent request
-          return Bluebird.reject(new app.Error('InvalidPasswordResetCode'));
-        }
-
-        if (request.hasExpired()) {
-          return Bluebird.reject(new app.Error('ResetCodeExpired'));
-        }
-
-        // get the lock and attempt to unlock it
-        var lockId = request.get('lockId');
-
-        return app.services._auxiliaryLock.unlock(
-          // unlock the lock
-          lockId,
-          // using code
-          pwdResetCode,
-          // and let the app's default attempter be the one blamed
-          // for attempting to unlock
-          app.constants.ATTEMPTER_ID
+        return app.controllers.protectedRequest.verifyRequestConfirmationCode(
+          _user.get('_id').toString(),
+          ACTION_NAME,
+          confirmationCode
         );
-
       })
       .then(() => {
         // successfully unlocked
-        
-        // load the user
-        return app.controllers.user.getById(userId);
-      })
-      .then((user) => {
-        // save the user
-        _user = user;
 
-        // create a new lock for the user using the new password
-        return app.services.accountLock.create(newPwd);
-      })
-      .then((lockId) => {
-        // set user's _accLockId
-        _user.set('_accLockId', lockId);
+        // reset existing lock for the account
+        // instead of creating a new one
+        var _accLockId = _user.get('_accLockId');
 
-        return _user.save();
+        return app.services.accountLock.reset(_accLockId, newPwd);
       })
       .then(() => {
         // finished

@@ -4,9 +4,9 @@ const superagent = require('superagent');
 const stubTransort = require('nodemailer-stub-transport');
 
 // auxiliary
-const aux = require('../../auxiliary');
+const aux = require('../../../auxiliary');
 
-const createHAuth = require('../../../server');
+const createHAuth = require('../../../../server');
 
 describe('User Account verification', function () {
 
@@ -50,7 +50,7 @@ describe('User Account verification', function () {
     var FAKE_USER_ID = '57493bb407b079902681fe0d';
 
     superagent
-      .post(ASSETS.authURI + '/user/' + FAKE_USER_ID + '/verify')
+      .post(ASSETS.authURI + '/user/' + FAKE_USER_ID + '/verify-account')
       .send({
         code: 'fake-code'
       })
@@ -67,7 +67,7 @@ describe('User Account verification', function () {
 
   it('should reject verifying users that have no valid ids', function (done) {
     superagent
-      .post(ASSETS.authURI + '/user/INVALID/verify')
+      .post(ASSETS.authURI + '/user/INVALID/verify-account')
       .send({
         code: 'fake-code'
       })
@@ -104,7 +104,7 @@ describe('User Account verification', function () {
         userData = res.body.data;
 
         superagent
-          .post(ASSETS.authURI + '/user/' + res.body.data._id + '/verify')
+          .post(ASSETS.authURI + '/user/' + res.body.data._id + '/verify-account')
           .send({
             code: 'INVALID-VERIFICATION-CODE',
           })
@@ -161,7 +161,7 @@ describe('User Account verification', function () {
         userVerificationCode.should.be.a.String();
 
         superagent
-          .get(ASSETS.authURI + '/user/' + res.body.data._id + '/verify')
+          .get(ASSETS.authURI + '/user/' + res.body.data._id + '/verify-account')
           .query({
             code: userVerificationCode,
           })
@@ -219,7 +219,7 @@ describe('User Account verification', function () {
         var _userId = res.body.data._id;
 
         superagent
-          .post(ASSETS.authURI + '/user/' + _userId + '/verify')
+          .post(ASSETS.authURI + '/user/' + _userId + '/verify-account')
           .send({
             code: userVerificationCode,
           })
@@ -230,7 +230,7 @@ describe('User Account verification', function () {
             res.statusCode.should.equal(200);
 
             superagent
-              .post(ASSETS.authURI + '/user/' + _userId + '/verify')
+              .post(ASSETS.authURI + '/user/' + _userId + '/verify-account')
               .send({
                 code: userVerificationCode,
               })

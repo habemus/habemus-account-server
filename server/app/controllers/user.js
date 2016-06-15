@@ -92,11 +92,15 @@ module.exports = function (app, options) {
   };
 
   userCtrl.delete = function (userId) {
-    return User.findOneAndRemove({ _id: userId });
+    return Bluebird.resolve(User.findOneAndRemove({ _id: userId }));
   };
 
   userCtrl.getById = function (userId) {
-    return User.findOne({ _id: userId });
+    return Bluebird.resolve(User.findOne({ _id: userId }));
+  }
+
+  userCtrl.getByUsername = function (username) {
+    return Bluebird.resolve(User.findOne({ username: username }));
   }
 
   return userCtrl;

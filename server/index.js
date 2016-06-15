@@ -73,14 +73,7 @@ function createHabemusAuth(options) {
      */
     discardAfterUnlock: true
   });
-  app.services.verificationCodeLock = hLock({
-    lockModelName: 'HAuthAccountVerificationLock',
-    mongooseConnection: conn,
-    
-    // locks are destroyed after successful usage
-    useOnce: true
-  });
-
+  
   // load models
   app.models = {};
   app.models.User = require('./app/models/user')(conn, app, options);
