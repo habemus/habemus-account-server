@@ -1,49 +1,51 @@
 // constants
 const ERROR_PROPERTIES = {
-  code: true,
+  name: true,
   message: true
 };
 
 module.exports = function (app, options) {
 
+  const errors = app.errors;
+
   app.use(function (err, req, res, next) {
     
-    if (err.name === 'HAuthError') {
+    if (err instanceof errors.HAuthError) {
 
-      switch (err.code) {
+      switch (err.name) {
         case 'UsernameTaken':
           var msg = app.format.error(err, ERROR_PROPERTIES);
           res.status(400).json(msg);
           break;
-        case 'UsernameNotFound':
+
         case 'InvalidCredentials':
-        case 'InvalidVerificationCode':
           var msg = app.format.error({
-            code: 'InvalidCredentials'
+            name: 'InvalidCredentials'
           }, ERROR_PROPERTIES);
           res.status(401).json(msg);
           break;
-        case 'TokenMissing':
-          var msg = app.format.error({
-            code: 'TokenMissing'
-          }, ERROR_PROPERTIES);
-          res.status(400).json(msg);
-          break;
+
         case 'InvalidToken':
         case 'Unauthorized':
           var msg = app.format.error(err, ERROR_PROPERTIES);
           res.status(403).json(msg);
           break;
-        case 'UsernameMissing':
-        case 'EmailMissing':
-        case 'PasswordMissing':
-          var msg = app.format.error(err, ERROR_PROPERTIES);
+
+        case 'InvalidOption':
+          var msg = app.format.error(err, {
+            name: true,
+            message: true,
+            option: true,
+            kind: true
+          });
           res.status(400).json(msg);
           break;
-        case 'AccountVerificationEmailNotSent':
-          var msg = app.format.error({ code: 'InternalServerError' }, ERROR_PROPERTIES);
-          res.status(500).json(msg);
+
+        case 'UserNotFound':
+          var msg = app.format.error(err, ERROR_PROPERTIES);
+          res.status(404).json(msg);
           break;
+          
         default:
           next(err);
           break;

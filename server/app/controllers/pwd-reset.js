@@ -21,6 +21,8 @@ const resetPasswordEmailTemplate = fs.readFileSync(path.join(__dirname, '../../e
 
 module.exports = function (app, options) {
 
+  const errors = app.errors;
+
   const ProtectedActionRequest = app.models.ProtectedActionRequest;
   const User                   = app.models.User;
 
@@ -35,7 +37,13 @@ module.exports = function (app, options) {
    */
   pwdResetCtrl.createRequest = function (username) {
 
-    if (!username) { return Bluebird.reject(new app.Error('UsernameMissing')); }
+    if (!username) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'username',
+        'required',
+        'username is required to create a password reset request'
+      ));
+    }
 
     var _user;
 
@@ -82,7 +90,31 @@ module.exports = function (app, options) {
    * @param  {String} pwdResetCode
    * @return {Bluebird}
    */
-  pwdResetCtrl[ACTION_NAME] = function (username, confirmationCode, newPwd) {
+  pwdResetCtrl.resetPassword = function (username, confirmationCode, password) {
+
+    if (!username) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'username',
+        'required',
+        'username is required to reset password'
+      ));
+    }
+
+    if (!confirmationCode) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'confirmationCode',
+        'required',
+        'confirmationCode is required to reset password'
+      ));
+    }
+
+    if (!password) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'password',
+        'required',
+        'password is required to reset password'
+      ));
+    }
 
     var _user;
 
@@ -103,7 +135,7 @@ module.exports = function (app, options) {
         // instead of creating a new one
         var _accLockId = _user.get('_accLockId');
 
-        return app.services.accountLock.reset(_accLockId, newPwd);
+        return app.services.accountLock.reset(_accLockId, password);
       })
       .then(() => {
         // finished
@@ -113,7 +145,7 @@ module.exports = function (app, options) {
       .catch((err) => {
 
         if (err instanceof hLock.errors.InvalidSecret) {
-          return Bluebird.reject(new app.Error('InvalidPasswordResetCode'))
+          return Bluebird.reject(new errors.InvalidCredentials());
         }
 
         // default behavior is to reject with the original error

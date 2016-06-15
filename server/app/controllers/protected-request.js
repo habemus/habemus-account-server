@@ -29,6 +29,8 @@ function _genCode(length) {
 
 module.exports = function (app, options) {
 
+  const errors = app.errors;
+
   const ProtectedActionRequest = app.models.ProtectedActionRequest;
   const User                   = app.models.User;
 
@@ -43,6 +45,23 @@ module.exports = function (app, options) {
    * @return {Bluebird}
    */
   protectedRequestCtrl.create = function (userId, actionName, options) {
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required'
+      ));
+    }
+
+    if (!actionName) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'actionName',
+        'required',
+        'actionName is required'
+      ));
+    }
+
+    options = options || {};
 
     // parse out options
     var codeLength = options.codeLength || DEFAULT_CODE_LENGTH;
@@ -86,6 +105,30 @@ module.exports = function (app, options) {
    */
   protectedRequestCtrl.cancelUserRequests = function (userId, actionName, reason) {
 
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required'
+      ));
+    }
+
+    if (!actionName) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'actionName',
+        'required',
+        'actionName is required'
+      ));
+    }
+
+    if (!reason) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'reason',
+        'required',
+        'reason is required'
+      ));
+    }
+
     var requestQuery = {
       // load all requests of a given user
       userId: userId,
@@ -112,7 +155,30 @@ module.exports = function (app, options) {
    * @return {Bluebird}
    */
   protectedRequestCtrl.verifyRequestConfirmationCode = function (userId, actionName, confirmationCode) {
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required'
+      ));
+    }
 
+    if (!actionName) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'actionName',
+        'required',
+        'actionName is required'
+      ));
+    }
+
+    if (!confirmationCode) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'confirmationCode',
+        'required',
+        'confirmationCode is required'
+      ));
+    }
+    
     var requestQuery = {
       // request for the userId
       userId: userId,
@@ -153,11 +219,11 @@ module.exports = function (app, options) {
           // 
           // this is a very special situation,
           // when someone is trying to verify against non-existent request
-          return Bluebird.reject(new app.Error('InvalidVerificationCode'));
+          return Bluebird.reject(new errors.InvalidCredentials());
         }
 
         if (request.hasExpired()) {
-          return Bluebird.reject(new app.Error('VerificationCodeExpired'));
+          return Bluebird.reject(new errors.InvalidCredentials('CredentialsExpired'));
         }
 
         // get the lock and attempt to unlock it
@@ -186,7 +252,7 @@ module.exports = function (app, options) {
       .catch((err) => {
 
         if (err instanceof hLock.errors.InvalidSecret) {
-          return Bluebird.reject(new app.Error('InvalidVerificationCode'))
+          return Bluebird.reject(new errors.InvalidCredentials())
         }
 
         // default behavior is to reject with the original error

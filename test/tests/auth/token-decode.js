@@ -92,7 +92,9 @@ describe('POST /auth/token/decode', function () {
         res.statusCode.should.equal(400);
 
         should(res.body.data).be.undefined();
-        res.body.error.code.should.equal('TokenMissing');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('token');
+        res.body.error.kind.should.equal('required');
 
         done();
       });
@@ -117,7 +119,7 @@ describe('POST /auth/token/decode', function () {
       })
       .end(function (err, res) {
         res.statusCode.should.equal(403);
-        res.body.error.code.should.equal('InvalidToken');
+        res.body.error.name.should.equal('InvalidToken');
         should(res.body.data).be.undefined();
 
         done();

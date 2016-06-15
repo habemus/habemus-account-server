@@ -19,31 +19,40 @@ const ATTEMPTER_ID = 'h-auth-attempter';
 
 module.exports = function (app, options) {
 
+  const errors = app.errors;
   const User = app.models.User;
 
   var userCtrl = {};
 
+  /**
+   * Creates a user given user
+   * @param  {Object} userData
+   * @return {Bluebird -> user}
+   */
   userCtrl.create = function (userData) {
 
-    // this specific validation must be run manually,
-    // as the password is not defined at the User Model
-    // 
-    // following guide at
-    // http://stackoverflow.com/questions/15012250/handling-mongoose-validation-errors-where-and-how#17024166
+    if (!userData.username) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'username',
+        'required',
+        'username is required to create user account'
+      ));
+    }
+
     if (!userData.password) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'password',
+        'required',
+        'password is required to create an user account'
+      ));
+    }
 
-      var err = new ValidationError();
-      err.errors.password = new ValidatorError({
-        path: 'password',
-        message: '`password` is required',
-
-        // type maps to kind internally by mongoose...
-        // https://github.com/Automattic/mongoose/blob/4.4.19/lib/error/validator.js
-        type: 'required',
-        value: userData.password
-      });
-
-      return Bluebird.reject(err);
+    if (!userData.email) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'email',
+        'required',
+        'email is required'
+      ));
     }
 
     // variable to hold reference to data needed throughout multiple 
@@ -59,7 +68,7 @@ module.exports = function (app, options) {
         return user.save();
       })
       .catch((err) => {
-        // failed to save user
+        // failed to create user account
         
         if (err.name === 'MongoError' && err.code === 11000) {
           // TODO: improvement research:
@@ -67,12 +76,7 @@ module.exports = function (app, options) {
           // refers to username repetition
           
           // redefine the error object
-          return Bluebird.reject(new app.Error('UsernameTaken', userData.username));
-
-        }
-
-        if (err instanceof ValidationError) {
-          return Bluebird.reject(err);
+          return Bluebird.reject(new errors.UsernameTaken(userData.username));
         }
 
         // by default reject using the original error
@@ -86,21 +90,66 @@ module.exports = function (app, options) {
         // initiate request to verify the user's account
         return app.controllers.accVerification.createRequest(userId);
       })
-      .then((sentEmailInfo) => {
+      .then(() => {
         return _user;
       });
   };
-
+  
   userCtrl.delete = function (userId) {
-    return Bluebird.resolve(User.findOneAndRemove({ _id: userId }));
+
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required to delete user account'
+      ));
+    }
+
+    return Bluebird.resolve(User.findOneAndRemove({ _id: userId }))
+      .then((user) => {
+        // make sure to return nothing
+        return;
+      });
   };
 
   userCtrl.getById = function (userId) {
-    return Bluebird.resolve(User.findOne({ _id: userId }));
+
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required to retrieve user account'
+      ));
+    }
+
+    return Bluebird.resolve(User.findOne({ _id: userId }))
+      .then((user) => {
+        if (!user) {
+          return Bluebird.reject(new errors.UserNotFound(userId));
+        } else {
+          return user;
+        }
+      });
   }
 
   userCtrl.getByUsername = function (username) {
-    return Bluebird.resolve(User.findOne({ username: username }));
+
+    if (!username) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'username',
+        'required',
+        'username is required to retrieve user account'
+      ));
+    }
+
+    return Bluebird.resolve(User.findOne({ username: username }))
+      .then((user) => {
+        if (!user) {
+          return Bluebird.reject(new errors.UserNotFound(username));
+        } else {
+          return user;
+        }
+      });
   }
 
   return userCtrl;

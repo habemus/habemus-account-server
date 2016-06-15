@@ -94,7 +94,9 @@ describe('POST /auth/token/decode', function () {
         res.statusCode.should.equal(400);
 
         should(res.body.data).be.undefined();
-        res.body.error.code.should.equal('UsernameMissing');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('username');
+        res.body.error.kind.should.equal('required');
 
         done();
       });
@@ -111,7 +113,9 @@ describe('POST /auth/token/decode', function () {
         res.statusCode.should.equal(400);
 
         should(res.body.data).be.undefined();
-        res.body.error.code.should.equal('PasswordMissing');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('password');
+        res.body.error.kind.should.equal('required');
 
         done();
       });
@@ -129,7 +133,7 @@ describe('POST /auth/token/decode', function () {
         res.statusCode.should.equal(401);
 
         should(res.body.data).be.undefined();
-        res.body.error.code.should.equal('InvalidCredentials');
+        res.body.error.name.should.equal('InvalidCredentials');
 
         done();
       });
@@ -147,7 +151,7 @@ describe('POST /auth/token/decode', function () {
         res.statusCode.should.equal(401);
 
         should(res.body.data).be.undefined();
-        res.body.error.code.should.equal('InvalidCredentials');
+        res.body.error.name.should.equal('InvalidCredentials');
 
         done();
       });

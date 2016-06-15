@@ -128,7 +128,9 @@ describe('User Account deletion', function () {
         res.statusCode.should.equal(400);
 
         res.body.error.errors.length.should.equal(1);
-        res.body.error.code.should.equal('UsernameMissing');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('username');
+        res.body.error.kind.should.equal('required');
 
         done();
       });
@@ -227,7 +229,7 @@ describe('User Account deletion', function () {
             if (!err) { return done(new Error('error expected')); }
 
             res.statusCode.should.equal(401);
-            res.body.error.code.should.equal('InvalidCredentials');
+            res.body.error.name.should.equal('InvalidCredentials');
 
             // it should not be possible to login using the new password
             superagent
@@ -240,7 +242,7 @@ describe('User Account deletion', function () {
                 if (!err) { return done(new Error('error expected')); }
 
                 res.statusCode.should.equal(401);
-                res.body.error.code.should.equal('InvalidCredentials');
+                res.body.error.name.should.equal('InvalidCredentials');
 
                 // it should still be possible to login using original password
                 superagent

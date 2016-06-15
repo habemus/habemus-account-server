@@ -9,6 +9,8 @@ const ATTEMPTER_ID = 'h-auth-attempter';
 
 module.exports = function (app, options) {
 
+  const errors = app.errors;
+
   const User = app.models.User;
 
   var authCtrl = {};
@@ -19,20 +21,27 @@ module.exports = function (app, options) {
    * @param  {String} password The password in plain text (private part of the account)
    * @return {JWT}             A JSON Web Token
    */
-  authCtrl.generateToken = function (username, password, options) {
+  authCtrl.generateToken = function (username, password) {
 
-    if (!username) { return Bluebird.reject(new app.Error('UsernameMissing')); }
-    if (!password) { return Bluebird.reject(new app.Error('PasswordMissing')); }
+    if (!username) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'username',
+        'required',
+        'username is required for generating a token'
+      ));
+    }
+    if (!password) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'password',
+        'required',
+        'password is required for generating token'
+      ));
+    }
 
     var _user;
 
-    return Bluebird.resolve(User.findOne({ username: username }))
+    return app.controllers.user.getByUsername(username)
       .then((user) => {
-
-        if (!user) {
-          throw new app.Error('UsernameNotFound', username);
-        }
-
         // store user in outside var for later usage
         _user = user;
 
@@ -56,7 +65,12 @@ module.exports = function (app, options) {
       })
       .catch((err) => {
         if (err instanceof hLock.errors.InvalidSecret) {
-          return Bluebird.reject(new app.Error('InvalidCredentials'));
+          return Bluebird.reject(new errors.InvalidCredentials());
+        }
+
+        // omit 'UserNotFound' errors and return InvalidCredentials instead
+        if (err instanceof errors.UserNotFound) {
+          return Bluebird.reject(new errors.InvalidCredentials());
         }
 
         // always reject
@@ -70,7 +84,9 @@ module.exports = function (app, options) {
    * @return {Object}       [description]
    */
   authCtrl.decodeToken = function (token) {
-    if (!token) { return Bluebird.reject(new app.Error('TokenMissing')); }
+    if (!token) {
+      return Bluebird.reject(new errors.InvalidOption('token', 'required'));
+    }
 
     return app.services.token.verify(token)
       .then((decoded) => {
@@ -79,14 +95,23 @@ module.exports = function (app, options) {
 
       }, (err) => {
         if (err instanceof hToken.errors.InvalidTokenError) {
-          return Bluebird.reject(new app.Error('InvalidToken'));
-        } else {
-          return Bluebird.reject(new app.Error('InternalServerError'));
+          return Bluebird.reject(new errors.InvalidToken());
         }
+
+        // by default reject the err
+        return Bluebird.reject(err);
       });
   };
 
   authCtrl.revokeToken = function (tokenId) {
+    if (!tokenId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'tokenId',
+        'required',
+        'tokenId is required'
+      ));
+    }
+
     return app.services.token.revoke(tokenId);
   };
 

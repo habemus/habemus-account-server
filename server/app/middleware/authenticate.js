@@ -20,7 +20,7 @@ module.exports = function (app, options) {
     var token = parseToken(req);
 
     if (!token) {
-      next(new app.Error('InvalidToken', token));
+      next(new app.errors.InvalidToken());
       return;
     }
 

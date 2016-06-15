@@ -19,6 +19,8 @@ const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../../e
 
 module.exports = function (app, options) {
 
+  const errors = app.errors;
+
   const ProtectedActionRequest = app.models.ProtectedActionRequest;
   const User                   = app.models.User;
 
@@ -32,6 +34,14 @@ module.exports = function (app, options) {
    * @return {Bluebird}
    */
   accVerificationCtrl.createRequest = function (userId) {
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required for verification request'
+      ));
+    }
+
     var _user;
 
     // load user
@@ -75,7 +85,22 @@ module.exports = function (app, options) {
    * @param  {String} confirmationCode
    * @return {Bluebird}
    */
-  accVerificationCtrl[ACTION_NAME] = function (userId, confirmationCode) {
+  accVerificationCtrl.verifyUserAccount = function (userId, confirmationCode) {
+    if (!userId) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'userId',
+        'required',
+        'userId is required for verifying account'
+      ));
+    }
+
+    if (!confirmationCode) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'confirmationCode',
+        'required',
+        'confirmationCode is required for verifying account'
+      ));
+    }
 
     return app.controllers.protectedRequest
       .verifyRequestConfirmationCode(userId, ACTION_NAME, confirmationCode)

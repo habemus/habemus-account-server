@@ -64,15 +64,16 @@ module.exports = function (conn, app, options) {
    * Sets the user account status to 'cancelled';
    * @param {String} reason
    */
-  userSchema.methods.setAccountCancelled = function (reason) {
-    if (!reason) { throw new Error('reason is required'); }
+  // still not implemented
+  // userSchema.methods.setAccountCancelled = function (reason) {
+  //   if (!reason) { throw new Error('reason is required'); }
     
-    this.accountStatus = {
-      status: 'verified',
-      updatedAt: Date.now(),
-      reason: reason,
-    };
-  };
+  //   this.accountStatus = {
+  //     status: 'verified',
+  //     updatedAt: Date.now(),
+  //     reason: reason,
+  //   };
+  // };
 
   var User = conn.model('User', userSchema);
   

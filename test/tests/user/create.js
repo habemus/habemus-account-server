@@ -55,8 +55,8 @@ describe('User Account creation', function () {
         res.statusCode.should.equal(400);
 
         res.body.error.errors.length.should.equal(1);
-        res.body.error.code.should.equal('ValidationError');
-        res.body.error.path.should.equal('username');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('username');
         res.body.error.kind.should.equal('required');
 
         done();
@@ -75,8 +75,8 @@ describe('User Account creation', function () {
         res.statusCode.should.equal(400);
 
         res.body.error.errors.length.should.equal(1);
-        res.body.error.code.should.equal('ValidationError');
-        res.body.error.path.should.equal('email');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('email');
         res.body.error.kind.should.equal('required');
 
         done();
@@ -96,8 +96,8 @@ describe('User Account creation', function () {
         res.statusCode.should.equal(400);
 
         res.body.error.errors.length.should.equal(1);
-        res.body.error.code.should.equal('ValidationError');
-        res.body.error.path.should.equal('password');
+        res.body.error.name.should.equal('InvalidOption');
+        res.body.error.option.should.equal('password');
         res.body.error.kind.should.equal('required');
 
         done();
@@ -189,7 +189,7 @@ describe('User Account creation', function () {
         if (err) {
 
           res.statusCode.should.equal(500);
-          res.body.error.code.should.equal('InternalServerError');
+          res.body.error.name.should.equal('InternalServerError');
 
           // check that the user was not inserted into the database
 

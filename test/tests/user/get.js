@@ -154,7 +154,7 @@ describe('User Account read', function () {
           res.statusCode.should.equal(403);
 
           should(res.body.data).be.undefined();
-          res.body.error.code.should.equal('InvalidToken');
+          res.body.error.name.should.equal('InvalidToken');
 
           done();
         });

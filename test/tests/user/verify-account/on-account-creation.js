@@ -237,7 +237,7 @@ describe('User Account verification', function () {
               .end(function (err, res) {
                 if (err) {
                   res.statusCode.should.equal(401);
-                  res.body.error.code.should.equal('InvalidCredentials');
+                  res.body.error.name.should.equal('InvalidCredentials');
                   done();
 
                 } else {

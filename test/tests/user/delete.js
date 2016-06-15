@@ -121,7 +121,7 @@ describe('User Account deletion', function () {
         .end(function (err, res) {
 
           res.statusCode.should.equal(403);
-          res.body.error.code.should.equal('Unauthorized');
+          res.body.error.name.should.equal('Unauthorized');
 
           done();
         });
@@ -139,7 +139,7 @@ describe('User Account deletion', function () {
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
-          res.statusCode.should.equal(200);
+          res.statusCode.should.equal(204);
 
           // check if the user still exists
           ASSETS.db.collection('users').findOne({

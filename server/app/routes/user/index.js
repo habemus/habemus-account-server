@@ -29,17 +29,12 @@ module.exports = function (app, options) {
       // check that the authenticated user
       // is the one that the request refers to
       if (req.token.sub !== req.params.userId) {
-        next(new app.Error('Unauthorized'));
+        next(new app.errors.Unauthorized());
         return;
       }
 
       app.controllers.user.getById(req.params.userId)
         .then((user) => {
-
-          if (!user) {
-            next(new app.Error('UsernameNotFound'));
-            return;
-          }
 
           var msg = app.format.item(user, USER_DATA);
           res.json(msg);
@@ -55,14 +50,13 @@ module.exports = function (app, options) {
       // check that the authenticated user
       // is the one that the request refers to
       if (req.token.sub !== req.params.userId) {
-        next(new app.Error('Unauthorized'));
+        next(new app.errors.Unauthorized());
         return;
       }
 
       app.controllers.user.delete(req.params.userId)
         .then((deletedUserData) => {
-          var msg = app.format.item(deletedUserData, USER_DATA);
-          res.json(msg);
+          res.status(204).send();
         })
         .catch(next);
     }

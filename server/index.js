@@ -14,7 +14,7 @@ const hToken = require('h-token');
 const hLock  = require('h-lock');
 
 // own dependencies
-const HAuthError = require('../shared/errors');
+const errors = require('../shared/errors');
 
 /**
  * Function that starts the host server
@@ -34,9 +34,8 @@ function createHabemusAuth(options) {
   // create express app instance
   var app = express();
 
-  // make the error constructor available throughout the application
-  app.Error = HAuthError;
-
+  // make the error constructors available throughout the application
+  app.errors = errors;
 
   // logging
   require('./app/setup/logger')(app, options);
