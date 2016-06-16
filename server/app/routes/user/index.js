@@ -16,9 +16,7 @@ module.exports = function (app, options) {
 
           res.status(201).json(msg);
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(next);
     }
   );
 

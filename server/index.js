@@ -103,9 +103,7 @@ function createHabemusAuth(options) {
   require('./app/routes/auth')(app, options);
 
   // load error-handlers
-  require('./app/error-handlers/validation-error')(app, options);
   require('./app/error-handlers/h-auth-error')(app, options);
-  require('./app/error-handlers/internal')(app, options);
 
   return app;
 }

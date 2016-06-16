@@ -136,6 +136,24 @@ describe('User Account deletion', function () {
       });
   });
 
+  it('should refuse to create a password-reset request for a user that does not exist', function (done) {
+
+    superagent
+      .post(ASSETS.authURI + '/request-password-reset')
+      .send({
+        username: 'user-that-does-not-exist',
+      })
+      .end(function (err, res) {
+        // response should only acknowledge request was made
+        res.statusCode.should.equal(404);
+
+        res.body.error.errors.length.should.equal(1);
+        res.body.error.name.should.equal('UserNotFound');
+
+        done();
+      });
+  });
+
   it('should successfully reset password after request was made and verification code is correct', function (done) {
 
     // var to hold pwdResetConfirmationCode

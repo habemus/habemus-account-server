@@ -14,7 +14,11 @@ module.exports = function (app, options) {
     bodyParser.json(),
     function (req, res, next) {
 
-      var username = req.body.username;
+      app.controllers.accVerification.createRequest(req.params.userId)
+        .then(() => {
+          res.status(201).send();
+        })
+        .catch(next);
     }
   );
 
@@ -27,13 +31,9 @@ module.exports = function (app, options) {
         req.body.code
       ).then((user) => {
 
-        var msg = app.format.item(user, USER_DATA);
-
-        res.json(msg);
+        res.status(200).send();
       })
-      .catch((err) => {
-        next(err);
-      });
+      .catch(next);
     }
   );
 
@@ -43,11 +43,9 @@ module.exports = function (app, options) {
       req.params.userId,
       req.query.code
     ).then((user) => {
-      var msg = app.format.item(user, USER_DATA);
-      res.json(msg);
+
+      res.status(200).send();
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
   });
 };

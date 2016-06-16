@@ -23,9 +23,7 @@ module.exports = function (app, options) {
           var msg = app.format.item({ token: token }, { token: true });
           res.status(201).json(msg);
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(next);
     }
   );
 
@@ -40,9 +38,7 @@ module.exports = function (app, options) {
           var msg = app.format.item(decoded, TOKEN_DATA);
           res.json(msg);
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(next);
     }
   );
 
@@ -56,9 +52,7 @@ module.exports = function (app, options) {
           var msg = app.format.item(revocation, { tokenId: true });
           res.json(msg);
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(next);
     }
   );
 };

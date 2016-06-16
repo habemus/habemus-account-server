@@ -40,9 +40,7 @@ module.exports = function (app, options) {
           res.status(204).send();
 
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(next);
     }
   );
 };
