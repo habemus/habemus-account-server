@@ -20,7 +20,7 @@ const DEV_DB_URI = 'mongodb://localhost:27017/h-auth-development-db';
  */
 gulp.task('nodemon', function () {
   gulpNodemon({
-    script: 'cli/start.js',
+    script: 'cli/dev-start.js',
     env: {
       PORT: '4000',
       MONGODB_URI: DEV_DB_URI,

@@ -1,1 +1,3 @@
 - fully review code
+- execute removal of uneeded resources after DELETING STUFF
+- study data loss and redeploy
