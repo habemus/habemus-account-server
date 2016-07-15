@@ -1,0 +1,97 @@
+@keyframes fadeIn {
+  to { background: rgba(0,0,0,0.9); }
+}
+
+#h-auth-dialog {
+  font-family: sans-serif;
+
+  padding: 30px 30px 30px 30px;
+
+  border: none;
+}
+
+#h-auth-dialog button {
+  outline: none;
+  border: none;
+
+  padding: 10px 20px 10px 20px;
+}
+
+#h-auth-dialog > button.dialog-close {
+  position: absolute;
+
+  padding: 2px 2px;
+
+  top: 0px;
+  right: 0px;
+}
+
+/**
+ * Error messages
+ */
+.h-auth-error-message {
+  color: red;
+  opacity: 0;
+
+  font-size: 12px;
+}
+
+.h-auth-error-message.active {
+  opacity: 1;
+}
+
+/**
+ * State management
+ */
+#h-auth-dialog section[data-state] {
+  display: none;
+}
+
+#h-auth-dialog section[data-state].active {
+  display: block;
+}
+
+/**
+ * Action selector
+ */
+#h-auth-action-selector button {
+
+}
+
+#h-auth-action-selector button.active {
+  background-color: green;
+  color: white;
+}
+
+/**
+ * Forms
+ */
+#h-auth-dialog form {
+  display: flex;
+  flex-direction: column;
+
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
+#h-auth-dialog form label > * {
+  display: block;
+}
+
+#h-auth-dialog form label > span {
+  font-size: 12px;
+}
+
+#h-auth-dialog form input[type="email"],
+#h-auth-dialog form input[type="password"] {
+  margin-top: 10px;
+  margin-bottom: 10px;
+
+  font-size: 12px;
+  border: none;
+  outline: none;
+}
+
+#h-auth-dialog form button[type="submit"] {
+  margin-top: 10px;
+}

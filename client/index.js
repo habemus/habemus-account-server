@@ -9,8 +9,10 @@ const jwt        = require('jsonwebtoken');
 
 // constants
 const TRAILING_SLASH_RE = /\/$/;
-const STATUS_LOGGED_IN  = 'logged_in';
-const STATUS_LOGGED_OUT = 'logged_out';
+const LOGGED_IN  = 'logged_in';
+const LOGGED_OUT = 'logged_out';
+
+const errors = require('./errors');
 
 /**
  * Auth client constructor
@@ -31,102 +33,94 @@ function AuthClient(options) {
    */
   this.status = undefined;
 
+  /**
+   * The cached user
+   * @private
+   */
+  this._cachedUser = undefined;
+
   // check initial authentication status
   this.getCurrentUser();
 }
 
 util.inherits(AuthClient, EventEmitter);
 
-// auxiliary methods
+AuthClient.prototype.constants = {
+  LOGGED_IN: LOGGED_IN,
+  LOGGED_OUT: LOGGED_OUT
+};
+
+// static properties
+AuthClient.errors = errors;
+
+const privateMethods = require('./methods/private');
+
+for (var m in privateMethods) {
+  AuthClient.prototype[m] = privateMethods[m];
+}
+
 /**
  * Loads the auth token from the browser's localstorage
  * @return {String|Boolean}
  */
-AuthClient.prototype._loadAuthToken = function () {
+AuthClient.prototype.getAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   return window.localStorage.getItem(tokenStorageKey) || false;
 };
-
-/**
- * Saves the token to the browser localstorage
- * @param  {String} token
- */
-AuthClient.prototype._saveAuthToken = function (token) {
-  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
-
-  window.localStorage.setItem(tokenStorageKey, token);
-};
-
-/**
- * Deletes the token from the browser's localstorage
- */
-AuthClient.prototype._destroyAuthToken = function () {
-  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
-
-  window.localStorage.removeItem(tokenStorageKey);
-};
-
-/**
- * Changes the authentication status and emits `auth-status-change` event
- * if the auth-status has effectively been changed by the new value setting.
- */
-AuthClient.prototype.setAuthStatus = function (status) {
-
-  var hasChanged = (this.status !== status);
-
-  this.status = status;
-
-  if (hasChanged) {
-    this.emit('auth-status-change');
-  }
-};
-
 /**
  * Creates a new user account.
- * @param  {String} email   
+ * @param  {String} password   
  * @param  {String} password
- * @param  {Object} userData
+ * @param  {String} email
  * @return {Promise->userData}         
  */
-AuthClient.prototype.signUp = function (email, password, userData) {
-  var defer = Q.defer();
+AuthClient.prototype.signUp = function (username, password, email) {
+  if (!username) {
+    return Q.reject(new errors.InvalidOption(
+      'username',
+      'required',
+      'username is required for signUp'
+    ));
+  }
+
+  if (!password) {
+    return Q.reject(new errors.InvalidOption(
+      'password',
+      'required',
+      'password is required for signUp'
+    ));
+  }
 
   if (!email) {
-
-    defer.reject({
-      code: 'ValidationError',
-      path: 'email',
-      kind: 'required',
-      value: email,
-    });
-
-  } else if (!password) {
-
-    defer.reject({
-      code: 'ValidationError',
-      path: 'password',
-      kind: 'required',
-      value: password,
-    });
-
-  } else {
-    superagent
-      .post(this.serverURI + 'users')
-      .send({
-        username: email,
-        password: password,
-        email: email,
-      })
-      .end(function (err, res) {
-        if (err) {
-          defer.reject(res.body.error);
-          return;
-        }
-
-        defer.resolve(res.body.data);
-      });
+    return Q.reject(new errors.InvalidOption(
+      'email',
+      'required',
+      'email is required for signUp'
+    ));
   }
+
+  var defer = Q.defer();
+
+  superagent
+    .post(this.serverURI + 'users')
+    .send({
+      username: username,
+      password: password,
+      email: email,
+    })
+    .end(function (err, res) {
+      if (err) {
+        if (res && res.body && res.body.error) {
+          defer.reject(res.body.error);
+        } else {
+          defer.reject(err);
+        }
+        return;
+      }
+
+      defer.resolve(res.body.data);
+    });
 
   return defer.promise;
 };
@@ -139,35 +133,43 @@ AuthClient.prototype.signUp = function (email, password, userData) {
 AuthClient.prototype.getCurrentUser = function (options) {
   var defer = Q.defer();
 
-  var token = this._loadAuthToken();
+  var token = this.getAuthToken();
 
   if (!token) {
-    defer.reject(new Error('Not logged in'));
-    this.setAuthStatus(STATUS_LOGGED_OUT);
+    this._setAuthStatus(LOGGED_OUT);
+    defer.reject(new AuthClient.errors.NotLoggedIn());
   } else {
 
-    var tokenData = jwt.decode(token);
+    // check if there is a cached version of the userData
+    if (this._cachedUser) {
+      // resolve immediately
+      defer.resolve(this._cachedUser);
 
-    superagent
-      .get(this.serverURI + 'user/' + tokenData.sub)
-      .set({
-        'Authorization': 'Bearer ' + token
-      })
-      .end(function (err, res) {
-        if (err) {
-          if (res.statusCode === 401 || res.statusCode === 403) {
-            // token is invalid, destroy it
-            this._destroyAuthToken();
-            this.setAuthStatus(STATUS_LOGGED_OUT);
+    } else {
+      var tokenData = jwt.decode(token);
+
+      superagent
+        .get(this.serverURI + 'user/' + tokenData.sub)
+        .set({
+          'Authorization': 'Bearer ' + token
+        })
+        .end(function (err, res) {
+          if (err) {
+            if (res.statusCode === 401 || res.statusCode === 403) {
+              // token is invalid, destroy it
+              this._destroyAuthToken();
+              this._setAuthStatus(LOGGED_OUT);
+            }
+
+            defer.reject(res.body.error);
+            return;
           }
 
-          defer.reject(res.body.error);
-          return;
-        }
-
-        this.setAuthStatus(STATUS_LOGGED_IN);
-        defer.resolve(res.body.data);
-      }.bind(this));
+          this._cachedUser = res.body.data;
+          this._setAuthStatus(LOGGED_IN);
+          defer.resolve(res.body.data);
+        }.bind(this));
+    }
   }
 
   return defer.promise;
@@ -192,17 +194,18 @@ AuthClient.prototype.logIn = function (username, password) {
       if (err) {
         defer.reject(res.body.error);
 
-        this.setAuthStatus(STATUS_LOGGED_OUT);
+        delete this._cachedUser;
+        this._setAuthStatus(LOGGED_OUT);
         return;
       }
 
       // save the token
       this._saveAuthToken(res.body.data.token);
 
-      defer.resolve(res.body.data);
-
+      this._cachedUser = res.body.data;
       // set authentication status
-      this.setAuthStatus(STATUS_LOGGED_IN);
+      this._setAuthStatus(LOGGED_OUT);
+      defer.resolve(res.body.data);
     }.bind(this));
 
   return defer.promise;
@@ -215,13 +218,15 @@ AuthClient.prototype.logIn = function (username, password) {
 AuthClient.prototype.logOut = function () {
   var defer = Q.defer();
 
+  // TODO: implement logout on server
+
   this._destroyAuthToken();
+  delete this._cachedUser;
 
   defer.resolve();
 
   return defer.promise.then(function () {
-
-    this.setAuthStatus(STATUS_LOGGED_OUT);
+    this._setAuthStatus(LOGGED_OUT);
 
   }.bind(this));
 };

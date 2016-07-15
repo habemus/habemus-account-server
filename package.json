@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "brfs": "^1.4.3",
     "browser-sync": "^2.10.0",
     "browserify": "^12.0.1",
     "express-api-mock": "0.0.2",
@@ -35,6 +36,8 @@
     "bluebird": "^3.4.0",
     "body-parser": "^1.15.0",
     "cors": "^2.7.1",
+    "data-obj": "0.0.0",
+    "dialog-polyfill": "^0.4.3",
     "express": "^4.13.3",
     "h-lock": "git+ssh://git@bitbucket.org/habemus-tutti/h-lock.git",
     "h-token": "git+ssh://git@bitbucket.org/habemus-tutti/h-token.git",

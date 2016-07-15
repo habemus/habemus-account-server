@@ -1,0 +1,94 @@
+<dialog id="h-auth-dialog">
+
+  <!-- todo: put icon here -->
+  <button class="dialog-close" data-action="cancel">cancel</button>
+
+  <section
+    data-state="login login-error signup signup-error"
+    id="h-auth-action-selector">
+    <button data-state="login login-error" data-value="login">
+      Log in
+    </button>
+    <button data-state="signup signup-error" data-value="signup">
+      Sign up
+    </button>
+  </section>
+
+  <section data-state="login login-error">
+    <form id="h-auth-login">
+      <label>
+        <span>e-mail</span>
+        <input
+          type="email"
+          name="email"
+          class="h-auth-email"
+          placeholder="e-mail"
+          required
+          autofocus>
+      </label>
+      <label>
+        <span>password</span>
+        <input
+          type="password"
+          name="password"
+          class="h-auth-password"
+          placeholder="password"
+          required>
+      </label>
+
+      <label class="h-auth-error-message" data-state="login-error">login error</label>
+
+      <button type="submit">log in</button>
+    </form>
+  </section>
+
+  <section data-state="signup signup-error">
+    <form id="h-auth-signup">
+      <label>
+        <span>e-mail</span>
+        <input
+          type="email"
+          name="email"
+          class="h-auth-email"
+          placeholder="e-mail"
+          required
+          autofocus>
+      </label>
+      <label>
+        <span>password</span>
+        <input
+          type="password"
+          name="password"
+          class="h-auth-password"
+          placeholder="password"
+          required
+          minlength="6">
+      </label>
+      <label>
+        <span>confirm your password</span>
+        <input
+          type="password"
+          name="password-confirm"
+          class="h-auth-password-confirm"
+          placeholder="confirm password"
+          required
+          minlength="6">
+      </label>
+
+      <label class="h-auth-error-message" data-state="signup-error">signup error</label>
+
+      <button type="submit">sign up</button>
+
+    </form>
+  </section>
+
+  <section data-state="signup-loading">
+    signup-loading
+  </section>
+
+  <section data-state="signup-success">
+    signup-success
+    <button data-action="close">ok</button>
+  </section>
+
+</dialog>

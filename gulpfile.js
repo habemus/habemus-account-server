@@ -91,7 +91,7 @@ require('./tasks/client/build')(gulp);
 gulp.task('serve:client', function() {
   browserSync.init({
     server: {
-      baseDir: ['./demo', './dist']
+      baseDir: ['./demo', './dist', './client']
     },
     open: true
   });
@@ -101,7 +101,14 @@ gulp.task('serve:client', function() {
  * Watch for changes and auto recompile
  */
 gulp.task('watch', function () {
-  gulp.watch('client/**/*.js', ['javascript:client']);
+
+  var clientFiles = [
+    'client/**/*.js',
+    'client/**/*.html',
+    'client/**/*.css',
+  ];
+
+  gulp.watch(clientFiles, ['javascript']);
   gulp.watch([
     'dist/**/*.js',
     'demo/**/*'

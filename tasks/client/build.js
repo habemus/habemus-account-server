@@ -1,13 +1,14 @@
 'use strict';
 
-var gulpSize   = require('gulp-size');
+const gulpSize   = require('gulp-size');
 
 // browserify
-var browserify = require('browserify');
-var source     = require('vinyl-source-stream');
-var buffer     = require('vinyl-buffer');
-var gutil      = require('gulp-util');
-var uglify     = require('gulp-uglify');
+const browserify = require('browserify');
+const source     = require('vinyl-source-stream');
+const buffer     = require('vinyl-buffer');
+const gutil      = require('gulp-util');
+const uglify     = require('gulp-uglify');
+const brfs       = require('brfs');
 
 module.exports = function (gulp) {
 
@@ -41,6 +42,29 @@ module.exports = function (gulp) {
       .pipe(gulp.dest('./dist/'));
   });
 
-  gulp.task('javascript', ['javascript:client']);
+  gulp.task('javascript:client-ui', function () {
+    var b = browserify({
+      entries: './client/ui/dialog/index.js',
+      transform: [brfs],
+
+      // standalone global object for main module
+      standalone: 'HAuthDialog'
+    });
+
+    return b.bundle()
+      .on('error', function (err) {
+        gutil.log('Browserify Error', err);
+        this.emit('end');
+      })
+      .pipe(source('h-auth-dialog.js'))
+      .pipe(buffer())
+      .pipe(gulpSize({
+        title: 'javascript:client',
+        showFiles: true
+      }))
+      .pipe(gulp.dest('./dist/'));
+  });
+
+  gulp.task('javascript', ['javascript:client', 'javascript:client-ui']);
 
 };
