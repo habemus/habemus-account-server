@@ -72,6 +72,30 @@ gulp.task('test', ['pre-test'], function () {
     });
 });
 
+/**
+ * Testing through controllers
+ */
+gulp.task('pre-test-controllers', function () {
+  return gulp.src(['server/**/*.js', 'shared/**/*.js'])
+    // Covering files
+    .pipe(istanbul())
+    // Force `require` to return covered files
+    .pipe(istanbul.hookRequire());
+});
+
+gulp.task('test-controllers', ['pre-test-controllers'], function () {
+  return gulp.src(['test/tests/controllers/**/*.js'])
+    .pipe(mocha())
+    // Creating the reports after tests ran
+    .pipe(istanbul.writeReports())
+    // Enforce a coverage of at least 90%
+    .pipe(istanbul.enforceThresholds({ thresholds: { global: 90 } }))
+    .on('error', (err) => {
+      this.emit('error', err);
+    });
+});
+
+
 // MOCK SERVER
 gulp.task('mock', function () {
   gulpNodemon({

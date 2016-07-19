@@ -84,7 +84,7 @@ module.exports = function (app, options) {
           userId: userId,
           action: actionName,
           lockId: lockId,
-          status: app.constants.REQUEST_STATUSES.pending,
+          status: app.constants.REQUEST_STATUSES.PENDING,
           expiresAt: Date.now() + expiresIn,
         });
 
@@ -135,11 +135,11 @@ module.exports = function (app, options) {
       // for the verification action
       action: actionName,
       // whose status is at pending
-      status: app.constants.REQUEST_STATUSES.pending,
+      status: app.constants.REQUEST_STATUSES.PENDING,
     };
 
     return Bluebird.resolve(ProtectedActionRequest.update(requestQuery, {
-      status: app.constants.REQUEST_STATUSES.cancelled,
+      status: app.constants.REQUEST_STATUSES.CANCELLED,
       cancelReason: reason,
     }))
     .then(() => {
@@ -185,7 +185,7 @@ module.exports = function (app, options) {
       // for the verification action
       action: actionName,
       // which status is at pending (was not cancelled nor fulfilled)
-      status: app.constants.REQUEST_STATUSES.pending,
+      status: app.constants.REQUEST_STATUSES.PENDING,
 
       // let the expiry verification be made at the application
       // level so that we may inform the user about the expiry
@@ -242,7 +242,7 @@ module.exports = function (app, options) {
       })
       .then(() => {
         // set the request's status
-        _request.set('status', app.constants.REQUEST_STATUSES.fulfilled);
+        _request.set('status', app.constants.REQUEST_STATUSES.FULFILLED);
         return _request.save();
       })
       .then(() => {

@@ -5,13 +5,13 @@
 exports.ATTEMPTER_ID = 'h-auth-attempter';
 
 exports.REQUEST_STATUSES = {
-  pending: 'pending',
-  fulfilled: 'fulfilled',
-  cancelled: 'cancelled',
+  PENDING: 'pending',
+  FULFILLED: 'fulfilled',
+  CANCELLED: 'cancelled',
 };
 
 exports.ACCOUNT_STATUSES = {
-  unverified: 'unverified',
-  active: 'active',
-  cancelled: 'cancelled',
+  UNVERIFIED: 'unverified',
+  ACTIVE: 'active',
+  CANCELLED: 'cancelled',
 };

@@ -49,6 +49,21 @@ UsernameTaken.prototype.name = 'UsernameTaken';
 exports.UsernameTaken = UsernameTaken;
 
 /**
+ * Happens whenever the attempted email
+ * is already in use by another account.
+ * 
+ * @param {String} email
+ */
+function EmailTaken(email) {
+  HAuthError.call(this, 'Username ' + email + ' is already taken');
+
+  this.email = email;
+}
+util.inherits(EmailTaken, HAuthError);
+EmailTaken.prototype.name = 'EmailTaken';
+exports.EmailTaken = EmailTaken;
+
+/**
  * Happens whenever the credentials provided are not valid
  */
 function InvalidCredentials(detail) {
@@ -84,14 +99,14 @@ exports.InvalidToken = InvalidToken;
 
 /**
  * Happens whenever the user is not found
- * for the given identification (username or userId)
- * @param {String} userId (username or userId)
+ * for the given identification (username or identifier)
+ * @param {String} identifier (username or identifier)
  * @param {String} message
  */
-function UserNotFound(userId, message) {
+function UserNotFound(identifier, message) {
   HAuthError.call(this, message);
 
-  this.userId = userId;
+  this.identifier = identifier;
 }
 util.inherits(UserNotFound, HAuthError);
 UserNotFound.prototype.name = 'UserNotFound';

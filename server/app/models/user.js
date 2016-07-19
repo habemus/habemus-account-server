@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 // constants
 const Schema = mongoose.Schema;
 
+// sub-schemas
+const Status = require('./sub-schemas/status');
+
 module.exports = function (conn, app, options) {
 
   var userSchema = new Schema({
@@ -12,18 +15,23 @@ module.exports = function (conn, app, options) {
       default: Date.now
     },
 
-    accountStatus: {
-      status: {
-        type: String,
-        default: app.constants.ACCOUNT_STATUSES.unverified,
-      },
-      reason: {
-        type: String,
-      },
-      updatedAt: {
-        type: Date,
-      }
+    status: {
+      type: Status,
+      required: true,
     },
+
+    // accountStatus: {
+    //   status: {
+    //     type: String,
+    //     default: app.constants.ACCOUNT_STATUSES.unverified,
+    //   },
+    //   reason: {
+    //     type: String,
+    //   },
+    //   updatedAt: {
+    //     type: Date,
+    //   }
+    // },
 
     verifiedAt: {
       type: Date
@@ -38,6 +46,7 @@ module.exports = function (conn, app, options) {
     email: {
       type: String,
       required: true,
+      unique: true,
     },
 
     _accLockId: {

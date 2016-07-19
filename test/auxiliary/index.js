@@ -4,6 +4,7 @@ const http = require('http');
 
 // third-party dependencies
 const MongoClient = require('mongodb').MongoClient;
+const Bluebird    = require('bluebird');
 
 if (process.env.DEBUG === 'TRUE') {
   // set mongoose to debug mode
@@ -14,6 +15,14 @@ if (process.env.DEBUG === 'TRUE') {
 const TEST_DB_URI = 'mongodb://localhost:27017/h-auth-test-db';
 
 exports.dbURI = TEST_DB_URI;
+
+/**
+ * Used to reject successful promises that should have not been fulfilled
+ * @return {Bluebird Rejection}
+ */
+exports.errorExpected = function () {
+  return Bluebird.reject(new Error('error expected'));
+};
 
 /**
  * Starts a server and keeps reference to it.
