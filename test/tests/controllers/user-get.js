@@ -55,7 +55,9 @@ describe('userCtrl `get` methods', function () {
         ]);
         
       })
-      .then(() => {
+      .then((users) => {
+
+        ASSETS.users = users;
 
         done();
       })
@@ -103,13 +105,12 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should return error if email does not exist', function () {
-      return ASSETS.authApp.controllers.user.getByUsername('fake-email@dev.habem.us')
+      return ASSETS.authApp.controllers.user.getByEmail('fake-email@dev.habem.us')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('UserNotFound');
           err.identifier.should.equal('fake-email@dev.habem.us');
         });
     });
-
 
     it('should require email as first argument', function () {
       return ASSETS.authApp.controllers.user.getByEmail(undefined)
@@ -120,5 +121,37 @@ describe('userCtrl `get` methods', function () {
         });
     });
   });
-    
+  
+
+  describe('userCtrl.getById(id)', function () {
+    it('should retrieve the user by its username', function () {
+      return ASSETS.authApp.controllers.user.getById(ASSETS.users[1]._id)
+        .then((user) => {
+          user.username.should.equal('test-user-2');
+          user.email.should.equal('test-2@dev.habem.us');
+        });
+    });
+
+    it('should return error if _id does not exist', function () {
+      return ASSETS.authApp.controllers.user.getById('578e8e7dae522ad62c4ee9ae')
+        .then(aux.errorExpected, (err) => {
+          err.name.should.equal('UserNotFound');
+          err.identifier.should.equal('578e8e7dae522ad62c4ee9ae');
+        });
+    });
+
+    // TODO: check if we'll use ObjectId or uuid's
+    // it('should return error if passed an invalid ObjectId', function () {
+    //   return ASSETS.authApp.controllers.user.getById('invalid-object-id')
+    // })
+
+    it('should require _id as first argument', function () {
+      return ASSETS.authApp.controllers.user.getById(undefined)
+        .then(aux.errorExpected, (err) => {
+          err.name.should.equal('InvalidOption');
+          err.option.should.equal('id');
+          err.kind.should.equal('required');
+        });
+    });
+  });
 });

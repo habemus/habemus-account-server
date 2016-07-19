@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 // constants
 const Schema = mongoose.Schema;
 
+// internal dependencies
+const Status = require('./sub-schemas/status');
+
 var protectedActionRequestSchema = new Schema({
   createdAt: {
     type: Date,
@@ -41,14 +44,19 @@ var protectedActionRequestSchema = new Schema({
     }
   },
 
+  status: {
+    type: Status,
+    required: true,
+  },
+
   /**
    * Status at which the request is
    * @type {String}
    */
-  status: {
-    type: String,
-    required: true
-  },
+  // status: {
+  //   type: String,
+  //   required: true
+  // },
 
   /**
    * Special property to store the reason for request cancellation

@@ -1,5 +1,6 @@
 // third-party
 const mongoose = require('mongoose');
+const uuid     = require('node-uuid');
 
 // constants
 const Schema = mongoose.Schema;
@@ -10,6 +11,22 @@ const Status = require('./sub-schemas/status');
 module.exports = function (conn, app, options) {
 
   var userSchema = new Schema({
+
+    /**
+     * TODO: we must explore what's the most efficient and safe
+     * way to use uuids as _id in mongodb.
+     * Had difficulties in finding adequate docs for the problems
+     * described in the following post, so I (Simon) preferred
+     * to play it safe and use String instead of BSON.
+     * http://3t.io/blog/best-practices-uuid-mongodb/
+     * 
+     * @type {String}
+     */
+    _id: {
+      type: String,
+      default: uuid.v4,
+    },
+
     createdAt: {
       type: Date,
       default: Date.now
@@ -19,19 +36,6 @@ module.exports = function (conn, app, options) {
       type: Status,
       required: true,
     },
-
-    // accountStatus: {
-    //   status: {
-    //     type: String,
-    //     default: app.constants.ACCOUNT_STATUSES.unverified,
-    //   },
-    //   reason: {
-    //     type: String,
-    //   },
-    //   updatedAt: {
-    //     type: Date,
-    //   }
-    // },
 
     verifiedAt: {
       type: Date
@@ -62,9 +66,8 @@ module.exports = function (conn, app, options) {
   userSchema.methods.setAccountActive = function (reason) {
     if (!reason) { throw new Error('reason is required'); }
 
-    this.accountStatus = {
-      status: app.constants.ACCOUNT_STATUSES.active,
-      updatedAt: Date.now(),
+    this.status = {
+      value: app.constants.ACCOUNT_STATUSES.ACTIVE,
       reason: reason,
     };
   };

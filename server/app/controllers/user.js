@@ -104,11 +104,6 @@ module.exports = function (app, options) {
             .then((user) => {
               // user with given email was found, return EmailTaken
               return Bluebird.reject(new errors.EmailTaken(userData.email));
-            }, (err) => {
-              // strange error, as nor username nor email were taken.
-              // probably good to log error and just let Internal server error happen
-              console.warn('strange unique error on user creation', err);
-              return Bluebird.reject(err);
             });
         }
 
@@ -145,22 +140,20 @@ module.exports = function (app, options) {
       });
   };
 
-  userCtrl.getById = function (userId) {
+  userCtrl.getById = function (id) {
 
-    console.warn('DEPRECATE: userCtrl.getById');
-
-    if (!userId) {
+    if (!id) {
       return Bluebird.reject(new errors.InvalidOption(
-        'userId',
+        'id',
         'required',
-        'userId is required to retrieve user account'
+        'id is required to retrieve user account'
       ));
     }
 
-    return Bluebird.resolve(User.findOne({ _id: userId }))
+    return Bluebird.resolve(User.findOne({ _id: id }))
       .then((user) => {
         if (!user) {
-          return Bluebird.reject(new errors.UserNotFound(userId));
+          return Bluebird.reject(new errors.UserNotFound(id));
         } else {
           return user;
         }

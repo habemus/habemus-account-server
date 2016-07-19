@@ -53,6 +53,8 @@
     "superagent": "^1.4.0"
   },
   "browserify": {
-    "transform": ["brfs"]
+    "transform": [
+      "brfs"
+    ]
   }
 }
