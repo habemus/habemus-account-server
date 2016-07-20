@@ -56,7 +56,9 @@ describe('authCtrl.generateToken(username|email, password)', function () {
         ]);
         
       })
-      .then(() => {
+      .then((users) => {
+
+        ASSETS.users = users;
 
         done();
       })
@@ -141,14 +143,16 @@ describe('authCtrl.generateToken(username|email, password)', function () {
       .then((token) => {
         var decoded = jwt.decode(token);
 
-        Object.keys(decoded).length.should.equal(6);
+        Object.keys(decoded).length.should.equal(7);
 
         decoded.createdAt.should.be.instanceof(String);
+        decoded.username.should.equal('test-user-3');
+        
         decoded.iat.should.be.instanceof(Number);
         decoded.exp.should.be.instanceof(Number);
         decoded.iss.should.equal('h-auth');
         // sub should be equal to the username
-        decoded.sub.should.equal('test-user-3');
+        decoded.sub.should.equal(ASSETS.users[2]._id);
         decoded.jti.should.be.instanceof(String);
       });
   });

@@ -54,13 +54,13 @@ module.exports = function (app, options) {
       })
       .then(() => {
 
-        var userData = {            
+        var userData = {
           createdAt: _user.createdAt,
-          verifiedAt: _user.verifiedAt
+          username: _user.username,
         };
 
         return app.services.token.generate(userData, {
-          subject: _user.username,
+          subject: _user._id,
         });
       })
       .catch((err) => {

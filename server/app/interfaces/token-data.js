@@ -1,5 +1,6 @@
 const TOKEN_DATA = {
   sub: true,
+  username: true,
   iat: true,
   exp: true,
 };

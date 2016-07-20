@@ -4,6 +4,7 @@ const superagent = require('superagent');
 const stubTransort = require('nodemailer-stub-transport');
 const Bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
+const uuid = require('node-uuid');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -56,7 +57,9 @@ describe('authCtrl.decodeToken(token)', function () {
         ]);
         
       })
-      .then(() => {
+      .then((users) => {
+
+        ASSETS.users = users;
 
         done();
       })
@@ -75,14 +78,16 @@ describe('authCtrl.decodeToken(token)', function () {
           .decodeToken(token);
       })
       .then((decoded) => {
-        Object.keys(decoded).length.should.equal(6);
+        Object.keys(decoded).length.should.equal(7);
 
         decoded.createdAt.should.be.instanceof(String);
+        decoded.username.should.equal('test-user-1');
+        
         decoded.iat.should.be.instanceof(Number);
         decoded.exp.should.be.instanceof(Number);
         decoded.iss.should.equal('h-auth');
         // sub should be equal to the username
-        decoded.sub.should.equal('test-user-1');
+        decoded.sub.should.equal(ASSETS.users[0]._id);
         decoded.jti.should.be.instanceof(String);
       });
   });
@@ -92,7 +97,7 @@ describe('authCtrl.decodeToken(token)', function () {
     var forgedToken = jwt.sign({}, 'forged-fake-secret', {
       expiresIn: '10h',
       issuer: 'h-auth',
-      subject: 'test-user-1'
+      subject: uuid.v4(),
     });
 
     return ASSETS.authApp.controllers.auth

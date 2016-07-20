@@ -174,7 +174,8 @@ describe('POST /auth/token/decode', function () {
         var decoded = jwt.verify(res.body.data.token, 'fake-secret');
 
         // be sure that all properties are known
-        decoded.sub.should.equal(ASSETS.users[0].username);
+        decoded.sub.should.be.instanceof(String);
+        decoded.username.should.equal(ASSETS.users[0].username);
         decoded.createdAt.should.be.a.String();
 
         decoded.iat.should.be.a.Number();
@@ -182,7 +183,7 @@ describe('POST /auth/token/decode', function () {
         decoded.jti.should.be.a.String();
         decoded.iss.should.equal('h-auth');
 
-        Object.keys(decoded).length.should.equal(6);
+        Object.keys(decoded).length.should.equal(7);
 
         done();
       });
