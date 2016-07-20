@@ -8,7 +8,7 @@ const aux = require('../../auxiliary');
 
 const createHAuth = require('../../../server');
 
-describe('User Account deletion', function () {
+describe('User Account password reset', function () {
 
   var ASSETS;
 
