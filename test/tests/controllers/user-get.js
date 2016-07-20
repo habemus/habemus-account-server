@@ -140,11 +140,6 @@ describe('userCtrl `get` methods', function () {
         });
     });
 
-    // TODO: check if we'll use ObjectId or uuid's
-    // it('should return error if passed an invalid ObjectId', function () {
-    //   return ASSETS.authApp.controllers.user.getById('invalid-object-id')
-    // })
-
     it('should require _id as first argument', function () {
       return ASSETS.authApp.controllers.user.getById(undefined)
         .then(aux.errorExpected, (err) => {
@@ -154,4 +149,50 @@ describe('userCtrl `get` methods', function () {
         });
     });
   });
+  
+
+  describe('userCtrl.getByUsernameOrEmail(usernameOrEmail)', function () {
+    it('should retrieve the user by its username if given the username', function () {
+      return ASSETS.authApp.controllers.user.getByUsernameOrEmail(ASSETS.users[1].username)
+        .then((user) => {
+          user.username.should.equal('test-user-2');
+          user.email.should.equal('test-2@dev.habem.us');
+        });
+    });
+
+    it('should retrieve the user by its email if given the email', function () {
+      return ASSETS.authApp.controllers.user.getByUsernameOrEmail(ASSETS.users[1].email)
+        .then((user) => {
+          user.username.should.equal('test-user-2');
+          user.email.should.equal('test-2@dev.habem.us');
+        });
+    });
+
+    it('should attempt to get user by email if argument passed looks like email and upon UserNotFound error, attempt to get the user by its username', function () {
+      
+      // create a user that has an 'email'-like username
+      return ASSETS.authApp.controllers.user.create({
+          username: 'email-like@username.com',
+          email: 'some-email@dev.habem.us',
+          password: 'test-password',
+        })
+        .then((user) => {
+          return ASSETS.authApp.controllers.user.getByUsernameOrEmail('email-like@username.com')
+        })
+        .then((user) => {
+          user.username.should.equal('email-like@username.com');
+          user.email.should.equal('some-email@dev.habem.us');
+        });
+    });
+    
+    it('should require usernameOrEmail as first argument', function () {
+      return ASSETS.authApp.controllers.user.getByUsernameOrEmail(undefined)
+        .then(aux.errorExpected, (err) => {
+          err.name.should.equal('InvalidOption');
+          err.option.should.equal('usernameOrEmail');
+          err.kind.should.equal('required');
+        });
+    });
+  });
+
 });

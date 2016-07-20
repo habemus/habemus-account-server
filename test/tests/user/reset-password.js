@@ -225,6 +225,8 @@ describe('User Account deletion', function () {
 
   it('should fail to reset password if given the wrong reset code', function (done) {
 
+    this.timeout(5000);
+
     var NEW_PWD = 'new-different-password';
 
     superagent

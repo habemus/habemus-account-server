@@ -12,6 +12,11 @@ const hLock  = require('h-lock');
 const DEFAULT_CODE_LENGTH = 7;
 const DEFAULT_VERIFICATION_EXPIRY = ms('1d');
 
+const VALID_ACTIONS = [
+  'verifyUserAccount',
+  'resetPassword',
+];
+
 /**
  * Auxiliary function that generates a random code of given length
  * @param  {Number} length
@@ -58,6 +63,14 @@ module.exports = function (app, options) {
         'actionName',
         'required',
         'actionName is required'
+      ));
+    }
+
+    if (VALID_ACTIONS.indexOf(actionName) === -1) {
+      return Bluebird.reject(new errors.InvalidOption(
+        'actionName',
+        'unsupported',
+        'actionName not supported'
       ));
     }
 

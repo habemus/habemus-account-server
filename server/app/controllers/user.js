@@ -105,6 +105,12 @@ module.exports = function (app, options) {
               // user with given email was found, return EmailTaken
               return Bluebird.reject(new errors.EmailTaken(userData.email));
             });
+
+        } else if (err instanceof ValidationError) {
+
+          if (err.errors.email && err.errors.email.message === 'InvalidEmail') {
+            return Bluebird.reject(new errors.InvalidOption('email', 'invalid'));
+          }
         }
 
         // by default reject using the original error
@@ -200,7 +206,7 @@ module.exports = function (app, options) {
 
   userCtrl.getByUsernameOrEmail = function (usernameOrEmail) {
     if (!usernameOrEmail) {
-      return bluebird.reject(new errors.InvalidOption(
+      return Bluebird.reject(new errors.InvalidOption(
         'usernameOrEmail',
         'required',
         'usernameOrEmail is required to retrieve account by getByUsernameOrEmail method'

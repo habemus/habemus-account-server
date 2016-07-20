@@ -36,6 +36,7 @@ describe('userCtrl.create(userData)', function () {
   });
 
   afterEach(function (done) {
+    this.timeout(4000);
     aux.teardown().then(done).catch(done);
   });
 
@@ -99,6 +100,19 @@ describe('userCtrl.create(userData)', function () {
       err.name.should.equal('InvalidOption');
       err.option.should.equal('email');
       err.kind.should.equal('required');
+    });
+  });
+
+  it('should require a valid email email', function () {
+    return ASSETS.authApp.controllers.user.create({
+      username: 'test-user',
+      password: 'test-password',
+      email: 'not-an-email@',
+    })
+    .then(aux.errorExpected, (err) => {
+      err.name.should.equal('InvalidOption');
+      err.option.should.equal('email');
+      err.kind.should.equal('invalid');
     });
   });
 

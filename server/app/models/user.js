@@ -61,6 +61,10 @@ module.exports = function (conn, app, options) {
       type: String,
       required: true,
       unique: true,
+      validate: {
+        validator: isEmail,
+        message: 'InvalidEmail',
+      }
     },
 
     _accLockId: {

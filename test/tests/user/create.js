@@ -106,6 +106,8 @@ describe('User Account creation', function () {
 
   it('should create a new user', function (done) {
 
+    this.timeout(4000);
+
     superagent
       .post(ASSETS.authURI + '/users')
       .send({

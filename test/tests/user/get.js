@@ -28,6 +28,8 @@ describe('User Account read', function () {
   }
 
   beforeEach(function (done) {
+    this.timeout(4000);
+
     aux.setup()
       .then((assets) => {
         ASSETS = assets;
