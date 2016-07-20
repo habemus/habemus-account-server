@@ -149,13 +149,11 @@ describe('POST /auth/token/decode', function () {
 
             res.statusCode.should.equal(200);
 
-            res.body.data.sub.should.equal(ASSETS.users[0]._id);
-            res.body.data.createdAt.should.be.a.String();
-
+            res.body.data.sub.should.equal(ASSETS.users[0].username);
             res.body.data.iat.should.be.a.Number();
             res.body.data.exp.should.be.a.Number();
 
-            Object.keys(res.body.data).length.should.equal(4);
+            Object.keys(res.body.data).length.should.equal(3);
 
             done();
           });

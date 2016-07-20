@@ -1,4 +1,4 @@
 - fully review code
 - execute removal of uneeded resources after DELETING STUFF
 - study data loss and redeploy
-- decide over ObjectId, uuid or username/email
+- check 'createdAt' property of jwt

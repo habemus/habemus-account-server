@@ -69,7 +69,7 @@ describe('User Account verification after-creation', function () {
 
   it('should create a verification request', function (done) {
     superagent
-      .post(ASSETS.authURI + '/user/' + ASSETS.user._id + '/request-account-verification')
+      .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/request-account-verification')
       .end(function (err, res) {
         if (err) { return done(err); }
 
@@ -104,7 +104,7 @@ describe('User Account verification after-creation', function () {
 
 
     superagent
-      .post(ASSETS.authURI + '/user/' + ASSETS.user._id + '/request-account-verification')
+      .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/request-account-verification')
       .end(function (err, res) {
         if (err) { return done(err); }
 
@@ -116,7 +116,7 @@ describe('User Account verification after-creation', function () {
         accVerificationConfirmationCode.should.be.instanceof(String);
 
         superagent
-          .post(ASSETS.authURI + '/user/' + ASSETS.user._id + '/verify-account')
+          .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/verify-account')
           .send({
             code: accVerificationConfirmationCode,
           })
@@ -128,7 +128,7 @@ describe('User Account verification after-creation', function () {
 
             // it should not be possible to verify again
             superagent
-              .post(ASSETS.authURI + '/user/' + ASSETS.user._id + '/verify-account')
+              .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/verify-account')
               .send({
                 code: accVerificationConfirmationCode,
               })

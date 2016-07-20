@@ -17,17 +17,17 @@ module.exports = function (app, options) {
 
   /**
    * Generates an authentication token for the given credentials
-   * @param  {String} username The username (public part of the account)
+   * @param  {String} usernameOrEmail The usernameOrEmail (public part of the account)
    * @param  {String} password The password in plain text (private part of the account)
    * @return {JWT}             A JSON Web Token
    */
-  authCtrl.generateToken = function (username, password) {
+  authCtrl.generateToken = function (usernameOrEmail, password) {
 
-    if (!username) {
+    if (!usernameOrEmail) {
       return Bluebird.reject(new errors.InvalidOption(
-        'username',
+        'usernameOrEmail',
         'required',
-        'username is required for generating a token'
+        'usernameOrEmail is required for generating a token'
       ));
     }
     if (!password) {
@@ -40,7 +40,7 @@ module.exports = function (app, options) {
 
     var _user;
 
-    return app.controllers.user.getByUsername(username)
+    return app.controllers.user.getByUsernameOrEmail(usernameOrEmail)
       .then((user) => {
         // store user in outside var for later usage
         _user = user;
@@ -60,7 +60,7 @@ module.exports = function (app, options) {
         };
 
         return app.services.token.generate(userData, {
-          subject: _user._id.toString(),
+          subject: _user.username,
         });
       })
       .catch((err) => {

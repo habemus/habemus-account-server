@@ -135,7 +135,7 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(ASSETS.authURI + '/user/' + ASSETS.users[0]._id)
+        .delete(ASSETS.authURI + '/user/' + ASSETS.users[0].username)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 

@@ -1,13 +1,6 @@
 // third-party
 const bodyParser = require('body-parser');
 
-const USER_DATA = require('../../interfaces/user-data');
-const TOKEN_DATA = require('../../interfaces/token-data');
-
-for (prop in USER_DATA) {
-  TOKEN_DATA[prop] = USER_DATA[prop];
-}
-
 module.exports = function (app, options) {
 
   app.post('/request-password-reset',

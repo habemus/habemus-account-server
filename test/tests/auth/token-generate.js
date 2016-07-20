@@ -95,7 +95,7 @@ describe('POST /auth/token/decode', function () {
 
         should(res.body.data).be.undefined();
         res.body.error.name.should.equal('InvalidOption');
-        res.body.error.option.should.equal('username');
+        res.body.error.option.should.equal('usernameOrEmail');
         res.body.error.kind.should.equal('required');
 
         done();
@@ -174,7 +174,7 @@ describe('POST /auth/token/decode', function () {
         var decoded = jwt.verify(res.body.data.token, 'fake-secret');
 
         // be sure that all properties are known
-        decoded.sub.should.equal(ASSETS.users[0]._id);
+        decoded.sub.should.equal(ASSETS.users[0].username);
         decoded.createdAt.should.be.a.String();
 
         decoded.iat.should.be.a.Number();

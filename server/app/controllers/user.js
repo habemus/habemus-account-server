@@ -113,10 +113,9 @@ module.exports = function (app, options) {
       .then((user) => {
         // user was successfully saved to the database
         _user = user;
-        var userId = user.get('_id').toString();
 
         // initiate request to verify the user's account
-        return app.controllers.accVerification.createRequest(userId);
+        return app.controllers.accVerification.createRequest(user.username);
       })
       .then(() => {
         return _user;
@@ -198,6 +197,38 @@ module.exports = function (app, options) {
         }
       });
   };
+
+  userCtrl.getByUsernameOrEmail = function (usernameOrEmail) {
+    if (!usernameOrEmail) {
+      return bluebird.reject(new errors.InvalidOption(
+        'usernameOrEmail',
+        'required',
+        'usernameOrEmail is required to retrieve account by getByUsernameOrEmail method'
+      ));
+    }
+
+    if (User.isEmail(usernameOrEmail)) {
+      // start trying to get the user by email
+      return userCtrl.getByEmail(usernameOrEmail).catch((err) => {
+        if (err instanceof errors.UserNotFound) {
+          // on not found error, attempt to get by username
+          return userCtrl.getByUsername(usernameOrEmail);
+        } else {
+          return Bluebird.reject(err);
+        }
+      });
+    } else {
+      // start by trying to get the user by username
+      return userCtrl.getByUsername(usernameOrEmail).catch((err) => {
+        if (err instanceof errors.UserNotFound) {
+          // on not found error, attempt to get by email
+          return userCtrl.getByEmail(usernameOrEmail);
+        } else {
+          return Bluebird.reject(err);
+        }
+      });
+    }
+  }
 
   return userCtrl;
 };

@@ -46,11 +46,8 @@ describe('User Account verification', function () {
   });
 
   it('should reject verifying users that do not exist', function (done) {
-
-    var FAKE_USER_ID = '57493bb407b079902681fe0d';
-
     superagent
-      .post(ASSETS.authURI + '/user/' + FAKE_USER_ID + '/verify-account')
+      .post(ASSETS.authURI + '/user/' + 'fake-username' + '/verify-account')
       .send({
         code: 'fake-code'
       })
@@ -65,25 +62,6 @@ describe('User Account verification', function () {
       });
   });
 
-  it('should reject verifying users that have no valid ids', function (done) {
-    superagent
-      .post(ASSETS.authURI + '/user/INVALID/verify-account')
-      .send({
-        code: 'fake-code'
-      })
-      .end((err, res) => {
-        if (err) {
-          // we expect error
-          // and this one should behave as the one with a valid 
-          // but inexistent id
-          res.statusCode.should.equal(401);
-          done();
-        } else {
-          done(new Error('invalid user id should not be validated'));
-        }
-      })
-  });
-
   it('should reject invalid verification code', function (done) {
 
     superagent
@@ -95,16 +73,15 @@ describe('User Account verification', function () {
       })
       .end(function (err, res) {
 
-        if (err) { return done(err); }
+        if (err) {
+          return done(err);
+        }
 
         res.statusCode.should.equal(201);
-
         res.body.data.username.should.equal('test-user');
 
-        userData = res.body.data;
-
         superagent
-          .post(ASSETS.authURI + '/user/' + res.body.data._id + '/verify-account')
+          .post(ASSETS.authURI + '/user/test-user/verify-account')
           .send({
             code: 'INVALID-VERIFICATION-CODE',
           })
@@ -152,16 +129,13 @@ describe('User Account verification', function () {
         if (err) { return done(err); }
 
         res.statusCode.should.equal(201);
-
         res.body.data.username.should.equal('test-user-2');
-
-        userData = res.body.data;
 
         // make sure the confirmation code is already available
         userVerificationCode.should.be.a.String();
 
         superagent
-          .get(ASSETS.authURI + '/user/' + res.body.data._id + '/verify-account')
+          .get(ASSETS.authURI + '/user/' + res.body.data.username + '/verify-account')
           .query({
             code: userVerificationCode,
           })
@@ -208,18 +182,15 @@ describe('User Account verification', function () {
         if (err) { return done(err); }
 
         res.statusCode.should.equal(201);
-
         res.body.data.username.should.equal('test-user-3');
-
-        userData = res.body.data;
 
         // make sure the confirmation code is already available
         userVerificationCode.should.be.a.String();
 
-        var _userId = res.body.data._id;
+        var username = res.body.data.username;
 
         superagent
-          .post(ASSETS.authURI + '/user/' + _userId + '/verify-account')
+          .post(ASSETS.authURI + '/user/' + username + '/verify-account')
           .send({
             code: userVerificationCode,
           })
@@ -230,7 +201,7 @@ describe('User Account verification', function () {
             res.statusCode.should.equal(200);
 
             superagent
-              .post(ASSETS.authURI + '/user/' + _userId + '/verify-account')
+              .post(ASSETS.authURI + '/user/' + username + '/verify-account')
               .send({
                 code: userVerificationCode,
               })

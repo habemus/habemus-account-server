@@ -21,8 +21,7 @@ module.exports = function (app, options) {
 
   const errors = app.errors;
 
-  const ProtectedActionRequest = app.models.ProtectedActionRequest;
-  const User                   = app.models.User;
+  const User = app.models.User;
 
   const FROM_EMAIL = options.fromEmail;
 
@@ -30,27 +29,27 @@ module.exports = function (app, options) {
 
   /**
    * Creates a verification request
-   * @param  {String} userId
+   * @param  {String} username
    * @return {Bluebird}
    */
-  accVerificationCtrl.createRequest = function (userId) {
-    if (!userId) {
+  accVerificationCtrl.createRequest = function (username) {
+    if (!username) {
       return Bluebird.reject(new errors.InvalidOption(
-        'userId',
+        'username',
         'required',
-        'userId is required for verification request'
+        'username is required for verification request'
       ));
     }
 
     var _user;
 
     // load user
-    return app.controllers.user.getById(userId)
+    return app.controllers.user.getByUsername(username)
       .then((user) => {
         // save the user for later usage
         _user = user;
 
-        return app.controllers.protectedRequest.create(userId, ACTION_NAME, {
+        return app.controllers.protectedRequest.create(user._id, ACTION_NAME, {
           expiresIn: '1d',
           codeLength: CODE_LENGTH,
         });
@@ -81,16 +80,16 @@ module.exports = function (app, options) {
 
   /**
    * Attempt to verify a user with a verificationCode
-   * @param  {String} userId
+   * @param  {String} username
    * @param  {String} confirmationCode
    * @return {Bluebird}
    */
-  accVerificationCtrl.verifyUserAccount = function (userId, confirmationCode) {
-    if (!userId) {
+  accVerificationCtrl.verifyUserAccount = function (username, confirmationCode) {
+    if (!username) {
       return Bluebird.reject(new errors.InvalidOption(
-        'userId',
+        'username',
         'required',
-        'userId is required for verifying account'
+        'username is required for verifying account'
       ));
     }
 
@@ -102,23 +101,31 @@ module.exports = function (app, options) {
       ));
     }
 
-    return app.controllers.protectedRequest
-      .verifyRequestConfirmationCode(userId, ACTION_NAME, confirmationCode)
+    var _user;
+
+    return app.controllers.user.getByUsername(username)
+      .then((user) => {
+        _user = user;
+
+        return app.controllers.protectedRequest
+          .verifyRequestConfirmationCode(user._id, ACTION_NAME, confirmationCode)
+      })
       .then(() => {
         // successfully unlocked
         
-        // load the user
-        return app.controllers.user.getById(userId);
-      })
-      .then((user) => {
         // change the user account status to active
-        user.setAccountActive('VerificationSuccess');
+        _user.setAccountActive('VerificationSuccess');
 
-        return user.save();
+        return _user.save();
       })
       .catch((err) => {
+        if (err instanceof errors.UserNotFound) {
+          // in case user not found, as this is a sensitive
+          // method, we should return InvalidCredentials
+          return Bluebird.reject(new errors.InvalidCredentials());
+        }
 
-        // default behavior is to reject with the original error
+        // by default reject using original error
         return Bluebird.reject(err);
       });
   };

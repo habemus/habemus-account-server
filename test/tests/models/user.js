@@ -33,10 +33,10 @@ describe('User Model#setAccountActive', function () {
 
     user.setAccountActive('SomeReason');
 
-    var accountStatus = user.get('accountStatus');
+    var status = user.get('status');
 
-    accountStatus.status.should.equal(app.constants.ACCOUNT_STATUSES.active);
-    accountStatus.reason.should.equal('SomeReason');
+    status.value.should.equal(app.constants.ACCOUNT_STATUSES.ACTIVE);
+    status.reason.should.equal('SomeReason');
   });
 
   it('should require a reason', function () {

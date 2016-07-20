@@ -1,8 +1,9 @@
 const USER_DATA = {
-  _id: true,
   username: true,
   createdAt: true,
-  verifiedAt: true,
+  'status.value': true,
+  'status.reason': true,
+  'status.updatedAt': true
 };
 
 module.exports = USER_DATA;

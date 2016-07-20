@@ -84,6 +84,9 @@ describe('accVerificationCtrl', function () {
 
     it('should be possible to verify the user account with the creation verification request', function () {
 
+      // rather long sequence
+      this.timeout(4000);
+
       var _userVerificationCode;
       var _user;
 
@@ -114,7 +117,7 @@ describe('accVerificationCtrl', function () {
       })
       .then(() => {
         return ASSETS.authApp.controllers.accVerification
-          .verifyUserAccount(_user._id, _userVerificationCode);
+          .verifyUserAccount('test-user', _userVerificationCode);
       })
       .then(() => {
         // check that the user's status
@@ -152,7 +155,7 @@ describe('accVerificationCtrl', function () {
       })
       .then((user) => {
         return ASSETS.authApp.controllers.accVerification
-          .verifyUserAccount(user._id, 'WRONG_CODE');
+          .verifyUserAccount('test-user', 'WRONG_CODE');
       })
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -192,7 +195,7 @@ describe('accVerificationCtrl', function () {
       })
       .then(() => {
         return ASSETS.authApp.controllers.accVerification
-          .verifyUserAccount('some-wrong-user-id', _userVerificationCode);
+          .verifyUserAccount('wrong-username', _userVerificationCode);
       })
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -201,7 +204,7 @@ describe('accVerificationCtrl', function () {
     });
   });
 
-  describe('createRequest(userId)', function () {
+  describe('createRequest(username)', function () {
 
     beforeEach(function () {
 
@@ -228,7 +231,7 @@ describe('accVerificationCtrl', function () {
 
     it('should create a new verification request for the userId and cancel the previously created', function () {
       return ASSETS.authApp.controllers
-        .accVerification.createRequest(ASSETS.users[0]._id)
+        .accVerification.createRequest(ASSETS.users[0].username)
         .then(() => {
           arguments.length.should.equal(0);
 
@@ -258,7 +261,7 @@ describe('accVerificationCtrl', function () {
           // create yet another request, and check that previously generated requests
           // were cancelled
           return ASSETS.authApp.controllers
-            .accVerification.createRequest(ASSETS.users[0]._id);
+            .accVerification.createRequest(ASSETS.users[0].username);
         })
         .then(() => {
 
@@ -283,9 +286,18 @@ describe('accVerificationCtrl', function () {
           }).length.should.equal(2);
         });
     });
+
+    it('should require username as the first argument', function () {
+      return ASSETS.authApp.controllers.accVerification.createRequest(undefined)
+        .then(aux.errorExpected, (err) => {
+          err.name.should.equal('InvalidOption');
+          err.option.should.equal('username')
+          err.kind.should.equal('required');
+        });
+    });
   });
 
-  describe('verifyUserAccount(userId, confirmationCode)', function () {
+  describe('verifyUserAccount(username, confirmationCode)', function () {
 
     beforeEach(function () {
 
@@ -344,15 +356,48 @@ describe('accVerificationCtrl', function () {
       })
       .then(() => {
         return ASSETS.authApp.controllers.accVerification
-          .verifyUserAccount(_user._id, _userVerificationCode);
+          .verifyUserAccount(_user.username, _userVerificationCode);
       })
       .then(() => {
         // refetch user's data
-        return ASSETS.authApp.controllers.user.getByUsername(_user.username);
+        // and query for protectedActionRequests
+        var userQuery = ASSETS.authApp.controllers.user.getByUsername(_user.username);
+        var actionRequestQuery = ASSETS.authApp.models.ProtectedActionRequest.find({
+          userId: _user._id
+        });
+
+        return Bluebird.all([
+          userQuery,
+          actionRequestQuery
+        ])
       })
-      .then((user) => {
+      .then((results) => {
+        var user = results[0];
+        var actionRequests = results[1];
+
         user.status.value.should.equal('active');
+        actionRequests.length.should.equal(1);
+
+        actionRequests[0].status.value.should.equal('fulfilled');
       });
-    })
+    });
+
+    it('should require username as the first argument', function () {
+      return ASSETS.authApp.controllers.accVerification.verifyUserAccount(undefined, 'CODE')
+        .then(aux.errorExpected, (err) => {
+          err.name.should.equal('InvalidOption');
+          err.option.should.equal('username')
+          err.kind.should.equal('required');
+        });
+    });
+
+    it('should require confirmationCode as the second argument', function () {
+      return ASSETS.authApp.controllers.accVerification.verifyUserAccount('username', undefined)
+        .then(aux.errorExpected, (err) => {
+          err.name.should.equal('InvalidOption');
+          err.option.should.equal('confirmationCode')
+          err.kind.should.equal('required');
+        });
+    });
   });
 });

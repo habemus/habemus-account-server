@@ -8,6 +8,16 @@ const Schema = mongoose.Schema;
 // sub-schemas
 const Status = require('./sub-schemas/status');
 
+/**
+ * Verifies whether a string is in a valid email format
+ * @param {String} str
+ */
+// http://stackoverflow.com/questions/46155/validate-email-address-in-javascript#46181
+const EMAIL_REGEXP = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+function isEmail(str) {
+  return EMAIL_REGEXP.test(str);
+}
+
 module.exports = function (conn, app, options) {
 
   var userSchema = new Schema({
@@ -86,8 +96,11 @@ module.exports = function (conn, app, options) {
   //     reason: reason,
   //   };
   // };
+  
+  // statics
+  userSchema.statics.isEmail = isEmail;
 
   var User = conn.model('User', userSchema);
   
   return User;
-}
+};

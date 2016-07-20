@@ -171,18 +171,23 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.authURI + '/user/' + ASSETS.users[0]._id)
+        .get(ASSETS.authURI + '/user/' + ASSETS.users[0].username)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
           if (err) { return done(err); }
 
           res.statusCode.should.equal(200);
-          res.body.data._id.should.equal(ASSETS.users[0]._id);
+
+          // make sure the user data only returns 3 properties
+          Object.keys(res.body.data).length.should.equal(3);
           res.body.data.username.should.equal('test-user');
           res.body.data.createdAt.should.be.a.String();
 
-          // make sure the user data only returns 2 properties
-          Object.keys(res.body.data).length.should.equal(3);
+          // status
+          Object.keys(res.body.data.status).length.should.equal(3);
+          res.body.data.status.value.should.equal('unverified');
+          res.body.data.status.updatedAt.should.be.instanceof(String);
+          res.body.data.status.reason.should.be.instanceof(String);
 
           done();
         });

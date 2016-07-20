@@ -20,18 +20,18 @@ module.exports = function (app, options) {
     }
   );
 
-  app.get('/user/:userId',
+  app.get('/user/:username',
     app.middleware.authenticate,
     function (req, res, next) {
 
       // check that the authenticated user
       // is the one that the request refers to
-      if (req.token.sub !== req.params.userId) {
+      if (req.token.sub !== req.params.username) {
         next(new app.errors.Unauthorized());
         return;
       }
 
-      app.controllers.user.getById(req.params.userId)
+      app.controllers.user.getByUsername(req.params.username)
         .then((user) => {
 
           var msg = app.format.item(user, USER_DATA);
@@ -41,18 +41,18 @@ module.exports = function (app, options) {
     }
   );
 
-  app.delete('/user/:userId',
+  app.delete('/user/:username',
     app.middleware.authenticate,
     function (req, res, next) {
 
       // check that the authenticated user
       // is the one that the request refers to
-      if (req.token.sub !== req.params.userId) {
+      if (req.token.sub !== req.params.username) {
         next(new app.errors.Unauthorized());
         return;
       }
 
-      app.controllers.user.delete(req.params.userId)
+      app.controllers.user.delete(req.params.username)
         .then((deletedUserData) => {
           res.status(204).send();
         })

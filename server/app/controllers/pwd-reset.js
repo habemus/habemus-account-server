@@ -23,8 +23,7 @@ module.exports = function (app, options) {
 
   const errors = app.errors;
 
-  const ProtectedActionRequest = app.models.ProtectedActionRequest;
-  const User                   = app.models.User;
+  const User = app.models.User;
 
   const FROM_EMAIL = options.fromEmail;
 
@@ -141,15 +140,6 @@ module.exports = function (app, options) {
         // finished
         // make sure to return nothing
         return;
-      })
-      .catch((err) => {
-
-        if (err instanceof hLock.errors.InvalidSecret) {
-          return Bluebird.reject(new errors.InvalidCredentials());
-        }
-
-        // default behavior is to reject with the original error
-        return Bluebird.reject(err);
       });
   };
 
