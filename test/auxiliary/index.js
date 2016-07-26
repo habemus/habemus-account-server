@@ -60,7 +60,6 @@ exports.setup = function () {
 
   var _assets = {
     dbURI: TEST_DB_URI,
-    authURI: 'http://localhost:8000',
   };
 
   return MongoClient.connect(TEST_DB_URI)
