@@ -17,12 +17,12 @@
   <section data-state="login login-error">
     <form id="h-auth-login">
       <label>
-        <span>e-mail</span>
+        <span>username or e-mail</span>
         <input
-          type="email"
-          name="email"
-          class="h-auth-email"
-          placeholder="e-mail"
+          type="text"
+          name="username"
+          class="h-auth-username"
+          placeholder="username or e-mail"
           required
           autofocus>
       </label>
@@ -44,6 +44,16 @@
 
   <section data-state="signup signup-error">
     <form id="h-auth-signup">
+      <label>
+        <span>username</span>
+        <input
+          type="text"
+          name="username"
+          class="h-auth-username"
+          placeholder="username"
+          required
+          autofocus>
+      </label>
       <label>
         <span>e-mail</span>
         <input

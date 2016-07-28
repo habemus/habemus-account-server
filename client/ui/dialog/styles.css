@@ -82,6 +82,7 @@
   font-size: 12px;
 }
 
+#h-auth-dialog form input[type="text"],
 #h-auth-dialog form input[type="email"],
 #h-auth-dialog form input[type="password"] {
   margin-top: 10px;

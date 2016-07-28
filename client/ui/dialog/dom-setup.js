@@ -48,7 +48,7 @@ exports.setupLoginForm = function (dialog) {
    * Login form submission
    */
   var loginForm  = dialog.element.querySelector('#h-auth-login');
-  var loginUsername = loginForm.querySelector('[name="email"]');
+  var loginUsername = loginForm.querySelector('[name="username"]');
   var loginPassword = loginForm.querySelector('[name="password"]');
 
   var loginErrorMessage = loginForm.querySelector('[data-state="login-error"]');
@@ -57,14 +57,14 @@ exports.setupLoginForm = function (dialog) {
     e.preventDefault();
     e.stopPropagation();
 
-    var email    = loginUsername.value;
+    var username = loginUsername.value;
     var password = loginPassword.value;
 
     // set the dialog to login-loading mode
     dialog.model.set('state', 'login-loading');
 
     dialog.auth
-      .logIn(email, password)
+      .logIn(username, password)
       .then(function (user) {
 
         dialog.resolve(user);
@@ -89,7 +89,8 @@ exports.setupLoginForm = function (dialog) {
 exports.setupSignupForm = function (dialog) {
   // elements
   var signupForm = dialog.element.querySelector('#h-auth-signup');
-  var signupUsername = signupForm.querySelector('[name="email"]');
+  var signupUsername = signupForm.querySelector('[name="username"]');
+  var signupEmail    = signupForm.querySelector('[name="email"]');
   var signupPassword = signupForm.querySelector('[name="password"]');
   var signupPasswordConfirm = signupForm.querySelector('[name="password-confirm"]');
 
@@ -102,7 +103,8 @@ exports.setupSignupForm = function (dialog) {
     e.preventDefault();
     e.stopPropagation();
 
-    var email    = signupUsername.value;
+    var username = signupUsername.value;
+    var email    = signupEmail.value;
     var password = signupPassword.value;
     var passwordConfirm = signupPasswordConfirm.value;
 
@@ -119,7 +121,7 @@ exports.setupSignupForm = function (dialog) {
     dialog.model.set('state', 'signup-loading');
 
     dialog.auth
-      .signUp(email, password, email, {
+      .signUp(username, password, email, {
         // signup and immediately logIn after signUp
         immediatelyLogIn: true,
       })

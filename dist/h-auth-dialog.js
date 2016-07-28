@@ -382,7 +382,7 @@ exports.setupLoginForm = function (dialog) {
    * Login form submission
    */
   var loginForm  = dialog.element.querySelector('#h-auth-login');
-  var loginUsername = loginForm.querySelector('[name="email"]');
+  var loginUsername = loginForm.querySelector('[name="username"]');
   var loginPassword = loginForm.querySelector('[name="password"]');
 
   var loginErrorMessage = loginForm.querySelector('[data-state="login-error"]');
@@ -391,14 +391,14 @@ exports.setupLoginForm = function (dialog) {
     e.preventDefault();
     e.stopPropagation();
 
-    var email    = loginUsername.value;
+    var username = loginUsername.value;
     var password = loginPassword.value;
 
     // set the dialog to login-loading mode
     dialog.model.set('state', 'login-loading');
 
     dialog.auth
-      .logIn(email, password)
+      .logIn(username, password)
       .then(function (user) {
 
         dialog.resolve(user);
@@ -423,7 +423,8 @@ exports.setupLoginForm = function (dialog) {
 exports.setupSignupForm = function (dialog) {
   // elements
   var signupForm = dialog.element.querySelector('#h-auth-signup');
-  var signupUsername = signupForm.querySelector('[name="email"]');
+  var signupUsername = signupForm.querySelector('[name="username"]');
+  var signupEmail    = signupForm.querySelector('[name="email"]');
   var signupPassword = signupForm.querySelector('[name="password"]');
   var signupPasswordConfirm = signupForm.querySelector('[name="password-confirm"]');
 
@@ -436,7 +437,8 @@ exports.setupSignupForm = function (dialog) {
     e.preventDefault();
     e.stopPropagation();
 
-    var email    = signupUsername.value;
+    var username = signupUsername.value;
+    var email    = signupEmail.value;
     var password = signupPassword.value;
     var passwordConfirm = signupPasswordConfirm.value;
 
@@ -453,7 +455,7 @@ exports.setupSignupForm = function (dialog) {
     dialog.model.set('state', 'signup-loading');
 
     dialog.auth
-      .signUp(email, password, email, {
+      .signUp(username, password, email, {
         // signup and immediately logIn after signUp
         immediatelyLogIn: true,
       })
@@ -510,8 +512,8 @@ const Bluebird = require('bluebird');
 
 // internal
 const HAuthClient = require('../../');
-const dialogTemplate = "<dialog id=\"h-auth-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-auth-action-selector\">\n    <button data-state=\"login login-error\" data-value=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-value=\"signup\">\n      Sign up\n    </button>\n  </section>\n\n  <section data-state=\"login login-error\">\n    <form id=\"h-auth-login\">\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n  </section>\n\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-auth-signup\">\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-auth-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n\n</dialog>";
-const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-auth-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-auth-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-auth-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-auth-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-auth-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-auth-dialog section[data-state] {\n  display: none;\n}\n\n#h-auth-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-auth-action-selector button {\n\n}\n\n#h-auth-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-auth-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-auth-dialog form label > * {\n  display: block;\n}\n\n#h-auth-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-auth-dialog form input[type=\"email\"],\n#h-auth-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-auth-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
+const dialogTemplate = "<dialog id=\"h-auth-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-auth-action-selector\">\n    <button data-state=\"login login-error\" data-value=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-value=\"signup\">\n      Sign up\n    </button>\n  </section>\n\n  <section data-state=\"login login-error\">\n    <form id=\"h-auth-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n  </section>\n\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-auth-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-auth-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n\n</dialog>";
+const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-auth-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-auth-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-auth-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-auth-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-auth-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-auth-dialog section[data-state] {\n  display: none;\n}\n\n#h-auth-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-auth-action-selector button {\n\n}\n\n#h-auth-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-auth-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-auth-dialog form label > * {\n  display: block;\n}\n\n#h-auth-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-auth-dialog form input[type=\"text\"],\n#h-auth-dialog form input[type=\"email\"],\n#h-auth-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-auth-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
 // according to brfs docs, require.resolve() may be used as well
 // https://www.npmjs.com/package/brfs#methods
 const dialogPolyfillStyles = "dialog {\n  position: absolute;\n  left: 0; right: 0;\n  width: -moz-fit-content;\n  width: -webkit-fit-content;\n  width: fit-content;\n  height: -moz-fit-content;\n  height: -webkit-fit-content;\n  height: fit-content;\n  margin: auto;\n  border: solid;\n  padding: 1em;\n  background: white;\n  color: black;\n  display: none;\n}\n\ndialog[open] {\n  display: block;\n}\n\ndialog + .backdrop {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n  background: rgba(0,0,0,0.1);\n}\n\n/* for small devices, modal dialogs go full-screen */\n@media screen and (max-width: 540px) {\n  dialog[_polyfill_modal] {  /* TODO: implement */\n    top: 0;\n    width: auto;\n    margin: 1em;\n  }\n}\n\n._dialog_overlay {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n}"
