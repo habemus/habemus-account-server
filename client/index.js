@@ -5,7 +5,6 @@ const EventEmitter = require('events');
 // third-party
 const superagent = require('superagent');
 const Bluebird   = require('bluebird');
-const jwt        = require('jsonwebtoken');
 
 // constants
 const TRAILING_SLASH_RE = /\/$/;
@@ -13,6 +12,7 @@ const LOGGED_IN  = 'logged_in';
 const LOGGED_OUT = 'logged_out';
 
 const errors = require('./errors');
+const aux    = require('./auxiliary');
 
 /**
  * Auth client constructor
@@ -159,7 +159,7 @@ AuthClient.prototype.getCurrentUser = function (options) {
         resolve(this._cachedUser);
 
       } else {
-        var tokenData = jwt.decode(token);
+        var tokenData = aux.decodeJWTPayload(token);
 
         superagent
           .get(this.serverURI + 'user/' + tokenData.username)
@@ -220,7 +220,7 @@ AuthClient.prototype.logIn = function (username, password) {
 
         // decode the token and save the decoded data
         // as the _cachedUser
-        var tokenData = jwt.decode(token);
+        var tokenData = aux.decodeJWTPayload(token);
 
         this._cachedUser = tokenData;
         // set authentication status

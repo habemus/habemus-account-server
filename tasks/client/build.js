@@ -1,6 +1,7 @@
 'use strict';
 
 const gulpSize   = require('gulp-size');
+const gulpUglify = require('gulp-uglify');
 
 // browserify
 const browserify = require('browserify');
@@ -34,6 +35,7 @@ module.exports = function (gulp) {
       })
       .pipe(source('h-auth-client.js'))
       .pipe(buffer())
+      // .pipe(gulpUglify())
       // calculate size before writing source maps
       .pipe(gulpSize({
         title: 'javascript:client',
