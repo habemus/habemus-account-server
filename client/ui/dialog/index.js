@@ -65,8 +65,8 @@ function _toArray(obj) {
  */
 function HAuthDialog(options) {
 
-  // instantiate auth client
-  this.auth = new HAuthClient(options);
+  // instantiate auth client if none is passed as option
+  this.auth = options.auth || new HAuthClient(options);
 
   /**
    * Data store for the modal model
@@ -199,5 +199,51 @@ HAuthDialog.prototype.close = function () {
   this.clear();
   this.element.close();
 };
+
+/**
+ * Ensures there is a logged in user and returns it.
+ * If the user is not logged in, pops the login dialog.
+ * Otherwise, simply returns the current user.
+ * @return {UserData}
+ */
+HAuthDialog.prototype.ensureUser = function () {
+
+  var self = this;
+
+  return self.auth.getCurrentUser()
+    .then(function (user) {
+      return user;
+    })
+    .catch(function (err) {
+      if (err.name === 'NotLoggedIn') {
+
+        return self.logIn()
+          .then(function () {
+            // the method MUST return the current user
+            return self.auth.getCurrentUser();
+          });
+
+      } else {
+        // normally reject original error
+        return Bluebird.reject(err);
+      }
+    });
+
+};
+
+// AuthClient proxy methods
+const AUTH_PROXY_METHODS = [
+  'getAuthToken',
+  'getCurrentUser',
+  'logOut',
+];
+
+AUTH_PROXY_METHODS.forEach(function (method) {
+  HAuthDialog.prototype[method] = function () {
+    var args = Array.prototype.slice.call(arguments, 0);
+
+    return this.auth[method].apply(this.auth, args);
+  };
+});
 
 module.exports = HAuthDialog;

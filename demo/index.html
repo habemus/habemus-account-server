@@ -6,6 +6,8 @@
 
   <button onclick="logIn()">log in</button>
   <button onclick="signUp()">sign up</button>
+  <button onclick="ensureUser()">ensure user</button>
+  <button onclick="logOut()">log out</button>
 
   <p>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis vel pellentesque tortor. Sed bibendum ullamcorper nulla a blandit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce commodo justo nec metus lobortis, rutrum cursus neque rutrum. Aliquam quis quam id urna egestas molestie sit amet a purus. Nam auctor erat metus, quis ornare metus fringilla non. Nam diam quam, hendrerit commodo libero ut, lacinia aliquam leo. Nulla a nisl efficitur, bibendum arcu id, bibendum leo. Mauris eget metus imperdiet, luctus erat eget, sodales augue. Etiam porta ullamcorper egestas.
@@ -53,6 +55,26 @@
         .catch(function (err) {
           console.warn('signUp error', err)
         });
+    }
+
+    function ensureUser() {
+      authDialog.ensureUser()
+        .then(function (user) {
+          console.log('ensureUser success', user);
+        })
+        .catch(function (err) {
+          console.warn('ensureUser error', err);
+        })
+    }
+
+    function logOut() {
+      authDialog.logOut()
+        .then(function () {
+          console.log('logOut success');
+        })
+        .catch(function (err) {
+          console.warn('logOut error', err);
+        })
     }
   </script>
 </body>

@@ -119,7 +119,10 @@ exports.setupSignupForm = function (dialog) {
     dialog.model.set('state', 'signup-loading');
 
     dialog.auth
-      .signUp(email, password, email)
+      .signUp(email, password, email, {
+        // signup and immediately logIn after signUp
+        immediatelyLogIn: true,
+      })
       .then(function (user) {
 
         dialog.model.set('state', 'signup-success');

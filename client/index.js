@@ -4,7 +4,7 @@ const EventEmitter = require('events');
 
 // third-party
 const superagent = require('superagent');
-const Q          = require('q');
+const Bluebird   = require('bluebird');
 const jwt        = require('jsonwebtoken');
 
 // constants
@@ -53,12 +53,6 @@ AuthClient.prototype.constants = {
 // static properties
 AuthClient.errors = errors;
 
-const privateMethods = require('./methods/private');
-
-for (var m in privateMethods) {
-  AuthClient.prototype[m] = privateMethods[m];
-}
-
 /**
  * Loads the auth token from the browser's localstorage
  * @return {String|Boolean}
@@ -73,11 +67,13 @@ AuthClient.prototype.getAuthToken = function () {
  * @param  {String} password   
  * @param  {String} password
  * @param  {String} email
+ * @param  {Object} options
+ *         - immediatelyLogIn
  * @return {Promise->userData}         
  */
-AuthClient.prototype.signUp = function (username, password, email) {
+AuthClient.prototype.signUp = function (username, password, email, options) {
   if (!username) {
-    return Q.reject(new errors.InvalidOption(
+    return Bluebird.reject(new errors.InvalidOption(
       'username',
       'required',
       'username is required for signUp'
@@ -85,7 +81,7 @@ AuthClient.prototype.signUp = function (username, password, email) {
   }
 
   if (!password) {
-    return Q.reject(new errors.InvalidOption(
+    return Bluebird.reject(new errors.InvalidOption(
       'password',
       'required',
       'password is required for signUp'
@@ -93,36 +89,51 @@ AuthClient.prototype.signUp = function (username, password, email) {
   }
 
   if (!email) {
-    return Q.reject(new errors.InvalidOption(
+    return Bluebird.reject(new errors.InvalidOption(
       'email',
       'required',
       'email is required for signUp'
     ));
   }
 
-  var defer = Q.defer();
+  options = options || {};
 
-  superagent
-    .post(this.serverURI + 'users')
-    .send({
-      username: username,
-      password: password,
-      email: email,
-    })
-    .end(function (err, res) {
-      if (err) {
-        if (res && res.body && res.body.error) {
-          defer.reject(res.body.error);
-        } else {
-          defer.reject(err);
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + 'users')
+      .send({
+        username: username,
+        password: password,
+        email: email,
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.body && res.body.error) {
+            reject(res.body.error);
+          } else {
+            reject(err);
+          }
+          return;
         }
-        return;
-      }
 
-      defer.resolve(res.body.data);
-    });
+        resolve(res.body.data);
+      });
+    
+  }.bind(this))
+  .then(function (user) {
 
-  return defer.promise;
+    if (options.immediatelyLogIn) {
+      return this.logIn(username, password)
+        .then(function () {
+          // ensure signup function returns the user
+          return user;
+        });
+    } else {
+      return user;
+    }
+
+  }.bind(this));
 };
 
 /**
@@ -131,48 +142,50 @@ AuthClient.prototype.signUp = function (username, password, email) {
  * @return {Promise->userData}        
  */
 AuthClient.prototype.getCurrentUser = function (options) {
-  var defer = Q.defer();
 
-  var token = this.getAuthToken();
+  return new Bluebird(function (resolve, reject) {
 
-  if (!token) {
-    this._setAuthStatus(LOGGED_OUT);
-    defer.reject(new AuthClient.errors.NotLoggedIn());
-  } else {
+    var token = this.getAuthToken();
 
-    // check if there is a cached version of the userData
-    if (this._cachedUser) {
-      // resolve immediately
-      defer.resolve(this._cachedUser);
-
+    if (!token) {
+      this._setAuthStatus(LOGGED_OUT);
+      reject(new AuthClient.errors.NotLoggedIn());
     } else {
-      var tokenData = jwt.decode(token);
 
-      superagent
-        .get(this.serverURI + 'user/' + tokenData.sub)
-        .set({
-          'Authorization': 'Bearer ' + token
-        })
-        .end(function (err, res) {
-          if (err) {
-            if (res.statusCode === 401 || res.statusCode === 403) {
-              // token is invalid, destroy it
-              this._destroyAuthToken();
-              this._setAuthStatus(LOGGED_OUT);
+      // check if there is a cached version of the userData
+      if (this._cachedUser) {
+
+        // resolve immediately
+        resolve(this._cachedUser);
+
+      } else {
+        var tokenData = jwt.decode(token);
+
+        superagent
+          .get(this.serverURI + 'user/' + tokenData.username)
+          .set({
+            'Authorization': 'Bearer ' + token
+          })
+          .end(function (err, res) {
+            if (err) {
+              if (res.statusCode === 401 || res.statusCode === 403) {
+                // token is invalid, destroy it
+                this._destroyAuthToken();
+                this._setAuthStatus(LOGGED_OUT);
+              }
+
+              reject(res.body.error);
+              return;
             }
 
-            defer.reject(res.body.error);
-            return;
-          }
-
-          this._cachedUser = res.body.data;
-          this._setAuthStatus(LOGGED_IN);
-          defer.resolve(res.body.data);
-        }.bind(this));
+            this._cachedUser = res.body.data;
+            this._setAuthStatus(LOGGED_IN);
+            resolve(res.body.data);
+          }.bind(this));
+      }
     }
-  }
 
-  return defer.promise;
+  }.bind(this));
 };
 
 /**
@@ -182,33 +195,43 @@ AuthClient.prototype.getCurrentUser = function (options) {
  * @return {Promise -> userData}         
  */
 AuthClient.prototype.logIn = function (username, password) {
-  var defer = Q.defer();
 
-  superagent
-    .post(this.serverURI + 'auth/token/generate')
-    .send({
-      username: username,
-      password: password
-    })
-    .end(function (err, res) {
-      if (err) {
-        defer.reject(res.body.error);
+  return new Bluebird(function (resolve, reject) {
 
-        delete this._cachedUser;
+    superagent
+      .post(this.serverURI + 'auth/token/generate')
+      .send({
+        username: username,
+        password: password
+      })
+      .end(function (err, res) {
+        if (err) {
+          reject(res.body.error);
+
+          delete this._cachedUser;
+          this._setAuthStatus(LOGGED_OUT);
+          return;
+        }
+
+        var token = res.body.data.token;
+
+        // save the token
+        this._saveAuthToken(token);
+
+        // decode the token and save the decoded data
+        // as the _cachedUser
+        var tokenData = jwt.decode(token);
+
+        this._cachedUser = tokenData;
+        // set authentication status
         this._setAuthStatus(LOGGED_OUT);
-        return;
-      }
 
-      // save the token
-      this._saveAuthToken(res.body.data.token);
+        // resolve with the response data
+        resolve(res.body.data);
+      }.bind(this));
 
-      this._cachedUser = res.body.data;
-      // set authentication status
-      this._setAuthStatus(LOGGED_OUT);
-      defer.resolve(res.body.data);
-    }.bind(this));
+  }.bind(this));
 
-  return defer.promise;
 };
 
 /**
@@ -216,19 +239,61 @@ AuthClient.prototype.logIn = function (username, password) {
  * @return {Promise}
  */
 AuthClient.prototype.logOut = function () {
-  var defer = Q.defer();
 
-  // TODO: implement logout on server
+  return new Bluebird(function (resolve, reject) {
+    // TODO: implement logout on server
 
-  this._destroyAuthToken();
-  delete this._cachedUser;
+    this._destroyAuthToken();
+    delete this._cachedUser;
 
-  defer.resolve();
+    resolve();
 
-  return defer.promise.then(function () {
-    this._setAuthStatus(LOGGED_OUT);
+    return defer.promise.then(function () {
+      this._setAuthStatus(LOGGED_OUT);
+
+    }.bind(this));
 
   }.bind(this));
+
+};
+
+//////////////////
+// PRIVATE METHODS
+
+/**
+ * Saves the token to the browser localstorage
+ * @private
+ * @param  {String} token
+ */
+AuthClient.prototype._saveAuthToken = function (token) {
+  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
+
+  window.localStorage.setItem(tokenStorageKey, token);
+};
+
+/**
+ * Deletes the token from the browser's localstorage
+ * @private
+ */
+AuthClient.prototype._destroyAuthToken = function () {
+  var tokenStorageKey = this.localStoragePrefix + 'auth_token';
+
+  window.localStorage.removeItem(tokenStorageKey);
+};
+
+/**
+ * Changes the authentication status and emits `auth-status-change` event
+ * if the auth-status has effectively been changed by the new value setting.
+ */
+AuthClient.prototype._setAuthStatus = function (status) {
+
+  var hasChanged = (this.status !== status);
+
+  this.status = status;
+
+  if (hasChanged) {
+    this.emit('auth-status-change', status);
+  }
 };
 
 module.exports = AuthClient;
