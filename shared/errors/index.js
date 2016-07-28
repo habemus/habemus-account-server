@@ -10,6 +10,7 @@ function HAuthError(message) {
 
   this.message = message;
 };
+util.inherits(HAuthError, Error);
 HAuthError.prototype.name = 'HAuthError';
 exports.HAuthError = HAuthError;
 

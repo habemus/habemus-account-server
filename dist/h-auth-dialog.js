@@ -274,17 +274,30 @@ AuthClient.prototype.logIn = function (username, password) {
 AuthClient.prototype.logOut = function () {
 
   return new Bluebird(function (resolve, reject) {
-    // TODO: implement logout on server
+
+    var token = this.getAuthToken();
+
+    if (!token) {
+      reject(new errors.NotLoggedIn('Already logged out'));
+      return;
+    }
 
     this._destroyAuthToken();
     delete this._cachedUser;
 
-    resolve();
+    superagent
+      .post(this.serverURI + 'auth/token/revoke')
+      .set('Authorization', 'Bearer ' + token)
+      .end(function (err, res) {
+        if (err) {
+          reject(res.body.error);
 
-    return defer.promise.then(function () {
-      this._setAuthStatus(LOGGED_OUT);
+          this._setAuthStatus(LOGGED_OUT);
+          return;
+        }
 
-    }.bind(this));
+        resolve();
+      }.bind(this));
 
   }.bind(this));
 
@@ -473,6 +486,10 @@ exports.setupSignupForm = function (dialog) {
         if (err.name === 'UsernameTaken') {
 
           signupErrorMessage.innerHTML = 'UsernameTaken';
+
+        } else if (err.name) {
+          
+          signupErrorMessage.innerHTML = 'EmailTaken';
 
         } else {
           signupErrorMessage.innerHTML = 'Unknown sign up error';
@@ -30753,6 +30770,7 @@ function HAuthError(message) {
 
   this.message = message;
 };
+util.inherits(HAuthError, Error);
 HAuthError.prototype.name = 'HAuthError';
 exports.HAuthError = HAuthError;
 

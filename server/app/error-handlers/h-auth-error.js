@@ -14,6 +14,7 @@ module.exports = function (app, options) {
 
       switch (err.name) {
         case 'UsernameTaken':
+        case 'EmailTaken':
           var msg = app.format.error(err, ERROR_PROPERTIES);
           res.status(400).json(msg);
           break;

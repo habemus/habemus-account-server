@@ -140,6 +140,10 @@ exports.setupSignupForm = function (dialog) {
 
           signupErrorMessage.innerHTML = 'UsernameTaken';
 
+        } else if (err.name) {
+          
+          signupErrorMessage.innerHTML = 'EmailTaken';
+
         } else {
           signupErrorMessage.innerHTML = 'Unknown sign up error';
         }
