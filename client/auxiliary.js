@@ -11,5 +11,5 @@ exports.decodeJWTPayload = function (token) {
     throw new Error('Invalid token');
   }
 
-  return btoa(payload);
+  return JSON.parse(atob(payload));
 };

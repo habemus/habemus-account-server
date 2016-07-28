@@ -12,7 +12,7 @@ exports.decodeJWTPayload = function (token) {
     throw new Error('Invalid token');
   }
 
-  return btoa(payload);
+  return JSON.parse(atob(payload));
 };
 },{}],2:[function(require,module,exports){
 const util = require('util');
@@ -640,6 +640,13 @@ function HAuthDialog(options) {
   }.bind(this));
 
   dialogPolyfill.registerDialog(this.element);
+
+  /**
+   * Optionally attach to an element
+   */
+  if (options.containerElement) {
+    this.attach(options.containerElement);
+  }
 }
 
 HAuthDialog.prototype._domSetup = function () {

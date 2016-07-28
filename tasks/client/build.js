@@ -8,7 +8,6 @@ const browserify = require('browserify');
 const source     = require('vinyl-source-stream');
 const buffer     = require('vinyl-buffer');
 const gutil      = require('gulp-util');
-const uglify     = require('gulp-uglify');
 const brfs       = require('brfs');
 
 module.exports = function (gulp) {
@@ -35,7 +34,7 @@ module.exports = function (gulp) {
       })
       .pipe(source('h-auth-client.js'))
       .pipe(buffer())
-      // .pipe(gulpUglify())
+      .pipe(gulpUglify())
       // calculate size before writing source maps
       .pipe(gulpSize({
         title: 'javascript:client',
