@@ -3,8 +3,9 @@ const path = require('path');
 const http = require('http');
 
 // third-party dependencies
-const MongoClient = require('mongodb').MongoClient;
-const Bluebird    = require('bluebird');
+const MongoClient   = require('mongodb').MongoClient;
+const Bluebird      = require('bluebird');
+const enableDestroy = require('server-destroy');
 
 if (process.env.DEBUG === 'TRUE') {
   // set mongoose to debug mode
@@ -34,7 +35,9 @@ exports.startServer = function (port, app) {
   if (!app) { throw new Error('app is required'); }
 
   // create http server and pass express app as callback
-  var server = this.server = http.createServer(app);
+  var server = http.createServer(app);
+
+  enableDestroy(server);
 
   return new Promise((resolve, reject) => {
     server.listen(port, () => {
@@ -42,7 +45,13 @@ exports.startServer = function (port, app) {
       // register the server to be tore down
       exports.registerTeardown(function () {
         return new Promise((resolve, reject) => {
-          server.close(resolve);
+          server.destroy((err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
         })
       });
 

@@ -12,8 +12,8 @@ describe('User Account verification after-creation', function () {
 
   var ASSETS;
 
-  beforeEach(function (done) {
-    aux.setup()
+  beforeEach(function () {
+    return aux.setup()
       .then((assets) => {
         ASSETS = assets;
 
@@ -57,14 +57,11 @@ describe('User Account verification after-creation', function () {
       .then((user) => {
 
         ASSETS.user = user;
-
-        done();
-      })
-      .catch(done);
+      });
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    return aux.teardown();
   });
 
   it('should create a verification request', function (done) {
