@@ -9,7 +9,7 @@ const stubTransort = require('nodemailer-stub-transport');
 // auxiliary
 const aux = require('../auxiliary');
 
-const createHAuthApp = require('../../');
+const hAccountApp = require('../../');
 
 const REQUIRED_OPTIONS = {
   apiVersion: '0.0.0',
@@ -41,7 +41,7 @@ describe('server initialization', function () {
     delete options.apiVersion;
 
     assert.throws(function () {
-      createHAuthApp(options);
+      hAccountApp(options);
     });
   });
 
@@ -50,7 +50,7 @@ describe('server initialization', function () {
     delete options.mongodbURI;
 
     assert.throws(function () {
-      createHAuthApp(options);
+      hAccountApp(options);
     });
   });
 
@@ -59,7 +59,7 @@ describe('server initialization', function () {
     delete options.secret;
 
     assert.throws(function () {
-      createHAuthApp(options);
+      hAccountApp(options);
     });
   });
 
@@ -68,7 +68,7 @@ describe('server initialization', function () {
     delete options.host;
 
     assert.throws(function () {
-      createHAuthApp(options);
+      hAccountApp(options);
     });
   });
 
@@ -77,7 +77,7 @@ describe('server initialization', function () {
     delete options.nodemailerTransport;
 
     assert.throws(function () {
-      createHAuthApp(options);
+      hAccountApp(options);
     });
   });
 
@@ -87,12 +87,12 @@ describe('server initialization', function () {
     delete options.fromEmail;
 
     assert.throws(function () {
-      createHAuthApp(options);
+      hAccountApp(options);
     });
   });
 
   it('should instantiate an express app', function (done) {
-    var app = createHAuthApp({
+    var app = hAccountApp({
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
       secret: 'fake-secret',

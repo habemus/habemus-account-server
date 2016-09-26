@@ -6,7 +6,7 @@ const stubTransort = require('nodemailer-stub-transport');
 // auxiliary
 const aux = require('../../auxiliary');
 
-const createHAuth = require('../../../server');
+const hAccount = require('../../../server');
 
 describe('userCtrl.create(userData)', function () {
 
@@ -28,7 +28,7 @@ describe('userCtrl.create(userData)', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = createHAuth(options);
+        ASSETS.authApp = hAccount(options);
 
         done();
       })

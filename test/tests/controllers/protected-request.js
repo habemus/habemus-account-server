@@ -17,7 +17,7 @@ const uuid = require('node-uuid');
 // auxiliary
 const aux = require('../../auxiliary');
 
-const createHAuth = require('../../../server');
+const hAccount = require('../../../server');
 
 describe('protectedRequestCtrl', function () {
 
@@ -39,7 +39,7 @@ describe('protectedRequestCtrl', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = createHAuth(options);
+        ASSETS.authApp = hAccount(options);
 
         // create some users
         var create1 = ASSETS.authApp.controllers.user.create({

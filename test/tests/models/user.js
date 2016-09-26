@@ -9,7 +9,7 @@ const stubTransort = require('nodemailer-stub-transport');
 // auxiliary
 const aux = require('../../auxiliary');
 
-const createHAuthApp = require('../../../');
+const hAccountApp = require('../../../');
 
 const REQUIRED_OPTIONS = {
   apiVersion: '0.0.0',
@@ -25,7 +25,7 @@ const REQUIRED_OPTIONS = {
 describe('User Model#setAccountActive', function () {
 
   it('should modify the user.status', function () {
-    var app = createHAuthApp(REQUIRED_OPTIONS);
+    var app = hAccountApp(REQUIRED_OPTIONS);
 
     var User = app.models.User;
 
@@ -40,7 +40,7 @@ describe('User Model#setAccountActive', function () {
   });
 
   it('should require a reason', function () {
-    var app = createHAuthApp(REQUIRED_OPTIONS);
+    var app = hAccountApp(REQUIRED_OPTIONS);
 
     var User = app.models.User;
 

@@ -7,7 +7,7 @@ const Bluebird = require('bluebird');
 // auxiliary
 const aux = require('../../auxiliary');
 
-const createHAuth = require('../../../server');
+const hAccount = require('../../../server');
 
 describe('userCtrl `get` methods', function () {
 
@@ -29,7 +29,7 @@ describe('userCtrl `get` methods', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = createHAuth(options);
+        ASSETS.authApp = hAccount(options);
 
         // create some users
         var create1 = ASSETS.authApp.controllers.user.create({

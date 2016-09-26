@@ -6,7 +6,7 @@ const stubTransort = require('nodemailer-stub-transport');
 // auxiliary
 const aux = require('../../../auxiliary');
 
-const createHAuth = require('../../../../server');
+const hAccount = require('../../../../server');
 
 describe('User Account verification after-creation', function () {
 
@@ -30,7 +30,7 @@ describe('User Account verification after-creation', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = createHAuth(options);
+        ASSETS.authApp = hAccount(options);
         ASSETS.authURI = 'http://localhost:4000';
 
         return aux.startServer(4000, ASSETS.authApp);

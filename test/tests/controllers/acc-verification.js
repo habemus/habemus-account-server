@@ -7,7 +7,7 @@ const Bluebird = require('bluebird');
 // auxiliary
 const aux = require('../../auxiliary');
 
-const createHAuth = require('../../../server');
+const hAccount = require('../../../server');
 
 function _wait(ms) {
   return new Bluebird((resolve, reject) => {
@@ -39,7 +39,7 @@ describe('accVerificationCtrl', function () {
         // the stub nodemailer instance events
         ASSETS.options = options;
 
-        ASSETS.authApp = createHAuth(options);
+        ASSETS.authApp = hAccount(options);
 
         done();
       })

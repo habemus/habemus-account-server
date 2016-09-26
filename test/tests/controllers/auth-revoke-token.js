@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 // auxiliary
 const aux = require('../../auxiliary');
 
-const createHAuth = require('../../../server');
+const hAccount = require('../../../server');
 
 describe('authCtrl.revokeToken(token)', function () {
 
@@ -30,7 +30,7 @@ describe('authCtrl.revokeToken(token)', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = createHAuth(options);
+        ASSETS.authApp = hAccount(options);
 
         // create some users
         var create1 = ASSETS.authApp.controllers.user.create({
