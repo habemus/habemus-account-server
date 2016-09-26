@@ -7,17 +7,15 @@ const Bluebird = require('bluebird');
 const uuid     = require('node-uuid');
 const ms       = require('ms');
 
-const hLock  = require('h-lock');
-
-const ACTION_NAME = 'resetPassword';
-const CODE_LENGTH = 15;
+const ACTION_NAME = 'verifyUserAccount';
+const CODE_LENGTH = 5;
 
 /**
  * Emailing stuff.
  * TODO: study whether this should be moved to a separate service
  */
 const mustache = require('mustache');
-const resetPasswordEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/reset-password.html'), 'utf8');
+const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../email-templates/verify-account.html'), 'utf8');
 
 module.exports = function (app, options) {
 
@@ -27,20 +25,19 @@ module.exports = function (app, options) {
 
   const FROM_EMAIL = options.fromEmail;
 
-  var pwdResetCtrl = {};
+  var accVerificationCtrl = {};
 
   /**
-   * Creates a reset request
-   * @param  {String} userId
+   * Creates a verification request
+   * @param  {String} username
    * @return {Bluebird}
    */
-  pwdResetCtrl.createRequest = function (username) {
-
+  accVerificationCtrl.createRequest = function (username) {
     if (!username) {
       return Bluebird.reject(new errors.InvalidOption(
         'username',
         'required',
-        'username is required to create a password reset request'
+        'username is required for verification request'
       ));
     }
 
@@ -52,10 +49,8 @@ module.exports = function (app, options) {
         // save the user for later usage
         _user = user;
 
-        var userId = user.get('_id').toString();
-
-        return app.controllers.protectedRequest.create(userId, ACTION_NAME, {
-          expiresIn: '1h',
+        return app.controllers.protectedRequest.create(user._id, ACTION_NAME, {
+          expiresIn: '1d',
           codeLength: CODE_LENGTH,
         });
       })
@@ -65,8 +60,8 @@ module.exports = function (app, options) {
         var mailOptions = {
           from: FROM_EMAIL,
           to: _user.get('email'),
-          subject: 'Habemus password reset',
-          html: mustache.render(resetPasswordEmailTemplate, {
+          subject: 'Welcome to Habemus',
+          html: mustache.render(verifyAccountEmailTemplate, {
             email: _user.get('email'),
             code: confirmationCode,
           }),
@@ -76,7 +71,7 @@ module.exports = function (app, options) {
           app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
             if (err) { reject(err); }
 
-            // make sure returns nothing
+            // make sure to return nothing
             resolve();
           });
         });
@@ -84,18 +79,17 @@ module.exports = function (app, options) {
   };
 
   /**
-   * Attempt to reset a user's password with a resetCode
+   * Attempt to verify a user with a verificationCode
    * @param  {String} username
-   * @param  {String} pwdResetCode
+   * @param  {String} confirmationCode
    * @return {Bluebird}
    */
-  pwdResetCtrl.resetPassword = function (username, confirmationCode, password) {
-
+  accVerificationCtrl.verifyUserAccount = function (username, confirmationCode) {
     if (!username) {
       return Bluebird.reject(new errors.InvalidOption(
         'username',
         'required',
-        'username is required to reset password'
+        'username is required for verifying account'
       ));
     }
 
@@ -103,15 +97,7 @@ module.exports = function (app, options) {
       return Bluebird.reject(new errors.InvalidOption(
         'confirmationCode',
         'required',
-        'confirmationCode is required to reset password'
-      ));
-    }
-
-    if (!password) {
-      return Bluebird.reject(new errors.InvalidOption(
-        'password',
-        'required',
-        'password is required to reset password'
+        'confirmationCode is required for verifying account'
       ));
     }
 
@@ -121,27 +107,28 @@ module.exports = function (app, options) {
       .then((user) => {
         _user = user;
 
-        return app.controllers.protectedRequest.verifyRequestConfirmationCode(
-          _user.get('_id').toString(),
-          ACTION_NAME,
-          confirmationCode
-        );
+        return app.controllers.protectedRequest
+          .verifyRequestConfirmationCode(user._id, ACTION_NAME, confirmationCode)
       })
       .then(() => {
         // successfully unlocked
+        
+        // change the user account status to active
+        _user.setAccountActive('VerificationSuccess');
 
-        // reset existing lock for the account
-        // instead of creating a new one
-        var _accLockId = _user.get('_accLockId');
-
-        return app.services.accountLock.reset(_accLockId, password);
+        return _user.save();
       })
-      .then(() => {
-        // finished
-        // make sure to return nothing
-        return;
+      .catch((err) => {
+        if (err instanceof errors.UserNotFound) {
+          // in case user not found, as this is a sensitive
+          // method, we should return InvalidCredentials
+          return Bluebird.reject(new errors.InvalidCredentials());
+        }
+
+        // by default reject using original error
+        return Bluebird.reject(err);
       });
   };
 
-  return pwdResetCtrl;
+  return accVerificationCtrl;
 };

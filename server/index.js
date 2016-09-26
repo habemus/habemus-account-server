@@ -38,7 +38,7 @@ function createHabemusAuth(options) {
   app.errors = errors;
 
   // logging
-  require('./app/setup/logger')(app, options);
+  require('./setup/logger')(app, options);
 
   // create a mongoose mongo db connection
   var conn = mongoose.createConnection(options.mongodbURI);
@@ -75,22 +75,22 @@ function createHabemusAuth(options) {
   
   // load models
   app.models = {};
-  app.models.User = require('./app/models/user')(conn, app, options);
-  app.models.ProtectedActionRequest = require('./app/models/protected-action-request')(conn, app, options);
+  app.models.User = require('./models/user')(conn, app, options);
+  app.models.ProtectedActionRequest = require('./models/protected-action-request')(conn, app, options);
 
   // instantiate controllers
   app.controllers = {};
-  app.controllers.user = require('./app/controllers/user')(app, options);
-  app.controllers.auth = require('./app/controllers/auth')(app, options);
-  app.controllers.protectedRequest = require('./app/controllers/protected-request')(app, options);
-  app.controllers.accVerification = require('./app/controllers/acc-verification')(app, options);
-  app.controllers.pwdReset = require('./app/controllers/pwd-reset')(app, options);
+  app.controllers.user = require('./controllers/user')(app, options);
+  app.controllers.auth = require('./controllers/auth')(app, options);
+  app.controllers.protectedRequest = require('./controllers/protected-request')(app, options);
+  app.controllers.accVerification = require('./controllers/acc-verification')(app, options);
+  app.controllers.pwdReset = require('./controllers/pwd-reset')(app, options);
 
   // instantiate middleware for usage in routes
   app.middleware = {};
-  app.middleware.authenticate = require('./app/middleware/authenticate')(app, options);
+  app.middleware.authenticate = require('./middleware/authenticate')(app, options);
 
-  require('./app/setup/middleware')(app, options);
+  require('./setup/middleware')(app, options);
 
   // define description route
   app.get('/who', function (req, res) {
@@ -99,11 +99,11 @@ function createHabemusAuth(options) {
   });
 
   // load routes
-  require('./app/routes/user')(app, options);
-  require('./app/routes/auth')(app, options);
+  require('./routes/user')(app, options);
+  require('./routes/auth')(app, options);
 
   // load error-handlers
-  require('./app/error-handlers/h-auth-error')(app, options);
+  require('./error-handlers/h-auth-error')(app, options);
 
   return app;
 }

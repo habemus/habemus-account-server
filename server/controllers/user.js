@@ -14,10 +14,10 @@ const ValidatorError  = mongoose.Error.ValidatorError;
 const hLock = require('h-lock');
 
 // 
-const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../../email-templates/verify-account.html'), 'utf8');
+const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../email-templates/verify-account.html'), 'utf8');
 const ATTEMPTER_ID = 'h-auth-attempter';
 
-const CONSTANTS = require('../../../shared/constants');
+const CONSTANTS = require('../../shared/constants');
 
 module.exports = function (app, options) {
 
