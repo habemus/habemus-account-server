@@ -13,3 +13,9 @@ exports.decodeJWTPayload = function (token) {
 
   return JSON.parse(atob(payload));
 };
+
+/**
+ * Regular expression that matches a trailing forward slash (/)
+ * @type {RegExp}
+ */
+exports.TRAILING_SLASH_RE = /\/$/;

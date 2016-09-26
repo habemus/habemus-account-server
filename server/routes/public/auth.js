@@ -1,7 +1,7 @@
 // third-party
 const bodyParser = require('body-parser');
 
-const TOKEN_DATA = require('../interfaces/token-data');
+const TOKEN_DATA = require('../../interfaces/token-data');
 
 module.exports = function (app, options) {
 

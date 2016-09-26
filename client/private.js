@@ -10,14 +10,15 @@ const aux = require('./auxiliary');
  * @param {Object} options
  *        - serverURI
  */
-function HAccount(options) {
+function PrivateHAccount(options) {
 
   if (!options.serverURI) {
     throw new Error('serverURI is required');
   }
 
   this.serverURI = options.serverURI.replace(aux.TRAILING_SLASH_RE, '');
+  this.serverURI = this.serverURI + '/_';
 }
 
-Object.assign(HAccount.prototype, require('./methods/shared'));
-Object.assign(HAccount.prototype, require('./methods/public'));
+Object.assign(PrivateHAccount.prototype, require('./methods/shared'));
+Object.assign(PrivateHAccount.prototype, require('./methods/private'));

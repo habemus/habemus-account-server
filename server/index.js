@@ -99,8 +99,8 @@ function createHabemusAuth(options) {
   });
 
   // load routes
-  require('./routes/user')(app, options);
-  require('./routes/auth')(app, options);
+  require('./routes/public')(app, options);
+  require('./routes/private')(app, options);
 
   // load error-handlers
   require('./error-handlers/h-auth-error')(app, options);

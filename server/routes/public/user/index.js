@@ -2,7 +2,7 @@
 const bodyParser = require('body-parser');
 const Bluebird   = require('bluebird');
 
-const USER_DATA = require('../../interfaces/user-data');
+const USER_DATA = require('../../../interfaces/user-data');
 
 module.exports = function (app, options) {
   

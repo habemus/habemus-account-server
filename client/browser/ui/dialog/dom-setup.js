@@ -1,5 +1,5 @@
 // internal dependencies
-const errors = require('../../errors');
+const errors = require('../../../errors');
 
 function _focusAndSelectAll(input) {
   input.focus();

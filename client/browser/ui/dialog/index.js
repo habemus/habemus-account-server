@@ -15,7 +15,7 @@ const dialogStyles   = fs.readFileSync(__dirname + '/styles.css', 'utf8');
 // https://www.npmjs.com/package/brfs#methods
 const dialogPolyfillStyles = fs.readFileSync(require.resolve('dialog-polyfill/dialog-polyfill.css'), 'utf8')
 const domSetup = require('./dom-setup');
-const errors = require('../../errors');
+const errors = require('../../../errors');
 
 // constants
 const ACTIVE_CLASS = 'active';
