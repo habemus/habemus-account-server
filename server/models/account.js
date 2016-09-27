@@ -1,12 +1,11 @@
 // third-party
-const mongoose = require('mongoose');
-const uuid     = require('node-uuid');
+const mongoose   = require('mongoose');
+const uuid       = require('uuid');
+const makeStatus = require('mongoose-make-status');
 
 // constants
 const Schema = mongoose.Schema;
-
-// sub-schemas
-const Status = require('./sub-schemas/status');
+const CONSTANTS = require('../../shared/constants');
 
 /**
  * Verifies whether a string is in a valid email format
@@ -20,7 +19,7 @@ function isEmail(str) {
 
 module.exports = function (conn, app, options) {
 
-  var userSchema = new Schema({
+  var accountSchema = new Schema({
 
     /**
      * TODO: we must explore what's the most efficient and safe
@@ -42,10 +41,10 @@ module.exports = function (conn, app, options) {
       default: Date.now
     },
 
-    status: {
-      type: Status,
-      required: true,
-    },
+    // status: {
+    //   type: Status,
+    //   required: true,
+    // },
 
     verifiedAt: {
       type: Date
@@ -73,25 +72,29 @@ module.exports = function (conn, app, options) {
     },
   });
 
-  /**
-   * Sets the user account status to 'active';
-   * @param {String} reason
-   */
-  userSchema.methods.setAccountActive = function (reason) {
-    if (!reason) { throw new Error('reason is required'); }
+  makeStatus(accountSchema, {
+    statuses: CONSTANTS.VALID_ACCOUNT_STATUSES
+  });
 
-    this.status = {
-      value: app.constants.ACCOUNT_STATUSES.ACTIVE,
-      reason: reason,
-    };
-  };
+  // /**
+  //  * Sets the user account status to 'active';
+  //  * @param {String} reason
+  //  */
+  // accountSchema.methods.setAccountActive = function (reason) {
+  //   if (!reason) { throw new Error('reason is required'); }
+
+  //   this.status = {
+  //     value: app.constants.ACCOUNT_STATUSES.ACTIVE,
+  //     reason: reason,
+  //   };
+  // };
 
   /**
    * Sets the user account status to 'cancelled';
    * @param {String} reason
    */
   // still not implemented
-  // userSchema.methods.setAccountCancelled = function (reason) {
+  // accountSchema.methods.setAccountCancelled = function (reason) {
   //   if (!reason) { throw new Error('reason is required'); }
     
   //   this.accountStatus = {
@@ -102,9 +105,9 @@ module.exports = function (conn, app, options) {
   // };
   
   // statics
-  userSchema.statics.isEmail = isEmail;
+  accountSchema.statics.isEmail = isEmail;
 
-  var User = conn.model('User', userSchema);
+  var User = conn.model('User', accountSchema);
   
   return User;
 };

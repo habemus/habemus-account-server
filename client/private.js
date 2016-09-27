@@ -22,3 +22,5 @@ function PrivateHAccount(options) {
 
 Object.assign(PrivateHAccount.prototype, require('./methods/shared'));
 Object.assign(PrivateHAccount.prototype, require('./methods/private'));
+
+module.exports = PrivateHAccount;

@@ -5,14 +5,14 @@ const util = require('util');
  * Base message constructor
  * @param {String} message
  */
-function HAuthError(message) {
+function HAccountError(message) {
   Error.call(this);
 
   this.message = message;
 };
-util.inherits(HAuthError, Error);
-HAuthError.prototype.name = 'HAuthError';
-exports.HAuthError = HAuthError;
+util.inherits(HAccountError, Error);
+HAccountError.prototype.name = 'HAccountError';
+exports.HAccountError = HAccountError;
 
 /**
  * Happens when any required option is invalid
@@ -25,12 +25,12 @@ exports.HAuthError = HAuthError;
  * @param {String} message
  */
 function InvalidOption(option, kind, message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 
   this.option = option;
   this.kind = kind;
 }
-util.inherits(InvalidOption, HAuthError);
+util.inherits(InvalidOption, HAccountError);
 InvalidOption.prototype.name = 'InvalidOption';
 exports.InvalidOption = InvalidOption;
 
@@ -41,11 +41,11 @@ exports.InvalidOption = InvalidOption;
  * @param {String} username
  */
 function UsernameTaken(username) {
-  HAuthError.call(this, 'Username ' + username + ' is already taken');
+  HAccountError.call(this, 'Username ' + username + ' is already taken');
 
   this.username = username;
 }
-util.inherits(UsernameTaken, HAuthError);
+util.inherits(UsernameTaken, HAccountError);
 UsernameTaken.prototype.name = 'UsernameTaken';
 exports.UsernameTaken = UsernameTaken;
 
@@ -56,11 +56,11 @@ exports.UsernameTaken = UsernameTaken;
  * @param {String} email
  */
 function EmailTaken(email) {
-  HAuthError.call(this, 'Username ' + email + ' is already taken');
+  HAccountError.call(this, 'Username ' + email + ' is already taken');
 
   this.email = email;
 }
-util.inherits(EmailTaken, HAuthError);
+util.inherits(EmailTaken, HAccountError);
 EmailTaken.prototype.name = 'EmailTaken';
 exports.EmailTaken = EmailTaken;
 
@@ -68,11 +68,11 @@ exports.EmailTaken = EmailTaken;
  * Happens whenever the credentials provided are not valid
  */
 function InvalidCredentials(detail) {
-  HAuthError.call(this, 'The credentials provided are invalid');
+  HAccountError.call(this, 'The credentials provided are invalid');
 
   this.detail = detail;
 }
-util.inherits(InvalidCredentials, HAuthError);
+util.inherits(InvalidCredentials, HAccountError);
 InvalidCredentials.prototype.name = 'InvalidCredentials';
 exports.InvalidCredentials = InvalidCredentials;
 
@@ -82,9 +82,9 @@ exports.InvalidCredentials = InvalidCredentials;
  * @param {String} message [description]
  */
 function Unauthorized(message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 }
-util.inherits(Unauthorized, HAuthError);
+util.inherits(Unauthorized, HAccountError);
 Unauthorized.prototype.name = 'Unauthorized';
 exports.Unauthorized = Unauthorized;
 
@@ -92,9 +92,9 @@ exports.Unauthorized = Unauthorized;
  * Happens whenever the token provided for auth is invalid
  */
 function InvalidToken() {
-  HAuthError.call(this, 'Token provided is invalid');
+  HAccountError.call(this, 'Token provided is invalid');
 }
-util.inherits(InvalidToken, HAuthError);
+util.inherits(InvalidToken, HAccountError);
 InvalidToken.prototype.name = 'InvalidToken';
 exports.InvalidToken = InvalidToken;
 
@@ -105,10 +105,10 @@ exports.InvalidToken = InvalidToken;
  * @param {String} message
  */
 function UserNotFound(identifier, message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 
   this.identifier = identifier;
 }
-util.inherits(UserNotFound, HAuthError);
+util.inherits(UserNotFound, HAccountError);
 UserNotFound.prototype.name = 'UserNotFound';
 exports.UserNotFound = UserNotFound;

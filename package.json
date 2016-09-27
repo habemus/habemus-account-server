@@ -45,13 +45,13 @@
     "json-message": "^2.0.0-beta.2",
     "jsonwebtoken": "^5.7.0",
     "mongoose": "^4.4.12",
+    "mongoose-make-status": "git+ssh://git@bitbucket.org/habemus-tutti/mongoose-make-status.git",
     "morgan": "^1.6.1",
     "mustache": "^2.2.1",
-    "node-uuid": "^1.4.7",
-    "nodemailer": "^2.4.1",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "q": "^1.4.1",
-    "superagent": "^1.4.0"
+    "superagent": "^1.4.0",
+    "uuid": "^2.0.3"
   },
   "browserify": {
     "transform": [

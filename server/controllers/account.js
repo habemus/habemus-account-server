@@ -21,19 +21,19 @@ const CONSTANTS = require('../../shared/constants');
 
 module.exports = function (app, options) {
 
-  const errors = app.errors;
-  const User = app.models.User;
+  const errors  = app.errors;
+  const Account = app.models.Account;
 
-  var userCtrl = {};
+  var accountCtrl = {};
 
   /**
    * Creates a user given user
-   * @param  {Object} userData
+   * @param  {Object} accountData
    * @return {Bluebird -> user}
    */
-  userCtrl.create = function (userData) {
+  accountCtrl.create = function (accountData) {
 
-    if (!userData.username) {
+    if (!accountData.username) {
       return Bluebird.reject(new errors.InvalidOption(
         'username',
         'required',
@@ -41,7 +41,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    if (!userData.password) {
+    if (!accountData.password) {
       return Bluebird.reject(new errors.InvalidOption(
         'password',
         'required',
@@ -49,7 +49,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    if (!userData.email) {
+    if (!accountData.email) {
       return Bluebird.reject(new errors.InvalidOption(
         'email',
         'required',
@@ -57,25 +57,31 @@ module.exports = function (app, options) {
       ));
     }
 
+    // pick the password and remove it from account data
+    // to ensure it is not passed on
+    var password = accountData.password;
+    delete accountData.password;
+
     // variable to hold reference to data needed throughout multiple 
     // steps
     var _user;
     
-    return Bluebird.resolve(app.services.accountLock.create(userData.password))
+    return Bluebird.resolve(app.services.accountLock.create(password))
       .then((accountLockId) => {
-        userData._accLockId = accountLockId;
-        
-        userData.status = {
-          value: CONSTANTS.ACCOUNT_STATUSES.UNVERIFIED,
-          reason: 'NewlyCreated',
-        };
 
-        var user = new User(userData);
+        accountData._accLockId = accountLockId;
 
-        return user.save();
+        var account = new Account(accountData);
+
+        account.setStatus(
+          CONSTANTS.ACCOUNT_STATUSES.UNVERIFIED,
+          'NewlyCreated'
+        );
+
+        return account.save();
       })
       .catch((err) => {
-        // failed to create user account
+        // failed to create account
         
         if (err.name === 'MongoError' && err.code === 11000) {
           // TODO: improvement research:
@@ -86,24 +92,24 @@ module.exports = function (app, options) {
           // For now, we'll run db checks to check what is the offending field
           // https://github.com/Automattic/mongoose/issues/2129
           
-          return userCtrl.getByUsername(userData.username)
-            .then((user) => {
-              // user with given username was found, return UsernameTaken
-              return Bluebird.reject(new errors.UsernameTaken(userData.username));
+          return accountCtrl.getByUsername(accountData.username)
+            .then((account) => {
+              // account with given username was found, return UsernameTaken
+              return Bluebird.reject(new errors.UsernameTaken(accountData.username));
 
             }, (err) => {
 
               if (err instanceof errors.UserNotFound) {
-                // user for the username was not found, check if the email is taken
-                return userCtrl.getByEmail(userData.email);
+                // account for the username was not found, check if the email is taken
+                return accountCtrl.getByEmail(accountData.email);
               } else {
                 return Bluebird.reject(err);
               }
 
             })
-            .then((user) => {
-              // user with given email was found, return EmailTaken
-              return Bluebird.reject(new errors.EmailTaken(userData.email));
+            .then((account) => {
+              // account with given email was found, return EmailTaken
+              return Bluebird.reject(new errors.EmailTaken(accountData.email));
             });
 
         } else if (err instanceof ValidationError) {
@@ -116,19 +122,19 @@ module.exports = function (app, options) {
         // by default reject using the original error
         return Bluebird.reject(err);
       })
-      .then((user) => {
-        // user was successfully saved to the database
-        _user = user;
+      .then((account) => {
+        // account was successfully saved to the database
+        _account = account;
 
-        // initiate request to verify the user's account
-        return app.controllers.accVerification.createRequest(user.username);
+        // initiate request to verify the account's email
+        return app.controllers.emailVerification.createRequest(account.username);
       })
       .then(() => {
         return _user;
       });
   };
   
-  userCtrl.delete = function (username) {
+  accountCtrl.delete = function (username) {
 
     if (!username) {
       return Bluebird.reject(new errors.InvalidOption(
@@ -145,7 +151,7 @@ module.exports = function (app, options) {
       });
   };
 
-  userCtrl.getById = function (id) {
+  accountCtrl.getById = function (id) {
 
     if (!id) {
       return Bluebird.reject(new errors.InvalidOption(
@@ -165,7 +171,7 @@ module.exports = function (app, options) {
       });
   };
 
-  userCtrl.getByUsername = function (username) {
+  accountCtrl.getByUsername = function (username) {
 
     if (!username) {
       return Bluebird.reject(new errors.InvalidOption(
@@ -185,7 +191,7 @@ module.exports = function (app, options) {
       });
   };
 
-  userCtrl.getByEmail = function (email) {
+  accountCtrl.getByEmail = function (email) {
     if (!email) {
       return Bluebird.reject(new errors.InvalidOption(
         'email',
@@ -204,7 +210,7 @@ module.exports = function (app, options) {
       });
   };
 
-  userCtrl.getByUsernameOrEmail = function (usernameOrEmail) {
+  accountCtrl.getByUsernameOrEmail = function (usernameOrEmail) {
     if (!usernameOrEmail) {
       return Bluebird.reject(new errors.InvalidOption(
         'usernameOrEmail',
@@ -215,20 +221,20 @@ module.exports = function (app, options) {
 
     if (User.isEmail(usernameOrEmail)) {
       // start trying to get the user by email
-      return userCtrl.getByEmail(usernameOrEmail).catch((err) => {
+      return accountCtrl.getByEmail(usernameOrEmail).catch((err) => {
         if (err instanceof errors.UserNotFound) {
           // on not found error, attempt to get by username
-          return userCtrl.getByUsername(usernameOrEmail);
+          return accountCtrl.getByUsername(usernameOrEmail);
         } else {
           return Bluebird.reject(err);
         }
       });
     } else {
       // start by trying to get the user by username
-      return userCtrl.getByUsername(usernameOrEmail).catch((err) => {
+      return accountCtrl.getByUsername(usernameOrEmail).catch((err) => {
         if (err instanceof errors.UserNotFound) {
           // on not found error, attempt to get by email
-          return userCtrl.getByEmail(usernameOrEmail);
+          return accountCtrl.getByEmail(usernameOrEmail);
         } else {
           return Bluebird.reject(err);
         }
@@ -236,5 +242,5 @@ module.exports = function (app, options) {
     }
   }
 
-  return userCtrl;
+  return accountCtrl;
 };
