@@ -36,7 +36,7 @@ module.exports = function (app, options) {
     var _user;
 
     // load user
-    return app.controllers.user.getByUsername(username)
+    return app.controllers.account.getByUsername(username)
       .then((user) => {
         // save the user for later usage
         _user = user;
@@ -100,7 +100,7 @@ module.exports = function (app, options) {
 
     var _user;
 
-    return app.controllers.user.getByUsername(username)
+    return app.controllers.account.getByUsername(username)
       .then((user) => {
         _user = user;
 

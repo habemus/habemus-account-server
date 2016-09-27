@@ -69,6 +69,8 @@ describe('emailVerificationCtrl', function () {
   });
 
   afterEach(function () {
+    mockery.disable();
+    
     return aux.teardown();
   });
 

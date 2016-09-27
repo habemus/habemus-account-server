@@ -40,7 +40,7 @@ module.exports = function (app, options) {
 
     var _user;
 
-    return app.controllers.user.getByUsernameOrEmail(usernameOrEmail)
+    return app.controllers.account.getByUsernameOrEmail(usernameOrEmail)
       .then((user) => {
         // store user in outside var for later usage
         _user = user;
@@ -59,7 +59,7 @@ module.exports = function (app, options) {
           username: _user.username,
         };
 
-        return app.services.token.generate(userData, {
+        return app.services.accountToken.generate(userData, {
           subject: _user._id,
         });
       })
@@ -88,7 +88,7 @@ module.exports = function (app, options) {
       return Bluebird.reject(new errors.InvalidOption('token', 'required'));
     }
 
-    return app.services.token.verify(token)
+    return app.services.accountToken.verify(token)
       .then((decoded) => {
 
         return decoded;
@@ -112,7 +112,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    return app.services.token.revoke(tokenId);
+    return app.services.accountToken.revoke(tokenId);
   };
 
   return authCtrl;

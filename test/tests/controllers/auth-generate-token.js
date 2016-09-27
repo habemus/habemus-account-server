@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 const Bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
 
@@ -22,9 +21,9 @@ describe('authCtrl.generateToken(username|email, password)', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
@@ -32,18 +31,22 @@ describe('authCtrl.generateToken(username|email, password)', function () {
 
         ASSETS.accountApp = hAccount(options);
 
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
+
         // create some users
-        var create1 = ASSETS.accountApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password-1',
         });
-        var create2 = ASSETS.accountApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password-2',
         });
-        var create3 = ASSETS.accountApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password-3',
@@ -150,7 +153,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
         
         decoded.iat.should.be.instanceof(Number);
         decoded.exp.should.be.instanceof(Number);
-        decoded.iss.should.equal('h-auth');
+        decoded.iss.should.equal('h-account');
         // sub should be equal to the username
         decoded.sub.should.equal(ASSETS.users[2]._id);
         decoded.jti.should.be.instanceof(String);

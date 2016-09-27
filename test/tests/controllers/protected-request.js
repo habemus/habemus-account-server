@@ -10,7 +10,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 const Bluebird = require('bluebird');
 const uuid = require('node-uuid');
 
@@ -31,9 +30,9 @@ describe('protectedRequestCtrl', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
@@ -41,18 +40,22 @@ describe('protectedRequestCtrl', function () {
 
         ASSETS.accountApp = hAccount(options);
 
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
+
         // create some users
-        var create1 = ASSETS.accountApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password',
         });
-        var create2 = ASSETS.accountApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password',
         });
-        var create3 = ASSETS.accountApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password',
