@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -16,7 +15,7 @@ describe('User Account deletion', function () {
 
     // first retrieve the token
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -35,25 +34,28 @@ describe('User Account deletion', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountApp = hAccount(options);
+        ASSETS.accountURI = 'http://localhost:4000';
 
-        return aux.startServer(4000, ASSETS.authApp);
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
+        return aux.startServer(4000, ASSETS.accountApp);
       })
       .then(() => {
         // create 2 users
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -68,7 +70,7 @@ describe('User Account deletion', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -100,7 +102,7 @@ describe('User Account deletion', function () {
   it('should not allow delete without any authentication', function (done) {
 
     superagent
-      .delete(ASSETS.authURI + '/user/test-user')
+      .delete(ASSETS.accountURI + '/account/test-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -116,7 +118,7 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(ASSETS.authURI + '/user/test-user')
+        .delete(ASSETS.accountURI + '/account/test-user')
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
@@ -135,7 +137,7 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(ASSETS.authURI + '/user/' + ASSETS.users[0].username)
+        .delete(ASSETS.accountURI + '/account/' + ASSETS.users[0].username)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 

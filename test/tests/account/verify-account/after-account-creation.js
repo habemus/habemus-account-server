@@ -1,7 +1,8 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
+const Bluebird   = require('bluebird');
+const mockery  = require('mockery');
 
 // auxiliary
 const aux = require('../../../auxiliary');
@@ -13,33 +14,57 @@ describe('User Account verification after-creation', function () {
   var ASSETS;
 
   beforeEach(function () {
+
+    mockery.enable({
+      warnOnReplace: false,
+      warnOnUnregistered: false,
+      useCleanCache: true
+    });
+
+    // mock h-mailer/client
+    function HMailerClient() {}
+    HMailerClient.prototype.connect = function () {
+      return Bluebird.resolve();
+    };
+    HMailerClient.prototype.schedule = function (data) {
+
+      // make the mail schedule data available
+      // on ASSETS object
+      ASSETS.scheduledMail = data;
+
+      // console.log('SCHEDULED MAIL:', data);
+    };
+    HMailerClient.prototype.on = function () {};
+    mockery.registerMock('h-mailer/client', HMailerClient);
+
     return aux.setup()
       .then((assets) => {
         ASSETS = assets;
 
-        ASSETS.nodemailerTransport = stubTransort();
-
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: ASSETS.nodemailerTransport,
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountApp = hAccount(options);
+        ASSETS.accountURI = 'http://localhost:4000';
 
-        return aux.startServer(4000, ASSETS.authApp);
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
+        return aux.startServer(4000, ASSETS.accountApp);
       })
       .then(() => {
         // create one user
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -61,12 +86,14 @@ describe('User Account verification after-creation', function () {
   });
 
   afterEach(function () {
+    mockery.disable();
+
     return aux.teardown();
   });
 
   it('should create a verification request', function (done) {
     superagent
-      .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/request-account-verification')
+      .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/request-email-verification')
       .end(function (err, res) {
         if (err) { return done(err); }
 
@@ -84,24 +111,8 @@ describe('User Account verification after-creation', function () {
     // var to hold accVerificationConfirmationCode
     var accVerificationConfirmationCode;
 
-    // TODO: this is very hacky
-    var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
-
-    // add listener to the log event of the node mailer stub transport
-    ASSETS.nodemailerTransport.on('log', function (log) {
-      if (log.type === 'message') {
-        var match = log.message.match(confirmationCodeRe);
-
-        if (match) {
-
-          accVerificationConfirmationCode = match[1];
-        }
-      }
-    });
-
-
     superagent
-      .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/request-account-verification')
+      .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/request-email-verification')
       .end(function (err, res) {
         if (err) { return done(err); }
 
@@ -110,10 +121,11 @@ describe('User Account verification after-creation', function () {
         res.body.should.eql({});
 
         // check that the confirmation code was sent
+        accVerificationConfirmationCode = ASSETS.scheduledMail.data.code;
         accVerificationConfirmationCode.should.be.instanceof(String);
 
         superagent
-          .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/verify-account')
+          .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/verify-email')
           .send({
             code: accVerificationConfirmationCode,
           })
@@ -125,7 +137,7 @@ describe('User Account verification after-creation', function () {
 
             // it should not be possible to verify again
             superagent
-              .post(ASSETS.authURI + '/user/' + ASSETS.user.username + '/verify-account')
+              .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/verify-email')
               .send({
                 code: accVerificationConfirmationCode,
               })

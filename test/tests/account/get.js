@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -16,7 +15,7 @@ describe('User Account read', function () {
 
     // first retrieve the token
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -37,25 +36,28 @@ describe('User Account read', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountApp = hAccount(options);
+        ASSETS.accountURI = 'http://localhost:4000';
 
-        return aux.startServer(4000, ASSETS.authApp);
+        return ASSETS.accountApp.ready;
       })
       .then(() => {
-        // create 2 users
+        return aux.startServer(4000, ASSETS.accountApp);
+      })
+      .then(() => {
+        // create 2 accounts
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -70,7 +72,7 @@ describe('User Account read', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -85,10 +87,10 @@ describe('User Account read', function () {
 
         return Promise.all([u1Promise, u2Promise]);
       })
-      .then((users) => {
+      .then((accounts) => {
 
-        // store the users for test use
-        ASSETS.users = users;
+        // store the accounts for test use
+        ASSETS.accounts = accounts;
 
         done();
       })
@@ -101,7 +103,7 @@ describe('User Account read', function () {
 
   it('should return 403 when given no credentials', function (done) {
     superagent
-      .get(ASSETS.authURI + '/user/test-user')
+      .get(ASSETS.accountURI + '/account/test-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -111,7 +113,7 @@ describe('User Account read', function () {
 
   it('should return 403 when given no credentials even if the username does not exist', function (done) {
     superagent
-      .get(ASSETS.authURI + '/user/test-unexistent-user')
+      .get(ASSETS.accountURI + '/account/test-unexistent-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -119,7 +121,7 @@ describe('User Account read', function () {
       });
   });
 
-  it('should return 403 when using invalid token for the given user data: users should not access other user\'s data', function (done) {
+  it('should return 403 when using invalid token for the given user data: accounts should not access other user\'s data', function (done) {
 
     _logIn({
       username: 'test-user-2',
@@ -129,7 +131,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.authURI + '/user/test-user')
+        .get(ASSETS.accountURI + '/account/test-user')
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
@@ -150,7 +152,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.authURI + '/user/test-user')
+        .get(ASSETS.accountURI + '/account/test-user')
         .set('Authorization', 'Bearer' + token)
         .end(function (err, res) {
           res.statusCode.should.equal(403);
@@ -173,7 +175,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.authURI + '/user/' + ASSETS.users[0].username)
+        .get(ASSETS.accountURI + '/account/' + ASSETS.accounts[0].username)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
           if (err) { return done(err); }

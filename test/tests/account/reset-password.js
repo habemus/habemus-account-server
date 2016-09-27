@@ -1,7 +1,8 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
+const Bluebird   = require('bluebird');
+const mockery  = require('mockery');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -16,7 +17,7 @@ describe('User Account password reset', function () {
 
     // first retrieve the token
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -27,35 +28,59 @@ describe('User Account password reset', function () {
       });
   }
 
-  beforeEach(function (done) {
-    aux.setup()
+  beforeEach(function () {
+
+    mockery.enable({
+      warnOnReplace: false,
+      warnOnUnregistered: false,
+      useCleanCache: true
+    });
+
+    // mock h-mailer/client
+    function HMailerClient() {}
+    HMailerClient.prototype.connect = function () {
+      return Bluebird.resolve();
+    };
+    HMailerClient.prototype.schedule = function (data) {
+
+      // make the mail schedule data available
+      // on ASSETS object
+      ASSETS.scheduledMail = data;
+
+      // console.log('SCHEDULED MAIL:', data);
+    };
+    HMailerClient.prototype.on = function () {};
+    mockery.registerMock('h-mailer/client', HMailerClient);
+
+    return aux.setup()
       .then((assets) => {
         ASSETS = assets;
-
-        ASSETS.nodemailerTransport = stubTransort();
 
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: ASSETS.nodemailerTransport,
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountApp = hAccount(options);
+        ASSETS.accountURI = 'http://localhost:4000';
 
-        return aux.startServer(4000, ASSETS.authApp);
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
+        return aux.startServer(4000, ASSETS.accountApp);
       })
       .then(() => {
         // create 2 users
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -70,7 +95,7 @@ describe('User Account password reset', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -89,20 +114,19 @@ describe('User Account password reset', function () {
 
         // store the users for test use
         ASSETS.users = users;
-
-        done();
-      })
-      .catch(done);
+      });
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    mockery.disable();
+
+    return aux.teardown();
   });
 
   it('should first create a request for password reset', function (done) {
 
     superagent
-      .post(ASSETS.authURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/request-password-reset')
       .send({
         username: 'test-user',
       })
@@ -119,7 +143,7 @@ describe('User Account password reset', function () {
   it('should refuse to create a password-reset request if not given a username', function (done) {
 
     superagent
-      .post(ASSETS.authURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/request-password-reset')
       .send({
         username: undefined,
       })
@@ -139,7 +163,7 @@ describe('User Account password reset', function () {
   it('should refuse to create a password-reset request for a user that does not exist', function (done) {
 
     superagent
-      .post(ASSETS.authURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/request-password-reset')
       .send({
         username: 'user-that-does-not-exist',
       })
@@ -159,23 +183,8 @@ describe('User Account password reset', function () {
     // var to hold pwdResetConfirmationCode
     var pwdResetConfirmationCode;
 
-    // TODO: this is very hacky
-    var confirmationCodeRe = /To reset your password, please enter the code (.*?)\s/;
-
-    // add listener to the log event of the node mailer stub transport
-    ASSETS.nodemailerTransport.on('log', function (log) {
-      if (log.type === 'message') {
-        var match = log.message.match(confirmationCodeRe);
-
-        if (match) {
-
-          pwdResetConfirmationCode = match[1];
-        }
-      }
-    });
-
     superagent
-      .post(ASSETS.authURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/request-password-reset')
       .send({
         username: 'test-user',
       })
@@ -186,10 +195,11 @@ describe('User Account password reset', function () {
         res.statusCode.should.equal(204);
 
         // make sure the confirmation code is already available
+        pwdResetConfirmationCode = ASSETS.scheduledMail.data.code;
         pwdResetConfirmationCode.should.be.a.String();
 
         superagent
-          .post(ASSETS.authURI + '/reset-password')
+          .post(ASSETS.accountURI + '/reset-password')
           .send({
             username: 'test-user',
             code: pwdResetConfirmationCode,
@@ -203,7 +213,7 @@ describe('User Account password reset', function () {
 
             // it should be possible to login using the new password
             superagent
-              .post(ASSETS.authURI + '/auth/token/generate')
+              .post(ASSETS.accountURI + '/auth/token/generate')
               .send({
                 username: 'test-user',
                 password: 'new-different-password'
@@ -230,7 +240,7 @@ describe('User Account password reset', function () {
     var NEW_PWD = 'new-different-password';
 
     superagent
-      .post(ASSETS.authURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/request-password-reset')
       .send({
         username: 'test-user',
       })
@@ -239,7 +249,7 @@ describe('User Account password reset', function () {
         res.statusCode.should.equal(204);
 
         superagent
-          .post(ASSETS.authURI + '/reset-password')
+          .post(ASSETS.accountURI + '/reset-password')
           .send({
             username: 'test-user',
             code: 'wrong-code',
@@ -253,7 +263,7 @@ describe('User Account password reset', function () {
 
             // it should not be possible to login using the new password
             superagent
-              .post(ASSETS.authURI + '/auth/token/generate')
+              .post(ASSETS.accountURI + '/auth/token/generate')
               .send({
                 username: 'test-user',
                 password: NEW_PWD
@@ -266,7 +276,7 @@ describe('User Account password reset', function () {
 
                 // it should still be possible to login using original password
                 superagent
-                  .post(ASSETS.authURI + '/auth/token/generate')
+                  .post(ASSETS.accountURI + '/auth/token/generate')
                   .send({
                     username: 'test-user',
                     password: 'test-password',

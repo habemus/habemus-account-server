@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -20,18 +19,21 @@ describe('User Account creation', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountApp = hAccount(options);
+        ASSETS.accountURI = 'http://localhost:4000';
 
-        return aux.startServer(4000, ASSETS.authApp);
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
+        return aux.startServer(4000, ASSETS.accountApp);
       })
       .then(() => {
         done();
@@ -45,7 +47,7 @@ describe('User Account creation', function () {
 
   it('should require a username', function (done) {
     superagent
-      .post(ASSETS.authURI + '/users')
+      .post(ASSETS.accountURI + '/accounts')
       .send({
         // username: 'test-user',
         email: 'test-user@dev.habem.us',
@@ -65,7 +67,7 @@ describe('User Account creation', function () {
 
   it('should require an email', function (done) {
     superagent
-      .post(ASSETS.authURI + '/users')
+      .post(ASSETS.accountURI + '/accounts')
       .send({
         username: 'test-user',
         // email: 'test-user@dev.habem.us',
@@ -86,7 +88,7 @@ describe('User Account creation', function () {
 
   it('should require a password', function (done) {
     superagent
-      .post(ASSETS.authURI + '/users')
+      .post(ASSETS.accountURI + '/accounts')
       .send({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
@@ -109,7 +111,7 @@ describe('User Account creation', function () {
     this.timeout(4000);
 
     superagent
-      .post(ASSETS.authURI + '/users')
+      .post(ASSETS.accountURI + '/accounts')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
@@ -124,7 +126,7 @@ describe('User Account creation', function () {
         res.body.data.username.should.equal('test-user');
         res.body.data.createdAt.should.be.a.String();
 
-        ASSETS.db.collection('users').find().toArray((err, users) => {
+        ASSETS.db.collection('accounts').find().toArray((err, users) => {
           users.length.should.equal(1);
 
           users[0].username.should.equal('test-user');
@@ -138,7 +140,7 @@ describe('User Account creation', function () {
   it('should enforce username uniqueness', function (done) {
 
     superagent
-      .post(ASSETS.authURI + '/users')
+      .post(ASSETS.accountURI + '/accounts')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
@@ -149,7 +151,7 @@ describe('User Account creation', function () {
         if (err) { return done(err); }
 
         superagent
-          .post(ASSETS.authURI + '/users')
+          .post(ASSETS.accountURI + '/accounts')
           .send({
             username: 'test-user',
             email: 'testemail@dev.habem.us',

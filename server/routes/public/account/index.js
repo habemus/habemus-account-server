@@ -6,7 +6,7 @@ const USER_DATA = require('../../../interfaces/user-data');
 
 module.exports = function (app, options) {
   
-  app.post('/users',
+  app.post('/accounts',
     bodyParser.json(),
     function (req, res, next) {
 
@@ -21,7 +21,7 @@ module.exports = function (app, options) {
     }
   );
 
-  app.get('/user/:username',
+  app.get('/account/:username',
     app.middleware.authenticate,
     function (req, res, next) {
 
@@ -42,7 +42,7 @@ module.exports = function (app, options) {
     }
   );
 
-  app.delete('/user/:username',
+  app.delete('/account/:username',
     app.middleware.authenticate,
     function (req, res, next) {
 

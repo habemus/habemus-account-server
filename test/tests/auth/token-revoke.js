@@ -29,7 +29,7 @@ describe('POST /auth/token/decode', function () {
         };
 
         ASSETS.accountApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountURI = 'http://localhost:4000';
 
         return aux.startServer(4000, ASSETS.accountApp);
       })
@@ -41,7 +41,7 @@ describe('POST /auth/token/decode', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -56,7 +56,7 @@ describe('POST /auth/token/decode', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -90,7 +90,7 @@ describe('POST /auth/token/decode', function () {
     var token1 = new Promise(function (resolve, reject) {
 
       superagent
-        .post(ASSETS.authURI + '/auth/token/generate')
+        .post(ASSETS.accountURI + '/auth/token/generate')
         .send({
           username: 'test-user',
           password: 'test-password'
@@ -106,7 +106,7 @@ describe('POST /auth/token/decode', function () {
 
     var token2 = new Promise(function (resolve, reject) {
       superagent
-        .post(ASSETS.authURI + '/auth/token/generate')
+        .post(ASSETS.accountURI + '/auth/token/generate')
         .send({
           username: 'test-user-2',
           password: 'test-password-2'
@@ -130,7 +130,7 @@ describe('POST /auth/token/decode', function () {
 
         return new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/auth/token/revoke')
+            .post(ASSETS.accountURI + '/auth/token/revoke')
             .set({
               'Authorization': 'Bearer ' + tokens[0]
             })
@@ -148,7 +148,7 @@ describe('POST /auth/token/decode', function () {
         // try to use the revoked token
         return new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/auth/token/decode')
+            .post(ASSETS.accountURI + '/auth/token/decode')
             .send({ token: _tokens[0] })
             .end((err, response) => {
               if (err) {

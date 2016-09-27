@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 
 module.exports = function (app, options) {
 
-  app.post('/user/:username/request-account-verification',
+  app.post('/account/:username/request-email-verification',
     bodyParser.json(),
     function (req, res, next) {
 
@@ -15,11 +15,11 @@ module.exports = function (app, options) {
     }
   );
 
-  app.post('/user/:username/verify-email',
+  app.post('/account/:username/verify-email',
     bodyParser.json(),
     function (req, res, next) {
 
-      app.controllers.emailVerification.verifyUserAccount(
+      app.controllers.emailVerification.verifyAccountEmail(
         req.params.username,
         req.body.code
       ).then(() => {
@@ -30,9 +30,9 @@ module.exports = function (app, options) {
     }
   );
 
-  app.get('/user/:username/verify-email', function (req, res, next) {
+  app.get('/account/:username/verify-email', function (req, res, next) {
 
-    app.controllers.emailVerification.verifyUserAccount(
+    app.controllers.emailVerification.verifyAccountEmail(
       req.params.username,
       req.query.code
     ).then((user) => {

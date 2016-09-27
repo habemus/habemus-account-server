@@ -29,7 +29,7 @@ describe('POST /auth/token/decode', function () {
         };
 
         ASSETS.accountApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountURI = 'http://localhost:4000';
 
         return aux.startServer(4000, ASSETS.accountApp);
       })
@@ -41,7 +41,7 @@ describe('POST /auth/token/decode', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -56,7 +56,7 @@ describe('POST /auth/token/decode', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -88,7 +88,7 @@ describe('POST /auth/token/decode', function () {
   it('should require a token to be sent for decoding', function (done) {
 
     superagent
-      .post(ASSETS.authURI + '/auth/token/decode')
+      .post(ASSETS.accountURI + '/auth/token/decode')
       .send({})
       .end(function (err, res) {
         res.statusCode.should.equal(400);
@@ -115,7 +115,7 @@ describe('POST /auth/token/decode', function () {
     });
 
     superagent
-      .post(ASSETS.authURI + '/auth/token/decode')
+      .post(ASSETS.accountURI + '/auth/token/decode')
       .send({
         token: deceitfulToken,
       })
@@ -131,7 +131,7 @@ describe('POST /auth/token/decode', function () {
   it('should properly decode a valid token', function (done) {
     // first create the token
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send({
         username: 'test-user',
         password: 'test-password'
@@ -142,7 +142,7 @@ describe('POST /auth/token/decode', function () {
         var token = res.body.data.token;
 
         superagent
-          .post(ASSETS.authURI + '/auth/token/decode')
+          .post(ASSETS.accountURI + '/auth/token/decode')
           .send({
             token: token
           })

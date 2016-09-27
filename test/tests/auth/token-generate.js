@@ -29,7 +29,7 @@ describe('POST /auth/token/decode', function () {
         };
 
         ASSETS.accountApp = hAccount(options);
-        ASSETS.authURI = 'http://localhost:4000';
+        ASSETS.accountURI = 'http://localhost:4000';
 
         return aux.startServer(4000, ASSETS.accountApp);
       })
@@ -41,7 +41,7 @@ describe('POST /auth/token/decode', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -56,7 +56,7 @@ describe('POST /auth/token/decode', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.authURI + '/users')
+            .post(ASSETS.accountURI + '/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -87,7 +87,7 @@ describe('POST /auth/token/decode', function () {
 
   it('should require username', function (done) {
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send({
         username: undefined,
         password: 'test-password'
@@ -106,7 +106,7 @@ describe('POST /auth/token/decode', function () {
 
   it('should require password', function (done) {
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send({
         username: 'test-user',
         password: undefined
@@ -125,7 +125,7 @@ describe('POST /auth/token/decode', function () {
 
   it('should not generate a token if credentials are not valid', function (done) {
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send({
         username: 'test-user',
         password: 'wrong-password'
@@ -143,7 +143,7 @@ describe('POST /auth/token/decode', function () {
 
   it('should respond with the exact same error code if the username is not found', function (done) {
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send({
         username: 'wrong-user',
         password: 'wrong-password'
@@ -161,7 +161,7 @@ describe('POST /auth/token/decode', function () {
 
   it('should generate a JWT given the right credentials', function (done) {
     superagent
-      .post(ASSETS.authURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/auth/token/generate')
       .send({
         username: 'test-user',
         password: 'test-password'

@@ -109,7 +109,7 @@ describe('emailVerificationCtrl', function () {
     it('should be possible to verify the user account with the creation verification request', function () {
 
       // rather long sequence
-      this.timeout(4000);
+      this.timeout(10000);
 
       var _userVerificationCode;
       var _user;
