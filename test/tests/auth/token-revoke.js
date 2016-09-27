@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 const jwt        = require('jsonwebtoken');
 
 // auxiliary
@@ -21,18 +20,21 @@ describe('POST /auth/token/decode', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
         ASSETS.authURI = 'http://localhost:4000';
 
-        return aux.startServer(4000, ASSETS.authApp);
+        return aux.startServer(4000, ASSETS.accountApp);
+      })
+      .then(() => {
+        return ASSETS.accountApp.ready;
       })
       .then(() => {
         // create 2 users

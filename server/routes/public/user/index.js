@@ -10,7 +10,7 @@ module.exports = function (app, options) {
     bodyParser.json(),
     function (req, res, next) {
 
-      app.controllers.user.create(req.body)
+      app.controllers.account.create(req.body)
         .then((createdUser) => {
 
           var msg = app.format.item(createdUser, USER_DATA);
@@ -25,7 +25,7 @@ module.exports = function (app, options) {
     app.middleware.authenticate,
     function (req, res, next) {
 
-      app.controllers.user.getByUsername(req.params.username)
+      app.controllers.account.getByUsername(req.params.username)
         .then((user) => {
           // check that the authenticated user
           // is the one that the request refers to
@@ -46,14 +46,14 @@ module.exports = function (app, options) {
     app.middleware.authenticate,
     function (req, res, next) {
 
-      app.controllers.user.getByUsername(req.params.username)
+      app.controllers.account.getByUsername(req.params.username)
         .then((user) => {
           // check that the authenticated user
           // is the one that the request refers to
           if (req.token.sub !== user._id) {
             return Bluebird.reject(new app.errors.Unauthorized());
           } else {
-            return app.controllers.user.delete(req.params.username);
+            return app.controllers.account.delete(req.params.username);
           }
         })
         .then((deletedUserData) => {
