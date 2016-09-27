@@ -18,7 +18,7 @@ module.exports = function (gulp) {
   gulp.task('javascript:client', function () {
     // set up the browserify instance on a task basis
     var b = browserify({
-      entries: './client/index.js',
+      entries: './client/browser/index.js',
       // debug: true,
       // defining transforms here will avoid crashing your stream
       transform: [],
@@ -32,7 +32,7 @@ module.exports = function (gulp) {
         gutil.log('Browserify Error', err);
         this.emit('end')
       })
-      .pipe(source('h-auth-client.js'))
+      .pipe(source('h-account-client.js'))
       .pipe(buffer())
       .pipe(gulpUglify())
       // calculate size before writing source maps
@@ -45,7 +45,7 @@ module.exports = function (gulp) {
 
   gulp.task('javascript:client-ui', function () {
     var b = browserify({
-      entries: './client/ui/dialog/index.js',
+      entries: './client/browser/ui/dialog/index.js',
       transform: [brfs],
 
       // standalone global object for main module
@@ -57,7 +57,7 @@ module.exports = function (gulp) {
         gutil.log('Browserify Error', err);
         this.emit('end');
       })
-      .pipe(source('h-auth-dialog.js'))
+      .pipe(source('h-account-dialog.js'))
       .pipe(buffer())
       .pipe(gulpSize({
         title: 'javascript:client',

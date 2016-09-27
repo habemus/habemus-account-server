@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.HAuthClient = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.HAuthDialog = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
  * Light version that only decodes the token's Payload
  * @param  {String|JWT} token
@@ -14,39 +14,14 @@ exports.decodeJWTPayload = function (token) {
 
   return JSON.parse(atob(payload));
 };
+
+/**
+ * Regular expression that matches a trailing forward slash (/)
+ * @type {RegExp}
+ */
+exports.TRAILING_SLASH_RE = /\/$/;
+
 },{}],2:[function(require,module,exports){
-const util = require('util');
-
-var errors = require('../shared/errors');
-
-const HAuthError = errors.HAuthError;
-
-/**
- * Client errors
- */
-
-/**
- * Happens whenever the user is not logged in
- * @param {String} message
- */
-function NotLoggedIn(message) {
-  HAuthError.call(this, message);
-}
-util.inherits(NotLoggedIn, HAuthError);
-NotLoggedIn.prototype.name = 'NotLoggedIn';
-exports.NotLoggedIn = NotLoggedIn;
-
-/**
- * Happens whenever the user has cancelled any action.
- * @param {String} message
- */
-function UserCancelled(message) {
-  HAuthError.call(this, message);
-}
-util.inherits(UserCancelled, HAuthError);
-UserCancelled.prototype.name = 'UserCancelled';
-exports.UserCancelled = UserCancelled;
-},{"../shared/errors":16,"util":15}],3:[function(require,module,exports){
 // native
 const util         = require('util');
 const EventEmitter = require('events');
@@ -60,21 +35,20 @@ const TRAILING_SLASH_RE = /\/$/;
 const LOGGED_IN  = 'logged_in';
 const LOGGED_OUT = 'logged_out';
 
-const errors = require('./errors');
-const aux    = require('./auxiliary');
+const errors = require('../errors');
+const aux    = require('../auxiliary');
 
 /**
  * Auth client constructor
  * @param {Object} options
  */
-function AuthClient(options) {
+function HAccountClient(options) {
 
   if (!options.serverURI) { throw new TypeError('serverURI is required'); }
 
-  this.serverURI = TRAILING_SLASH_RE.test(options.serverURI) ?
-    options.serverURI : options.serverURI + '/';
+  this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
 
-  this.localStoragePrefix = options.localStoragePrefix || 'h_auth_';
+  this.localStoragePrefix = options.localStoragePrefix || 'h_account_';
 
   /**
    * Indicates the status of the current user.
@@ -92,21 +66,21 @@ function AuthClient(options) {
   this.getCurrentUser();
 }
 
-util.inherits(AuthClient, EventEmitter);
+util.inherits(HAccountClient, EventEmitter);
 
-AuthClient.prototype.constants = {
+HAccountClient.prototype.constants = {
   LOGGED_IN: LOGGED_IN,
   LOGGED_OUT: LOGGED_OUT
 };
 
 // static properties
-AuthClient.errors = errors;
+HAccountClient.errors = errors;
 
 /**
  * Loads the auth token from the browser's localstorage
  * @return {String|Boolean}
  */
-AuthClient.prototype.getAuthToken = function () {
+HAccountClient.prototype.getAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   return window.localStorage.getItem(tokenStorageKey) || false;
@@ -120,7 +94,7 @@ AuthClient.prototype.getAuthToken = function () {
  *         - immediatelyLogIn
  * @return {Promise->userData}         
  */
-AuthClient.prototype.signUp = function (username, password, email, options) {
+HAccountClient.prototype.signUp = function (username, password, email, options) {
   if (!username) {
     return Bluebird.reject(new errors.InvalidOption(
       'username',
@@ -150,7 +124,7 @@ AuthClient.prototype.signUp = function (username, password, email, options) {
   return new Bluebird(function (resolve, reject) {
 
     superagent
-      .post(this.serverURI + 'users')
+      .post(this.serverURI + '/users')
       .send({
         username: username,
         password: password,
@@ -190,7 +164,7 @@ AuthClient.prototype.signUp = function (username, password, email, options) {
  * @param  {Object} options
  * @return {Promise->userData}        
  */
-AuthClient.prototype.getCurrentUser = function (options) {
+HAccountClient.prototype.getCurrentUser = function (options) {
 
   return new Bluebird(function (resolve, reject) {
 
@@ -198,7 +172,7 @@ AuthClient.prototype.getCurrentUser = function (options) {
 
     if (!token) {
       this._setAuthStatus(LOGGED_OUT);
-      reject(new AuthClient.errors.NotLoggedIn());
+      reject(new HAccountClient.errors.NotLoggedIn());
     } else {
 
       // check if there is a cached version of the userData
@@ -211,7 +185,7 @@ AuthClient.prototype.getCurrentUser = function (options) {
         var tokenData = aux.decodeJWTPayload(token);
 
         superagent
-          .get(this.serverURI + 'user/' + tokenData.username)
+          .get(this.serverURI + '/user/' + tokenData.username)
           .set({
             'Authorization': 'Bearer ' + token
           })
@@ -243,12 +217,12 @@ AuthClient.prototype.getCurrentUser = function (options) {
  * @param  {String} password
  * @return {Promise -> userData}         
  */
-AuthClient.prototype.logIn = function (username, password) {
+HAccountClient.prototype.logIn = function (username, password) {
 
   return new Bluebird(function (resolve, reject) {
 
     superagent
-      .post(this.serverURI + 'auth/token/generate')
+      .post(this.serverURI + '/auth/token/generate')
       .send({
         username: username,
         password: password
@@ -287,7 +261,7 @@ AuthClient.prototype.logIn = function (username, password) {
  * Logs currently logged in user out.
  * @return {Promise}
  */
-AuthClient.prototype.logOut = function () {
+HAccountClient.prototype.logOut = function () {
 
   return new Bluebird(function (resolve, reject) {
 
@@ -302,7 +276,7 @@ AuthClient.prototype.logOut = function () {
     delete this._cachedUser;
 
     superagent
-      .post(this.serverURI + 'auth/token/revoke')
+      .post(this.serverURI + '/auth/token/revoke')
       .set('Authorization', 'Bearer ' + token)
       .end(function (err, res) {
         if (err) {
@@ -327,7 +301,7 @@ AuthClient.prototype.logOut = function () {
  * @private
  * @param  {String} token
  */
-AuthClient.prototype._saveAuthToken = function (token) {
+HAccountClient.prototype._saveAuthToken = function (token) {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.setItem(tokenStorageKey, token);
@@ -337,7 +311,7 @@ AuthClient.prototype._saveAuthToken = function (token) {
  * Deletes the token from the browser's localstorage
  * @private
  */
-AuthClient.prototype._destroyAuthToken = function () {
+HAccountClient.prototype._destroyAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.removeItem(tokenStorageKey);
@@ -347,7 +321,7 @@ AuthClient.prototype._destroyAuthToken = function () {
  * Changes the authentication status and emits `auth-status-change` event
  * if the auth-status has effectively been changed by the new value setting.
  */
-AuthClient.prototype._setAuthStatus = function (status) {
+HAccountClient.prototype._setAuthStatus = function (status) {
 
   var hasChanged = (this.status !== status);
 
@@ -358,9 +332,472 @@ AuthClient.prototype._setAuthStatus = function (status) {
   }
 };
 
-module.exports = AuthClient;
+module.exports = HAccountClient;
 
-},{"./auxiliary":1,"./errors":2,"bluebird":4,"events":6,"superagent":10,"util":15}],4:[function(require,module,exports){
+},{"../auxiliary":1,"../errors":5,"bluebird":6,"events":10,"superagent":14,"util":19}],3:[function(require,module,exports){
+// internal dependencies
+const errors = require('../../../errors');
+
+function _focusAndSelectAll(input) {
+  input.focus();
+  input.select();
+}
+
+exports.setupSelector = function (dialog) {
+  /**
+   * Toggling the action the modal shows
+   */
+  var actionSelector = dialog.element.querySelector('#h-auth-action-selector');
+  actionSelector.addEventListener('click', function (e) {
+    var target = e.target;
+
+    var state = target.getAttribute('data-value');
+
+    if (state) {
+      dialog.model.set('state', state);
+    }
+  });
+
+  /**
+   * Auto focus
+   */
+  dialog.model.on('change:state', function () {
+    var state = dialog.model.get('state');
+
+    if (state === 'signup' || state === 'login') {
+
+      var focusInput = dialog.element.querySelector(
+        '[data-state~="' + state + '"] [autofocus]');
+
+      // set the focus in a timeout, to prevent browser
+      // default behaviors.
+      // TODO: study this better, focus and autofocus is a bit hard
+      // to reason about
+      setTimeout(function () {
+        _focusAndSelectAll(focusInput);
+      }, 100);
+    }
+  })
+};
+
+exports.setupLoginForm = function (dialog) {
+  /**
+   * Login form submission
+   */
+  var loginForm  = dialog.element.querySelector('#h-auth-login');
+  var loginUsername = loginForm.querySelector('[name="username"]');
+  var loginPassword = loginForm.querySelector('[name="password"]');
+
+  var loginErrorMessage = loginForm.querySelector('[data-state="login-error"]');
+
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var username = loginUsername.value;
+    var password = loginPassword.value;
+
+    // set the dialog to login-loading mode
+    dialog.model.set('state', 'login-loading');
+
+    dialog.auth
+      .logIn(username, password)
+      .then(function (user) {
+
+        dialog.resolve(user);
+        dialog.close();
+
+      }, function (err) {
+
+        dialog.model.set('state', 'login-error');
+
+        if (err.name === 'InvalidCredentials') {
+          loginErrorMessage.innerHTML = 'InvalidCredentials';
+
+          _focusAndSelectAll(loginPassword);
+        } else {
+          loginErrorMessage.innerHTML = 'Unknown log in error';
+        }
+      });
+
+  });
+};
+
+exports.setupSignupForm = function (dialog) {
+  // elements
+  var signupForm = dialog.element.querySelector('#h-auth-signup');
+  var signupUsername = signupForm.querySelector('[name="username"]');
+  var signupEmail    = signupForm.querySelector('[name="email"]');
+  var signupPassword = signupForm.querySelector('[name="password"]');
+  var signupPasswordConfirm = signupForm.querySelector('[name="password-confirm"]');
+
+  var signupSuccess = dialog.element.querySelector('#h-auth-signup [data-state="signup-success"]');
+  var signupErrorMessage   = dialog.element.querySelector('#h-auth-signup [data-state="signup-error"]');
+
+  var _user;
+
+  signupForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var username = signupUsername.value;
+    var email    = signupEmail.value;
+    var password = signupPassword.value;
+    var passwordConfirm = signupPasswordConfirm.value;
+
+    if (password !== passwordConfirm) {
+      dialog.model.set('state', 'signup-error');
+
+      signupErrorMessage.innerHTML = 'Passwords do not match';
+
+      _focusAndSelectAll(signupPasswordConfirm);
+      return;
+    }
+
+    // set the dialog to signup-loading mode
+    dialog.model.set('state', 'signup-loading');
+
+    dialog.auth
+      .signUp(username, password, email, {
+        // signup and immediately logIn after signUp
+        immediatelyLogIn: true,
+      })
+      .then(function (user) {
+
+        dialog.model.set('state', 'signup-success');
+
+        // resolve the promise
+        dialog.resolve(user);
+
+      }, function (err) {
+
+        dialog.model.set('state', 'signup-error');
+
+        if (err.name === 'UsernameTaken') {
+
+          signupErrorMessage.innerHTML = 'UsernameTaken';
+
+        } else if (err.name) {
+          
+          signupErrorMessage.innerHTML = 'EmailTaken';
+
+        } else {
+          signupErrorMessage.innerHTML = 'Unknown sign up error';
+        }
+      });
+
+  });
+};
+
+exports.closeButtons = function (dialog) {
+  dialog.element.addEventListener('click', function (e) {
+    var target = e.target;
+
+    var action = target.getAttribute('data-action');
+
+    switch (action) {
+      case 'close':
+        dialog.close();
+        break;
+      case 'cancel':
+        dialog.reject(new errors.UserCancelled('Action cancelled by the user.'));
+        dialog.close();
+        break;
+    }
+  });
+};
+
+},{"../../../errors":5}],4:[function(require,module,exports){
+// native
+
+const util = require('util');
+
+// third-party
+const dialogPolyfill = require('dialog-polyfill');
+const DataObj = require('data-obj');
+const Bluebird = require('bluebird');
+
+// internal
+const HAuthClient = require('../../');
+const dialogTemplate = "<dialog id=\"h-auth-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-auth-action-selector\">\n    <button data-state=\"login login-error\" data-value=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-value=\"signup\">\n      Sign up\n    </button>\n  </section>\n\n  <section data-state=\"login login-error\">\n    <form id=\"h-auth-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n  </section>\n\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-auth-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-auth-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n\n</dialog>";
+const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-auth-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-auth-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-auth-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-auth-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-auth-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-auth-dialog section[data-state] {\n  display: none;\n}\n\n#h-auth-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-auth-action-selector button {\n\n}\n\n#h-auth-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-auth-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-auth-dialog form label > * {\n  display: block;\n}\n\n#h-auth-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-auth-dialog form input[type=\"text\"],\n#h-auth-dialog form input[type=\"email\"],\n#h-auth-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-auth-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
+// according to brfs docs, require.resolve() may be used as well
+// https://www.npmjs.com/package/brfs#methods
+const dialogPolyfillStyles = "dialog {\n  position: absolute;\n  left: 0; right: 0;\n  width: -moz-fit-content;\n  width: -webkit-fit-content;\n  width: fit-content;\n  height: -moz-fit-content;\n  height: -webkit-fit-content;\n  height: fit-content;\n  margin: auto;\n  border: solid;\n  padding: 1em;\n  background: white;\n  color: black;\n  display: none;\n}\n\ndialog[open] {\n  display: block;\n}\n\ndialog + .backdrop {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n  background: rgba(0,0,0,0.1);\n}\n\n/* for small devices, modal dialogs go full-screen */\n@media screen and (max-width: 540px) {\n  dialog[_polyfill_modal] {  /* TODO: implement */\n    top: 0;\n    width: auto;\n    margin: 1em;\n  }\n}\n\n._dialog_overlay {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n}"
+const domSetup = require('./dom-setup');
+const errors = require('../../../errors');
+
+// constants
+const ACTIVE_CLASS = 'active';
+
+const STATE_LOGIN = 'login';
+const STATE_SIGNUP = 'signup';
+const STATE_SIGNUP_SUCCESS = 'signup-succes';
+
+/**
+ * Auxiliary function that inserts a CSSString into the document
+ * @param  {String} CSSString
+ */
+function _insertCSS(CSSString) {
+  var style = document.createElement('style');
+  style.innerHTML = CSSString;
+
+  document.querySelector('head').appendChild(style);
+}
+/**
+ * Global bootstrap: insert styles
+ */
+_insertCSS(dialogStyles);
+_insertCSS(dialogPolyfillStyles);
+
+/**
+ * Parses an html string and returns the corresponding DOM Element
+ * @param  {String} string
+ * @return {DOMElement}
+ */
+function _domElementFromString(string) {
+
+  // a very hacky way of doing this
+  var wrapper = document.createElement('div');
+
+  wrapper.innerHTML = string;
+
+  return wrapper.firstChild;
+}
+
+function _toArray(obj) {
+  return Array.prototype.slice.call(obj, 0);
+}
+
+/**
+ * Auth Dialog constructor
+ * @param {Object} options
+ */
+function HAuthDialog(options) {
+
+  // instantiate auth client if none is passed as option
+  this.auth = options.auth || new HAuthClient(options);
+
+  /**
+   * Data store for the modal model
+   * @type {DataObj}
+   */
+  this.model = new DataObj();
+
+  /**
+   * Instantiate a DOM Element for the dialog
+   * @type {DOMElement}
+   */
+  var element = _domElementFromString(dialogTemplate);
+  this.element = element;
+
+  this._domSetup();
+
+  // dialog-wide state
+  this.model.on('change:state', function (data) {
+    var currentState = data.newValue;
+
+    // toggle elements 'active' class
+    _toArray(element.querySelectorAll('[data-state]')).forEach(function (el) {
+      var elStates = el.getAttribute('data-state') || '';
+      elStates = elStates.split(/\s+/g);
+
+      var isActive = elStates.indexOf(currentState) !== -1;
+
+      el.classList.toggle(ACTIVE_CLASS, isActive);
+    });
+  });
+
+  // capture esk key cancel
+  this.element.addEventListener('cancel', function (e) {
+    this.reject(new errors.UserCancelled('escKey'));
+  }.bind(this));
+
+  dialogPolyfill.registerDialog(this.element);
+
+  /**
+   * Optionally attach to an element
+   */
+  if (options.containerElement) {
+    this.attach(options.containerElement);
+  }
+}
+
+HAuthDialog.prototype._domSetup = function () {
+  domSetup.setupSelector(this);
+  domSetup.setupLoginForm(this);
+  domSetup.setupSignupForm(this);
+  domSetup.closeButtons(this);
+};
+
+/**
+ * Attaches the dialog element to the DOM within a given
+ * containerElement
+ * @param  {DOM Element} containerElement
+ */
+HAuthDialog.prototype.attach = function (containerElement) {
+  this.containerElement = containerElement;
+
+  containerElement.appendChild(this.element);
+};
+
+/**
+ * Shows the modal on the login ui
+ * @return {Bluebird}
+ */
+HAuthDialog.prototype.logIn = function () {
+  this.model.set({
+    state: STATE_LOGIN,
+    action: 'logIn',
+  });
+
+  this.element.showModal();
+
+  return new Bluebird(function (resolve, reject) {
+    this._logInResolve = resolve;
+    this._logInReject  = reject;
+  }.bind(this));
+};
+
+/**
+ * Shows the dialog on the signup ui
+ * @return {Bluebird}
+ */
+HAuthDialog.prototype.signUp = function () {
+  this.model.set({
+    state: STATE_SIGNUP,
+    action: 'signUp'
+  });
+
+  this.element.showModal();
+
+  return new Bluebird(function (resolve, reject) {
+    this._signUpResolve = resolve;
+    this._signUpReject  = reject;
+  }.bind(this));
+};
+
+HAuthDialog.prototype.clear = function () {
+
+  _toArray(this.element.querySelectorAll('input')).forEach(function (el) {
+    el.value = '';
+  });
+
+  delete this._logInResolve;
+  delete this._logInReject;
+  delete this._signUpResolve;
+  delete this._signUpReject;
+};
+
+HAuthDialog.prototype.resolve = function (user) {
+  var action = this.model.get('action');
+
+  if (action === 'logIn') {
+    this._logInResolve(user);
+  } else if (action === 'signUp') {
+    this._signUpResolve(user);
+  }
+};
+
+HAuthDialog.prototype.reject = function (error) {
+  var action = this.model.get('action');
+
+  if (action === 'logIn') {
+    this._logInReject(error);
+  } else if (action === 'signUp') {
+    this._signUpReject(error);
+  }
+};
+
+/**
+ * Closes the dialog
+ */
+HAuthDialog.prototype.close = function () {
+  this.clear();
+  this.element.close();
+};
+
+/**
+ * Ensures there is a logged in user and returns it.
+ * If the user is not logged in, pops the login dialog.
+ * Otherwise, simply returns the current user.
+ * @return {UserData}
+ */
+HAuthDialog.prototype.ensureUser = function () {
+
+  var self = this;
+
+  return self.auth.getCurrentUser()
+    .then(function (user) {
+      return user;
+    })
+    .catch(function (err) {
+      if (err.name === 'NotLoggedIn') {
+
+        return self.logIn()
+          .then(function () {
+            // the method MUST return the current user
+            return self.auth.getCurrentUser();
+          });
+
+      } else {
+        // normally reject original error
+        return Bluebird.reject(err);
+      }
+    });
+
+};
+
+// AuthClient proxy methods
+const AUTH_PROXY_METHODS = [
+  'getAuthToken',
+  'getCurrentUser',
+  'logOut',
+];
+
+AUTH_PROXY_METHODS.forEach(function (method) {
+  HAuthDialog.prototype[method] = function () {
+    var args = Array.prototype.slice.call(arguments, 0);
+
+    return this.auth[method].apply(this.auth, args);
+  };
+});
+
+module.exports = HAuthDialog;
+
+},{"../../":2,"../../../errors":5,"./dom-setup":3,"bluebird":6,"data-obj":8,"dialog-polyfill":9,"util":19}],5:[function(require,module,exports){
+const util = require('util');
+
+var errors = require('../shared/errors');
+
+const HAuthError = errors.HAuthError;
+
+/**
+ * Client errors
+ */
+
+/**
+ * Happens whenever the user is not logged in
+ * @param {String} message
+ */
+function NotLoggedIn(message) {
+  HAuthError.call(this, message);
+}
+util.inherits(NotLoggedIn, HAuthError);
+NotLoggedIn.prototype.name = 'NotLoggedIn';
+exports.NotLoggedIn = NotLoggedIn;
+
+/**
+ * Happens whenever the user has cancelled any action.
+ * @param {String} message
+ */
+function UserCancelled(message) {
+  HAuthError.call(this, message);
+}
+util.inherits(UserCancelled, HAuthError);
+UserCancelled.prototype.name = 'UserCancelled';
+exports.UserCancelled = UserCancelled;
+},{"../shared/errors":20,"util":19}],6:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -5839,7 +6276,7 @@ module.exports = ret;
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":8}],5:[function(require,module,exports){
+},{"_process":12}],7:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -6004,7 +6441,621 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+// native dependencies
+const util         = require('util');
+const EventEmitter = require('events');
+
+function _iterateObject(obj, cb) {
+  for (var prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+      cb(obj[prop], prop);
+    }
+  }
+}
+
+function DataModel() {
+  /**
+   * Object on which the in-memory version of data is stored.
+   */
+  this.data = {};
+}
+util.inherits(DataModel, EventEmitter);
+
+/**
+ * Sets key and emits required events
+ */
+DataModel.prototype.set = function () {
+  
+  if (typeof arguments[0] === 'object') {
+    
+    _iterateObject(arguments[0], function (newValue, key) {
+      
+      var oldValue = this.data[key];
+      
+      // only set if value has changed
+      if (newValue !== oldValue) {
+        
+        var changeData = {
+          key: key,
+          oldValue: oldValue,
+          newValue: newValue
+        };
+        
+        this.data[key] = newValue;
+        this.emit('change', changeData);
+        this.emit('change:' + key, changeData);
+      }
+      
+    }.bind(this));
+    
+  } else {
+    var key = arguments[0];
+    var newValue = arguments[1];
+    var oldValue = this.data[key];
+    
+    // only set if value has changed
+    if (newValue !== oldValue) {
+      
+      var changeData = {
+        key: key,
+        oldValue: oldValue,
+        newValue: newValue
+      };
+      
+      this.data[key] = newValue;
+      this.emit('change', changeData);
+      this.emit('change:' + key, changeData);
+    }
+  }
+};
+
+/**
+ * Deletes the key
+ */
+DataModel.prototype.unset = function (key) {
+  
+  var oldValue = this.data[key];
+  
+  if (oldValue !== undefined) {
+    var changeData = {
+      key: key,
+      oldValue: oldValue,
+      newValue: undefined
+    };
+    
+    delete this.data[key];
+    this.emit('change', changeData);
+    this.emit('change:' + key, changeData);
+  }
+};
+
+/**
+ * Retrieves the value for a given key
+ */
+DataModel.prototype.get = function (key) {
+  return this.data[key];
+};
+
+module.exports = DataModel;
+
+},{"events":10,"util":19}],9:[function(require,module,exports){
+(function() {
+
+  var supportCustomEvent = window.CustomEvent;
+  if (!supportCustomEvent || typeof supportCustomEvent == 'object') {
+    supportCustomEvent = function CustomEvent(event, x) {
+      x = x || {};
+      var ev = document.createEvent('CustomEvent');
+      ev.initCustomEvent(event, !!x.bubbles, !!x.cancelable, x.detail || null);
+      return ev;
+    };
+    supportCustomEvent.prototype = window.Event.prototype;
+  }
+
+  /**
+   * Finds the nearest <dialog> from the passed element.
+   *
+   * @param {Element} el to search from
+   * @return {HTMLDialogElement} dialog found
+   */
+  function findNearestDialog(el) {
+    while (el) {
+      if (el.nodeName.toUpperCase() == 'DIALOG') {
+        return /** @type {HTMLDialogElement} */ (el);
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  /**
+   * Blur the specified element, as long as it's not the HTML body element.
+   * This works around an IE9/10 bug - blurring the body causes Windows to
+   * blur the whole application.
+   *
+   * @param {Element} el to blur
+   */
+  function safeBlur(el) {
+    if (el && el.blur && el != document.body) {
+      el.blur();
+    }
+  }
+
+  /**
+   * @param {!NodeList} nodeList to search
+   * @param {Node} node to find
+   * @return {boolean} whether node is inside nodeList
+   */
+  function inNodeList(nodeList, node) {
+    for (var i = 0; i < nodeList.length; ++i) {
+      if (nodeList[i] == node) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @param {!HTMLDialogElement} dialog to upgrade
+   * @constructor
+   */
+  function dialogPolyfillInfo(dialog) {
+    this.dialog_ = dialog;
+    this.replacedStyleTop_ = false;
+    this.openAsModal_ = false;
+
+    // Set a11y role. Browsers that support dialog implicitly know this already.
+    if (!dialog.hasAttribute('role')) {
+      dialog.setAttribute('role', 'dialog');
+    }
+
+    dialog.show = this.show.bind(this);
+    dialog.showModal = this.showModal.bind(this);
+    dialog.close = this.close.bind(this);
+
+    if (!('returnValue' in dialog)) {
+      dialog.returnValue = '';
+    }
+
+    this.maybeHideModal = this.maybeHideModal.bind(this);
+    if ('MutationObserver' in window) {
+      // IE11+, most other browsers.
+      var mo = new MutationObserver(this.maybeHideModal);
+      mo.observe(dialog, { attributes: true, attributeFilter: ['open'] });
+    } else {
+      dialog.addEventListener('DOMAttrModified', this.maybeHideModal);
+    }
+    // Note that the DOM is observed inside DialogManager while any dialog
+    // is being displayed as a modal, to catch modal removal from the DOM.
+
+    Object.defineProperty(dialog, 'open', {
+      set: this.setOpen.bind(this),
+      get: dialog.hasAttribute.bind(dialog, 'open')
+    });
+
+    this.backdrop_ = document.createElement('div');
+    this.backdrop_.className = 'backdrop';
+    this.backdropClick_ = this.backdropClick_.bind(this);
+  }
+
+  dialogPolyfillInfo.prototype = {
+
+    get dialog() {
+      return this.dialog_;
+    },
+
+    /**
+     * Maybe remove this dialog from the modal top layer. This is called when
+     * a modal dialog may no longer be tenable, e.g., when the dialog is no
+     * longer open or is no longer part of the DOM.
+     */
+    maybeHideModal: function() {
+      if (!this.openAsModal_) { return; }
+      if (this.dialog_.hasAttribute('open') &&
+          document.body.contains(this.dialog_)) { return; }
+
+      this.openAsModal_ = false;
+      this.dialog_.style.zIndex = '';
+
+      // This won't match the native <dialog> exactly because if the user set
+      // top on a centered polyfill dialog, that top gets thrown away when the
+      // dialog is closed. Not sure it's possible to polyfill this perfectly.
+      if (this.replacedStyleTop_) {
+        this.dialog_.style.top = '';
+        this.replacedStyleTop_ = false;
+      }
+
+      // Optimistically clear the modal part of this <dialog>.
+      this.backdrop_.removeEventListener('click', this.backdropClick_);
+      if (this.backdrop_.parentElement) {
+        this.backdrop_.parentElement.removeChild(this.backdrop_);
+      }
+      dialogPolyfill.dm.removeDialog(this);
+    },
+
+    /**
+     * @param {boolean} value whether to open or close this dialog
+     */
+    setOpen: function(value) {
+      if (value) {
+        this.dialog_.hasAttribute('open') || this.dialog_.setAttribute('open', '');
+      } else {
+        this.dialog_.removeAttribute('open');
+        this.maybeHideModal();  // nb. redundant with MutationObserver
+      }
+    },
+
+    /**
+     * Handles clicks on the fake .backdrop element, redirecting them as if
+     * they were on the dialog itself.
+     *
+     * @param {!Event} e to redirect
+     */
+    backdropClick_: function(e) {
+      var redirectedEvent = document.createEvent('MouseEvents');
+      redirectedEvent.initMouseEvent(e.type, e.bubbles, e.cancelable, window,
+          e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey,
+          e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
+      this.dialog_.dispatchEvent(redirectedEvent);
+      e.stopPropagation();
+    },
+
+    /**
+     * Sets the zIndex for the backdrop and dialog.
+     *
+     * @param {number} backdropZ
+     * @param {number} dialogZ
+     */
+    updateZIndex: function(backdropZ, dialogZ) {
+      this.backdrop_.style.zIndex = backdropZ;
+      this.dialog_.style.zIndex = dialogZ;
+    },
+
+    /**
+     * Shows the dialog. This is idempotent and will always succeed.
+     */
+    show: function() {
+      this.setOpen(true);
+    },
+
+    /**
+     * Show this dialog modally.
+     */
+    showModal: function() {
+      if (this.dialog_.hasAttribute('open')) {
+        throw new Error('Failed to execute \'showModal\' on dialog: The element is already open, and therefore cannot be opened modally.');
+      }
+      if (!document.body.contains(this.dialog_)) {
+        throw new Error('Failed to execute \'showModal\' on dialog: The element is not in a Document.');
+      }
+      if (!dialogPolyfill.dm.pushDialog(this)) {
+        throw new Error('Failed to execute \'showModal\' on dialog: There are too many open modal dialogs.');
+      }
+      this.show();
+      this.openAsModal_ = true;
+
+      // Optionally center vertically, relative to the current viewport.
+      if (dialogPolyfill.needsCentering(this.dialog_)) {
+        dialogPolyfill.reposition(this.dialog_);
+        this.replacedStyleTop_ = true;
+      } else {
+        this.replacedStyleTop_ = false;
+      }
+
+      // Insert backdrop.
+      this.backdrop_.addEventListener('click', this.backdropClick_);
+      this.dialog_.parentNode.insertBefore(this.backdrop_,
+          this.dialog_.nextSibling);
+
+      // Find element with `autofocus` attribute or first form control.
+      var target = this.dialog_.querySelector('[autofocus]:not([disabled])');
+      if (!target) {
+        // TODO: technically this is 'any focusable area'
+        var opts = ['button', 'input', 'keygen', 'select', 'textarea'];
+        var query = opts.map(function(el) {
+          return el + ':not([disabled])';
+        }).join(', ');
+        target = this.dialog_.querySelector(query);
+      }
+      safeBlur(document.activeElement);
+      target && target.focus();
+    },
+
+    /**
+     * Closes this HTMLDialogElement. This is optional vs clearing the open
+     * attribute, however this fires a 'close' event.
+     *
+     * @param {string=} opt_returnValue to use as the returnValue
+     */
+    close: function(opt_returnValue) {
+      if (!this.dialog_.hasAttribute('open')) {
+        throw new Error('Failed to execute \'close\' on dialog: The element does not have an \'open\' attribute, and therefore cannot be closed.');
+      }
+      this.setOpen(false);
+
+      // Leave returnValue untouched in case it was set directly on the element
+      if (opt_returnValue !== undefined) {
+        this.dialog_.returnValue = opt_returnValue;
+      }
+
+      // Triggering "close" event for any attached listeners on the <dialog>.
+      var closeEvent = new supportCustomEvent('close', {
+        bubbles: false,
+        cancelable: false
+      });
+      this.dialog_.dispatchEvent(closeEvent);
+    }
+
+  };
+
+  var dialogPolyfill = {};
+
+  dialogPolyfill.reposition = function(element) {
+    var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+    var topValue = scrollTop + (window.innerHeight - element.offsetHeight) / 2;
+    element.style.top = Math.max(scrollTop, topValue) + 'px';
+  };
+
+  dialogPolyfill.isInlinePositionSetByStylesheet = function(element) {
+    for (var i = 0; i < document.styleSheets.length; ++i) {
+      var styleSheet = document.styleSheets[i];
+      var cssRules = null;
+      // Some browsers throw on cssRules.
+      try {
+        cssRules = styleSheet.cssRules;
+      } catch (e) {}
+      if (!cssRules)
+        continue;
+      for (var j = 0; j < cssRules.length; ++j) {
+        var rule = cssRules[j];
+        var selectedNodes = null;
+        // Ignore errors on invalid selector texts.
+        try {
+          selectedNodes = document.querySelectorAll(rule.selectorText);
+        } catch(e) {}
+        if (!selectedNodes || !inNodeList(selectedNodes, element))
+          continue;
+        var cssTop = rule.style.getPropertyValue('top');
+        var cssBottom = rule.style.getPropertyValue('bottom');
+        if ((cssTop && cssTop != 'auto') || (cssBottom && cssBottom != 'auto'))
+          return true;
+      }
+    }
+    return false;
+  };
+
+  dialogPolyfill.needsCentering = function(dialog) {
+    var computedStyle = window.getComputedStyle(dialog);
+    if (computedStyle.position != 'absolute') {
+      return false;
+    }
+
+    // We must determine whether the top/bottom specified value is non-auto.  In
+    // WebKit/Blink, checking computedStyle.top == 'auto' is sufficient, but
+    // Firefox returns the used value. So we do this crazy thing instead: check
+    // the inline style and then go through CSS rules.
+    if ((dialog.style.top != 'auto' && dialog.style.top != '') ||
+        (dialog.style.bottom != 'auto' && dialog.style.bottom != ''))
+      return false;
+    return !dialogPolyfill.isInlinePositionSetByStylesheet(dialog);
+  };
+
+  /**
+   * @param {!Element} element to force upgrade
+   */
+  dialogPolyfill.forceRegisterDialog = function(element) {
+    if (element.showModal) {
+      console.warn('This browser already supports <dialog>, the polyfill ' +
+          'may not work correctly', element);
+    }
+    if (element.nodeName.toUpperCase() != 'DIALOG') {
+      throw new Error('Failed to register dialog: The element is not a dialog.');
+    }
+    new dialogPolyfillInfo(/** @type {!HTMLDialogElement} */ (element));
+  };
+
+  /**
+   * @param {!Element} element to upgrade
+   */
+  dialogPolyfill.registerDialog = function(element) {
+    if (element.showModal) {
+      console.warn('Can\'t upgrade <dialog>: already supported', element);
+    } else {
+      dialogPolyfill.forceRegisterDialog(element);
+    }
+  };
+
+  /**
+   * @constructor
+   */
+  dialogPolyfill.DialogManager = function() {
+    /** @type {!Array<!dialogPolyfillInfo>} */
+    this.pendingDialogStack = [];
+
+    // The overlay is used to simulate how a modal dialog blocks the document.
+    // The blocking dialog is positioned on top of the overlay, and the rest of
+    // the dialogs on the pending dialog stack are positioned below it. In the
+    // actual implementation, the modal dialog stacking is controlled by the
+    // top layer, where z-index has no effect.
+    this.overlay = document.createElement('div');
+    this.overlay.className = '_dialog_overlay';
+    this.overlay.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    this.handleKey_ = this.handleKey_.bind(this);
+    this.handleFocus_ = this.handleFocus_.bind(this);
+    this.handleRemove_ = this.handleRemove_.bind(this);
+
+    this.zIndexLow_ = 100000;
+    this.zIndexHigh_ = 100000 + 150;
+  };
+
+  /**
+   * @return {Element} the top HTML dialog element, if any
+   */
+  dialogPolyfill.DialogManager.prototype.topDialogElement = function() {
+    if (this.pendingDialogStack.length) {
+      var t = this.pendingDialogStack[this.pendingDialogStack.length - 1];
+      return t.dialog;
+    }
+    return null;
+  };
+
+  /**
+   * Called on the first modal dialog being shown. Adds the overlay and related
+   * handlers.
+   */
+  dialogPolyfill.DialogManager.prototype.blockDocument = function() {
+    document.body.appendChild(this.overlay);
+    document.body.addEventListener('focus', this.handleFocus_, true);
+    document.addEventListener('keydown', this.handleKey_);
+    document.addEventListener('DOMNodeRemoved', this.handleRemove_);
+  };
+
+  /**
+   * Called on the first modal dialog being removed, i.e., when no more modal
+   * dialogs are visible.
+   */
+  dialogPolyfill.DialogManager.prototype.unblockDocument = function() {
+    document.body.removeChild(this.overlay);
+    document.body.removeEventListener('focus', this.handleFocus_, true);
+    document.removeEventListener('keydown', this.handleKey_);
+    document.removeEventListener('DOMNodeRemoved', this.handleRemove_);
+  };
+
+  dialogPolyfill.DialogManager.prototype.updateStacking = function() {
+    var zIndex = this.zIndexLow_;
+
+    for (var i = 0; i < this.pendingDialogStack.length; i++) {
+      if (i == this.pendingDialogStack.length - 1) {
+        this.overlay.style.zIndex = zIndex++;
+      }
+      this.pendingDialogStack[i].updateZIndex(zIndex++, zIndex++);
+    }
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleFocus_ = function(event) {
+    var candidate = findNearestDialog(/** @type {Element} */ (event.target));
+    if (candidate != this.topDialogElement()) {
+      event.preventDefault();
+      event.stopPropagation();
+      safeBlur(/** @type {Element} */ (event.target));
+      // TODO: Focus on the browser chrome (aka document) or the dialog itself
+      // depending on the tab direction.
+      return false;
+    }
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleKey_ = function(event) {
+    if (event.keyCode == 27) {
+      event.preventDefault();
+      event.stopPropagation();
+      var cancelEvent = new supportCustomEvent('cancel', {
+        bubbles: false,
+        cancelable: true
+      });
+      var dialog = this.topDialogElement();
+      if (dialog.dispatchEvent(cancelEvent)) {
+        dialog.close();
+      }
+    }
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleRemove_ = function(event) {
+    if (event.target.nodeName.toUpperCase() != 'DIALOG') { return; }
+
+    var dialog = /** @type {HTMLDialogElement} */ (event.target);
+    if (!dialog.open) { return; }
+
+    // Find a dialogPolyfillInfo which matches the removed <dialog>.
+    this.pendingDialogStack.some(function(dpi) {
+      if (dpi.dialog == dialog) {
+        // This call will clear the dialogPolyfillInfo on this DialogManager
+        // as a side effect.
+        dpi.maybeHideModal();
+        return true;
+      }
+    });
+  };
+
+  /**
+   * @param {!dialogPolyfillInfo} dpi
+   * @return {boolean} whether the dialog was allowed
+   */
+  dialogPolyfill.DialogManager.prototype.pushDialog = function(dpi) {
+    var allowed = (this.zIndexHigh_ - this.zIndexLow_) / 2 - 1;
+    if (this.pendingDialogStack.length >= allowed) {
+      return false;
+    }
+    this.pendingDialogStack.push(dpi);
+    if (this.pendingDialogStack.length == 1) {
+      this.blockDocument();
+    }
+    this.updateStacking();
+    return true;
+  };
+
+  /**
+   * @param {dialogPolyfillInfo} dpi
+   */
+  dialogPolyfill.DialogManager.prototype.removeDialog = function(dpi) {
+    var index = this.pendingDialogStack.indexOf(dpi);
+    if (index == -1) { return; }
+
+    this.pendingDialogStack.splice(index, 1);
+    this.updateStacking();
+    if (this.pendingDialogStack.length == 0) {
+      this.unblockDocument();
+    }
+  };
+
+  dialogPolyfill.dm = new dialogPolyfill.DialogManager();
+
+  /**
+   * Global form 'dialog' method handler. Closes a dialog correctly on submit
+   * and possibly sets its return value.
+   */
+  document.addEventListener('submit', function(ev) {
+    var target = ev.target;
+    if (!target || !target.hasAttribute('method')) { return; }
+    if (target.getAttribute('method').toLowerCase() != 'dialog') { return; }
+    ev.preventDefault();
+
+    var dialog = findNearestDialog(/** @type {Element} */ (ev.target));
+    if (!dialog) { return; }
+
+    // FIXME: The original event doesn't contain the element used to submit the
+    // form (if any). Look in some possible places.
+    var returnValue;
+    var cands = [document.activeElement, ev.explicitOriginalTarget];
+    var els = ['BUTTON', 'INPUT'];
+    cands.some(function(cand) {
+      if (cand && cand.form == ev.target && els.indexOf(cand.nodeName.toUpperCase()) != -1) {
+        returnValue = cand.value;
+        return true;
+      }
+    });
+    dialog.close(returnValue);
+  }, true);
+
+  dialogPolyfill['forceRegisterDialog'] = dialogPolyfill.forceRegisterDialog;
+  dialogPolyfill['registerDialog'] = dialogPolyfill.registerDialog;
+
+  if (typeof module === 'object' && typeof module['exports'] === 'object') {
+    // CommonJS support
+    module['exports'] = dialogPolyfill;
+  } else if (typeof define === 'function' && 'amd' in define) {
+    // AMD support
+    define(function() { return dialogPolyfill; });
+  } else {
+    // all others
+    window['dialogPolyfill'] = dialogPolyfill;
+  }
+})();
+
+},{}],10:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6308,7 +7359,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -6333,7 +7384,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],8:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -6454,7 +7505,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],9:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -6479,7 +7530,7 @@ module.exports = function(arr, fn, initial){
   
   return curr;
 };
-},{}],10:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -7558,7 +8609,7 @@ request.put = function(url, data, fn){
   return req;
 };
 
-},{"./is-object":11,"./request":13,"./request-base":12,"emitter":5,"reduce":9}],11:[function(require,module,exports){
+},{"./is-object":15,"./request":17,"./request-base":16,"emitter":7,"reduce":13}],15:[function(require,module,exports){
 /**
  * Check if `obj` is an object.
  *
@@ -7573,7 +8624,7 @@ function isObject(obj) {
 
 module.exports = isObject;
 
-},{}],12:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * Module of mixed-in functions shared between node and client code
  */
@@ -7741,7 +8792,7 @@ exports.field = function(name, val) {
   return this;
 };
 
-},{"./is-object":11}],13:[function(require,module,exports){
+},{"./is-object":15}],17:[function(require,module,exports){
 // The node and browser modules expose versions of this with the
 // appropriate constructor function bound as first argument
 /**
@@ -7775,14 +8826,14 @@ function request(RequestConstructor, method, url) {
 
 module.exports = request;
 
-},{}],14:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -8372,7 +9423,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":14,"_process":8,"inherits":7}],16:[function(require,module,exports){
+},{"./support/isBuffer":18,"_process":12,"inherits":11}],20:[function(require,module,exports){
 // native
 const util = require('util');
 
@@ -8380,14 +9431,14 @@ const util = require('util');
  * Base message constructor
  * @param {String} message
  */
-function HAuthError(message) {
+function HAccountError(message) {
   Error.call(this);
 
   this.message = message;
 };
-util.inherits(HAuthError, Error);
-HAuthError.prototype.name = 'HAuthError';
-exports.HAuthError = HAuthError;
+util.inherits(HAccountError, Error);
+HAccountError.prototype.name = 'HAccountError';
+exports.HAccountError = HAccountError;
 
 /**
  * Happens when any required option is invalid
@@ -8400,12 +9451,12 @@ exports.HAuthError = HAuthError;
  * @param {String} message
  */
 function InvalidOption(option, kind, message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 
   this.option = option;
   this.kind = kind;
 }
-util.inherits(InvalidOption, HAuthError);
+util.inherits(InvalidOption, HAccountError);
 InvalidOption.prototype.name = 'InvalidOption';
 exports.InvalidOption = InvalidOption;
 
@@ -8416,11 +9467,11 @@ exports.InvalidOption = InvalidOption;
  * @param {String} username
  */
 function UsernameTaken(username) {
-  HAuthError.call(this, 'Username ' + username + ' is already taken');
+  HAccountError.call(this, 'Username ' + username + ' is already taken');
 
   this.username = username;
 }
-util.inherits(UsernameTaken, HAuthError);
+util.inherits(UsernameTaken, HAccountError);
 UsernameTaken.prototype.name = 'UsernameTaken';
 exports.UsernameTaken = UsernameTaken;
 
@@ -8431,11 +9482,11 @@ exports.UsernameTaken = UsernameTaken;
  * @param {String} email
  */
 function EmailTaken(email) {
-  HAuthError.call(this, 'Username ' + email + ' is already taken');
+  HAccountError.call(this, 'Username ' + email + ' is already taken');
 
   this.email = email;
 }
-util.inherits(EmailTaken, HAuthError);
+util.inherits(EmailTaken, HAccountError);
 EmailTaken.prototype.name = 'EmailTaken';
 exports.EmailTaken = EmailTaken;
 
@@ -8443,11 +9494,11 @@ exports.EmailTaken = EmailTaken;
  * Happens whenever the credentials provided are not valid
  */
 function InvalidCredentials(detail) {
-  HAuthError.call(this, 'The credentials provided are invalid');
+  HAccountError.call(this, 'The credentials provided are invalid');
 
   this.detail = detail;
 }
-util.inherits(InvalidCredentials, HAuthError);
+util.inherits(InvalidCredentials, HAccountError);
 InvalidCredentials.prototype.name = 'InvalidCredentials';
 exports.InvalidCredentials = InvalidCredentials;
 
@@ -8457,9 +9508,9 @@ exports.InvalidCredentials = InvalidCredentials;
  * @param {String} message [description]
  */
 function Unauthorized(message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 }
-util.inherits(Unauthorized, HAuthError);
+util.inherits(Unauthorized, HAccountError);
 Unauthorized.prototype.name = 'Unauthorized';
 exports.Unauthorized = Unauthorized;
 
@@ -8467,9 +9518,9 @@ exports.Unauthorized = Unauthorized;
  * Happens whenever the token provided for auth is invalid
  */
 function InvalidToken() {
-  HAuthError.call(this, 'Token provided is invalid');
+  HAccountError.call(this, 'Token provided is invalid');
 }
-util.inherits(InvalidToken, HAuthError);
+util.inherits(InvalidToken, HAccountError);
 InvalidToken.prototype.name = 'InvalidToken';
 exports.InvalidToken = InvalidToken;
 
@@ -8480,13 +9531,13 @@ exports.InvalidToken = InvalidToken;
  * @param {String} message
  */
 function UserNotFound(identifier, message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 
   this.identifier = identifier;
 }
-util.inherits(UserNotFound, HAuthError);
+util.inherits(UserNotFound, HAccountError);
 UserNotFound.prototype.name = 'UserNotFound';
 exports.UserNotFound = UserNotFound;
 
-},{"util":15}]},{},[3])(3)
+},{"util":19}]},{},[4])(4)
 });

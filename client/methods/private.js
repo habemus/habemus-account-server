@@ -1,5 +1,14 @@
+// third-party
+const Bluebird   = require('bluebird');
+const superagent = require('superagent');
 
-
+/**
+ * Decodes a token and verifies its validity.
+ * 
+ * @param  {String} authToken Private authentication token
+ * @param  {String} token     Token to be decoded
+ * @return {Bluebird -> tokenData}
+ */
 exports.decodeToken = function (authToken, token) {
 
   return new Bluebird((resolve, reject) => {

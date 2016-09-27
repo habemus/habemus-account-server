@@ -18,14 +18,13 @@ const aux    = require('../auxiliary');
  * Auth client constructor
  * @param {Object} options
  */
-function AuthClient(options) {
+function HAccountClient(options) {
 
   if (!options.serverURI) { throw new TypeError('serverURI is required'); }
 
-  this.serverURI = TRAILING_SLASH_RE.test(options.serverURI) ?
-    options.serverURI : options.serverURI + '/';
+  this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
 
-  this.localStoragePrefix = options.localStoragePrefix || 'h_auth_';
+  this.localStoragePrefix = options.localStoragePrefix || 'h_account_';
 
   /**
    * Indicates the status of the current user.
@@ -43,21 +42,21 @@ function AuthClient(options) {
   this.getCurrentUser();
 }
 
-util.inherits(AuthClient, EventEmitter);
+util.inherits(HAccountClient, EventEmitter);
 
-AuthClient.prototype.constants = {
+HAccountClient.prototype.constants = {
   LOGGED_IN: LOGGED_IN,
   LOGGED_OUT: LOGGED_OUT
 };
 
 // static properties
-AuthClient.errors = errors;
+HAccountClient.errors = errors;
 
 /**
  * Loads the auth token from the browser's localstorage
  * @return {String|Boolean}
  */
-AuthClient.prototype.getAuthToken = function () {
+HAccountClient.prototype.getAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   return window.localStorage.getItem(tokenStorageKey) || false;
@@ -71,7 +70,7 @@ AuthClient.prototype.getAuthToken = function () {
  *         - immediatelyLogIn
  * @return {Promise->userData}         
  */
-AuthClient.prototype.signUp = function (username, password, email, options) {
+HAccountClient.prototype.signUp = function (username, password, email, options) {
   if (!username) {
     return Bluebird.reject(new errors.InvalidOption(
       'username',
@@ -101,7 +100,7 @@ AuthClient.prototype.signUp = function (username, password, email, options) {
   return new Bluebird(function (resolve, reject) {
 
     superagent
-      .post(this.serverURI + 'users')
+      .post(this.serverURI + '/users')
       .send({
         username: username,
         password: password,
@@ -141,7 +140,7 @@ AuthClient.prototype.signUp = function (username, password, email, options) {
  * @param  {Object} options
  * @return {Promise->userData}        
  */
-AuthClient.prototype.getCurrentUser = function (options) {
+HAccountClient.prototype.getCurrentUser = function (options) {
 
   return new Bluebird(function (resolve, reject) {
 
@@ -149,7 +148,7 @@ AuthClient.prototype.getCurrentUser = function (options) {
 
     if (!token) {
       this._setAuthStatus(LOGGED_OUT);
-      reject(new AuthClient.errors.NotLoggedIn());
+      reject(new HAccountClient.errors.NotLoggedIn());
     } else {
 
       // check if there is a cached version of the userData
@@ -162,7 +161,7 @@ AuthClient.prototype.getCurrentUser = function (options) {
         var tokenData = aux.decodeJWTPayload(token);
 
         superagent
-          .get(this.serverURI + 'user/' + tokenData.username)
+          .get(this.serverURI + '/user/' + tokenData.username)
           .set({
             'Authorization': 'Bearer ' + token
           })
@@ -194,12 +193,12 @@ AuthClient.prototype.getCurrentUser = function (options) {
  * @param  {String} password
  * @return {Promise -> userData}         
  */
-AuthClient.prototype.logIn = function (username, password) {
+HAccountClient.prototype.logIn = function (username, password) {
 
   return new Bluebird(function (resolve, reject) {
 
     superagent
-      .post(this.serverURI + 'auth/token/generate')
+      .post(this.serverURI + '/auth/token/generate')
       .send({
         username: username,
         password: password
@@ -238,7 +237,7 @@ AuthClient.prototype.logIn = function (username, password) {
  * Logs currently logged in user out.
  * @return {Promise}
  */
-AuthClient.prototype.logOut = function () {
+HAccountClient.prototype.logOut = function () {
 
   return new Bluebird(function (resolve, reject) {
 
@@ -253,7 +252,7 @@ AuthClient.prototype.logOut = function () {
     delete this._cachedUser;
 
     superagent
-      .post(this.serverURI + 'auth/token/revoke')
+      .post(this.serverURI + '/auth/token/revoke')
       .set('Authorization', 'Bearer ' + token)
       .end(function (err, res) {
         if (err) {
@@ -278,7 +277,7 @@ AuthClient.prototype.logOut = function () {
  * @private
  * @param  {String} token
  */
-AuthClient.prototype._saveAuthToken = function (token) {
+HAccountClient.prototype._saveAuthToken = function (token) {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.setItem(tokenStorageKey, token);
@@ -288,7 +287,7 @@ AuthClient.prototype._saveAuthToken = function (token) {
  * Deletes the token from the browser's localstorage
  * @private
  */
-AuthClient.prototype._destroyAuthToken = function () {
+HAccountClient.prototype._destroyAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.removeItem(tokenStorageKey);
@@ -298,7 +297,7 @@ AuthClient.prototype._destroyAuthToken = function () {
  * Changes the authentication status and emits `auth-status-change` event
  * if the auth-status has effectively been changed by the new value setting.
  */
-AuthClient.prototype._setAuthStatus = function (status) {
+HAccountClient.prototype._setAuthStatus = function (status) {
 
   var hasChanged = (this.status !== status);
 
@@ -309,4 +308,4 @@ AuthClient.prototype._setAuthStatus = function (status) {
   }
 };
 
-module.exports = AuthClient;
+module.exports = HAccountClient;
