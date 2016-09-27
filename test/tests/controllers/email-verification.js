@@ -1,8 +1,8 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 const Bluebird = require('bluebird');
+const mockery  = require('mockery');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -15,21 +15,44 @@ function _wait(ms) {
   });
 }
 
-describe('accVerificationCtrl', function () {
+describe('emailVerificationCtrl', function () {
 
   var ASSETS;
 
-  beforeEach(function (done) {
-    aux.setup()
+  beforeEach(function () {
+
+    mockery.enable({
+      warnOnReplace: false,
+      warnOnUnregistered: false,
+      useCleanCache: true
+    });
+
+    // mock h-mailer/client
+    function HMailerClient() {}
+    HMailerClient.prototype.connect = function () {
+      return Bluebird.resolve();
+    };
+    HMailerClient.prototype.schedule = function (data) {
+
+      // make the mail schedule data available
+      // on ASSETS object
+      ASSETS.scheduledMail = data;
+
+      // console.log('SCHEDULED MAIL:', data);
+    };
+    HMailerClient.prototype.on = function () {};
+    mockery.registerMock('h-mailer/client', HMailerClient);
+
+    return aux.setup()
       .then((assets) => {
         ASSETS = assets;
 
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
@@ -41,13 +64,12 @@ describe('accVerificationCtrl', function () {
 
         ASSETS.accountApp = hAccount(options);
 
-        done();
-      })
-      .catch(done);
+        return ASSETS.accountApp.ready;
+      });
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    return aux.teardown();
   });
 
   describe('verification request created upon user creation', function () {
@@ -56,7 +78,7 @@ describe('accVerificationCtrl', function () {
 
       var _user;
 
-      return ASSETS.accountApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password',
@@ -64,7 +86,7 @@ describe('accVerificationCtrl', function () {
       .then((user) => {
         _user = user;
         // check that a protected action request was created
-        return Bluebird.resolve(ASSETS.accountApp.models.ProtectedActionRequest.find());
+        return Bluebird.resolve(ASSETS.accountApp.services.mongoose.models.ProtectedActionRequest.find());
       })
       .then((protectedActionRequests) => {
         protectedActionRequests.length.should.equal(1);
@@ -72,7 +94,7 @@ describe('accVerificationCtrl', function () {
         var req = protectedActionRequests[0];
 
         req.userId.should.equal(_user._id);
-        req.action.should.equal('verifyUserAccount');
+        req.action.should.equal('verifyAccountEmail');
         req.lockId.should.be.instanceof(String);
         req.expiresAt.should.be.instanceof(Date);
         req.createdAt.should.be.instanceof(Date);
@@ -90,20 +112,7 @@ describe('accVerificationCtrl', function () {
       var _userVerificationCode;
       var _user;
 
-      // TODO: this is very hacky
-      var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
-
-      // add listener to the log event of the node mailer stub transport
-      ASSETS.options.nodemailerTransport.on('log', function (log) {
-        if (log.type === 'message') {
-          var match = log.message.match(confirmationCodeRe);
-          if (match) {
-            _userVerificationCode = match[1];
-          }
-        }
-      });
-
-      return ASSETS.accountApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password'
@@ -116,14 +125,18 @@ describe('accVerificationCtrl', function () {
         return _wait(1000);
       })
       .then(() => {
-        return ASSETS.accountApp.controllers.accVerification
-          .verifyUserAccount('test-user', _userVerificationCode);
+
+        // user verification code should be availabe at the assets object
+        _userVerificationCode = ASSETS.scheduledMail.data.code;
+
+        return ASSETS.accountApp.controllers.emailVerification
+          .verifyAccountEmail('test-user', _userVerificationCode);
       })
       .then(() => {
         // check that the user's status
         // and the projetectedActionRequest have been updated
-        var userQuery = ASSETS.accountApp.controllers.user.getByUsername('test-user');
-        var actionRequestQuery = ASSETS.accountApp.models.ProtectedActionRequest.find();
+        var userQuery = ASSETS.accountApp.controllers.account.getByUsername('test-user');
+        var actionRequestQuery = ASSETS.accountApp.services.mongoose.models.ProtectedActionRequest.find();
 
         return Bluebird.all([
           userQuery,
@@ -134,28 +147,25 @@ describe('accVerificationCtrl', function () {
         var user = results[0];
         var actionRequests = results[1];
 
-        user.status.value.should.equal('active');
+        user.status.value.should.equal('verified');
 
         actionRequests.length.should.equal(1);
         actionRequests[0].status.value.should.equal('fulfilled');
       })
-      .catch((err) => {
-        console.log(err);
-        return Bluebird.reject(err);
-      });
+      .catch(aux.logError);
 
     });
 
     it('should fail verification upon providing wrong code', function () {
 
-      return ASSETS.accountApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password'
       })
       .then((user) => {
-        return ASSETS.accountApp.controllers.accVerification
-          .verifyUserAccount('test-user', 'WRONG_CODE');
+        return ASSETS.accountApp.controllers.emailVerification
+          .verifyAccountEmail('test-user', 'WRONG_CODE');
       })
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -168,20 +178,7 @@ describe('accVerificationCtrl', function () {
       var _userVerificationCode;
       var _user;
 
-      // TODO: this is very hacky
-      var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
-
-      // add listener to the log event of the node mailer stub transport
-      ASSETS.options.nodemailerTransport.on('log', function (log) {
-        if (log.type === 'message') {
-          var match = log.message.match(confirmationCodeRe);
-          if (match) {
-            _userVerificationCode = match[1];
-          }
-        }
-      });
-
-      return ASSETS.accountApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password'
@@ -194,8 +191,11 @@ describe('accVerificationCtrl', function () {
         return _wait(1000);
       })
       .then(() => {
-        return ASSETS.accountApp.controllers.accVerification
-          .verifyUserAccount('wrong-username', _userVerificationCode);
+
+        _userVerificationCode = ASSETS.scheduledMail.data.code;
+
+        return ASSETS.accountApp.controllers.emailVerification
+          .verifyAccountEmail('wrong-username', _userVerificationCode);
       })
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -208,13 +208,13 @@ describe('accVerificationCtrl', function () {
 
     beforeEach(function () {
 
-      var create1 = ASSETS.accountApp.controllers.user.create({
+      var create1 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-1',
         email: 'test-user-1@dev.habem.us',
         password: 'test-password'
       });
 
-      var create2 = ASSETS.accountApp.controllers.user.create({
+      var create2 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-2',
         email: 'test-user-2@dev.habem.us',
         password: 'test-password'
@@ -231,19 +231,19 @@ describe('accVerificationCtrl', function () {
 
     it('should create a new verification request for the userId and cancel the previously created', function () {
       return ASSETS.accountApp.controllers
-        .accVerification.createRequest(ASSETS.users[0].username)
+        .emailVerification.createRequest(ASSETS.users[0].username)
         .then(() => {
           arguments.length.should.equal(0);
 
           // verify the request was created
-          return ASSETS.accountApp.models.ProtectedActionRequest.find({
-            action: 'verifyUserAccount',
+          return ASSETS.accountApp.services.mongoose.models.ProtectedActionRequest.find({
+            action: 'verifyAccountEmail',
             userId: ASSETS.users[0]._id
           });
         })
         .then((protectedActionRequests) => {
           // there should be 2 action requests, one of them
-          // cancelled and another active
+          // cancelled and another verified
           protectedActionRequests.length.should.equal(2);
 
           protectedActionRequests.filter(function (req) {
@@ -261,12 +261,12 @@ describe('accVerificationCtrl', function () {
           // create yet another request, and check that previously generated requests
           // were cancelled
           return ASSETS.accountApp.controllers
-            .accVerification.createRequest(ASSETS.users[0].username);
+            .emailVerification.createRequest(ASSETS.users[0].username);
         })
         .then(() => {
 
-          return ASSETS.accountApp.models.ProtectedActionRequest.find({
-            action: 'verifyUserAccount',
+          return ASSETS.accountApp.services.mongoose.models.ProtectedActionRequest.find({
+            action: 'verifyAccountEmail',
             userId: ASSETS.users[0]._id
           })
         })
@@ -288,7 +288,7 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should require username as the first argument', function () {
-      return ASSETS.accountApp.controllers.accVerification.createRequest(undefined)
+      return ASSETS.accountApp.controllers.emailVerification.createRequest(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('username')
@@ -297,17 +297,17 @@ describe('accVerificationCtrl', function () {
     });
   });
 
-  describe('verifyUserAccount(username, confirmationCode)', function () {
+  describe('verifyAccountEmail(username, confirmationCode)', function () {
 
     beforeEach(function () {
 
-      var create1 = ASSETS.accountApp.controllers.user.create({
+      var create1 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-1',
         email: 'test-user-1@dev.habem.us',
         password: 'test-password'
       });
 
-      var create2 = ASSETS.accountApp.controllers.user.create({
+      var create2 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-2',
         email: 'test-user-2@dev.habem.us',
         password: 'test-password'
@@ -327,22 +327,9 @@ describe('accVerificationCtrl', function () {
       var _userVerificationCode;
       var _user;
 
-      // TODO: this is very hacky
-      var confirmationCodeRe = /Your confirmation code is (.*?)\s/;
-
-      // add listener to the log event of the node mailer stub transport
-      ASSETS.options.nodemailerTransport.on('log', function (log) {
-        if (log.type === 'message') {
-          var match = log.message.match(confirmationCodeRe);
-          if (match) {
-            _userVerificationCode = match[1];
-          }
-        }
-      });
-
       // create a new user so that we can
       // sniff the verification code
-      return ASSETS.accountApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.account.create({
         username: 'test-user-3',
         email: 'test-user-3@dev.habem.us',
         password: 'test-password'
@@ -355,14 +342,17 @@ describe('accVerificationCtrl', function () {
         return _wait(1000);
       })
       .then(() => {
-        return ASSETS.accountApp.controllers.accVerification
-          .verifyUserAccount(_user.username, _userVerificationCode);
+
+        _userVerificationCode = ASSETS.scheduledMail.data.code;
+
+        return ASSETS.accountApp.controllers.emailVerification
+          .verifyAccountEmail(_user.username, _userVerificationCode);
       })
       .then(() => {
         // refetch user's data
         // and query for protectedActionRequests
-        var userQuery = ASSETS.accountApp.controllers.user.getByUsername(_user.username);
-        var actionRequestQuery = ASSETS.accountApp.models.ProtectedActionRequest.find({
+        var userQuery = ASSETS.accountApp.controllers.account.getByUsername(_user.username);
+        var actionRequestQuery = ASSETS.accountApp.services.mongoose.models.ProtectedActionRequest.find({
           userId: _user._id
         });
 
@@ -375,7 +365,7 @@ describe('accVerificationCtrl', function () {
         var user = results[0];
         var actionRequests = results[1];
 
-        user.status.value.should.equal('active');
+        user.status.value.should.equal('verified');
         actionRequests.length.should.equal(1);
 
         actionRequests[0].status.value.should.equal('fulfilled');
@@ -383,7 +373,7 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should require username as the first argument', function () {
-      return ASSETS.accountApp.controllers.accVerification.verifyUserAccount(undefined, 'CODE')
+      return ASSETS.accountApp.controllers.emailVerification.verifyAccountEmail(undefined, 'CODE')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('username')
@@ -392,7 +382,7 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should require confirmationCode as the second argument', function () {
-      return ASSETS.accountApp.controllers.accVerification.verifyUserAccount('username', undefined)
+      return ASSETS.accountApp.controllers.emailVerification.verifyAccountEmail('username', undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('confirmationCode')
