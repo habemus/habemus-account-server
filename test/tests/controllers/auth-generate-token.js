@@ -30,20 +30,20 @@ describe('authCtrl.generateToken(username|email, password)', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
 
         // create some users
-        var create1 = ASSETS.authApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password-1',
         });
-        var create2 = ASSETS.authApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password-2',
         });
-        var create3 = ASSETS.authApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password-3',
@@ -70,7 +70,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should generate the token using username and password', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-user-1', 'test-password-1')
       .then((token) => {
         token.should.be.instanceof(String);
@@ -78,7 +78,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should generate the token using email and password', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-1@dev.habem.us', 'test-password-1')
       .then((token) => {
         token.should.be.instanceof(String);
@@ -86,7 +86,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should error upon using wrong password for username', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-user-1', 'test-password-2')
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -94,7 +94,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should error upon using wrong password for email', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-1@dev.habem.us', 'test-password-2')
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -102,7 +102,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should error upon using username that does not exist', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('random-username', 'test-password-1')
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -110,7 +110,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should error upon using email that does not exist', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('fake@email.com', 'test-password-1')
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidCredentials');
@@ -118,7 +118,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should require usernameOrEmail as the first argument', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken(undefined, 'test-password-1')
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidOption');
@@ -128,7 +128,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should require password as the second argument', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-user-1', undefined)
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidOption');
@@ -138,7 +138,7 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   });
 
   it('should generate a valid jwt token', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-user-3', 'test-password-3')
       .then((token) => {
         var decoded = jwt.decode(token);

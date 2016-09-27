@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 const Bluebird = require('bluebird');
 
 // auxiliary
@@ -9,40 +8,44 @@ const aux = require('../../auxiliary');
 
 const hAccount = require('../../../server');
 
-describe('userCtrl.delete(username)', function () {
+describe('accountCtrl.delete(username)', function () {
 
   var ASSETS;
 
-  beforeEach(function (done) {
-    aux.setup()
+  beforeEach(function () {
+    return aux.setup()
       .then((assets) => {
         ASSETS = assets;
 
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
+
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
 
         // create some users
-        var create1 = ASSETS.authApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password',
         });
-        var create2 = ASSETS.authApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password',
         });
-        var create3 = ASSETS.authApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password',
@@ -54,27 +57,22 @@ describe('userCtrl.delete(username)', function () {
           create3
         ]);
         
-      })
-      .then(() => {
-
-        done();
-      })
-      .catch(done);
+      });
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    return aux.teardown();
   });
 
-  it('should delete a user from the database', function () {
+  it('should delete an account from the database', function () {
 
-    return ASSETS.authApp.controllers.user.delete('test-user-2')
+    return ASSETS.accountApp.controllers.account.delete('test-user-2')
       .then(() => {
         arguments.length.should.equal(0);
 
         return new Promise((resolve, reject) => {
           ASSETS.db
-          .collection('users')
+          .collection('accounts')
           .find()
           .toArray((err, res) => {
             if (err) {
@@ -85,18 +83,18 @@ describe('userCtrl.delete(username)', function () {
           });
         })
       })
-      .then((users) => {
-        users.length.should.equal(2);
+      .then((accounts) => {
+        accounts.length.should.equal(2);
 
-        users.forEach((user) => {
-          user.username.should.not.equal('test-user-2');
+        accounts.forEach((account) => {
+          account.username.should.not.equal('test-user-2');
         });
       });
 
   });
 
   it('should require username as the first argument', function () {
-    return ASSETS.authApp.controllers.user.delete(undefined)
+    return ASSETS.accountApp.controllers.account.delete(undefined)
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidOption');
         err.option.should.equal('username');

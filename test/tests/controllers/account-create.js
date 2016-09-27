@@ -1,71 +1,70 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 
 // auxiliary
 const aux = require('../../auxiliary');
 
 const hAccount = require('../../../server');
 
-describe('userCtrl.create(userData)', function () {
+describe('accountCtrl.create(userData)', function () {
 
   var ASSETS;
 
-  beforeEach(function (done) {
-    aux.setup()
+  beforeEach(function () {
+    return aux.setup()
       .then((assets) => {
         ASSETS = assets;
 
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
 
-        done();
-      })
-      .catch(done);
+        return ASSETS.accountApp.ready;
+      });
   });
 
-  afterEach(function (done) {
+  afterEach(function () {
     this.timeout(4000);
-    aux.teardown().then(done).catch(done);
+    return aux.teardown();
   });
 
-  it('should create a user', function () {
+  it('should create an account', function () {
       
-    return ASSETS.authApp.controllers.user.create({
+    return ASSETS.accountApp.controllers.account.create({
       username: 'test-user',
       password: 'test-password',
       email: 'test-user@dev.habem.us',
     })
-    .then((user) => {
+    .then((account) => {
 
-      user.createdAt.should.be.instanceof(Date);
-      user.status.value.should.equal('unverified');
+      account.createdAt.should.be.instanceof(Date);
+      account.status.value.should.equal('unverified');
 
-      user.username.should.equal('test-user');
-      user.email.should.equal('test-user@dev.habem.us');
+      account.username.should.equal('test-user');
+      account.email.should.equal('test-user@dev.habem.us');
 
-      // rough test checking if the user's password is stored in the db
-      var pwdMatch = JSON.stringify(user).match(/test-password/);
+      // rough test checking if the account's password is stored in the db
+      var pwdMatch = JSON.stringify(account).match(/test-password/);
 
       if (pwdMatch) {
-        throw new Error('password found in user data');
+        throw new Error('password found in account data');
       }
-    });
+    })
+    .catch(aux.logError);
   });
 
   it('should require username', function () {
-    return ASSETS.authApp.controllers.user.create({
+    return ASSETS.accountApp.controllers.account.create({
       // username: 'test-user',
       password: 'test-password',
       email: 'test-user@dev.habem.us',
@@ -78,7 +77,7 @@ describe('userCtrl.create(userData)', function () {
   });
 
   it('should require a password', function () {
-    return ASSETS.authApp.controllers.user.create({
+    return ASSETS.accountApp.controllers.account.create({
       username: 'test-user',
       // password: 'test-password',
       email: 'test-user@dev.habem.us',
@@ -91,7 +90,7 @@ describe('userCtrl.create(userData)', function () {
   });
 
   it('should require an email', function () {
-    return ASSETS.authApp.controllers.user.create({
+    return ASSETS.accountApp.controllers.account.create({
       username: 'test-user',
       password: 'test-password',
       // email: 'test-user@dev.habem.us',
@@ -103,8 +102,8 @@ describe('userCtrl.create(userData)', function () {
     });
   });
 
-  it('should require a valid email email', function () {
-    return ASSETS.authApp.controllers.user.create({
+  it('should require a valid account email', function () {
+    return ASSETS.accountApp.controllers.account.create({
       username: 'test-user',
       password: 'test-password',
       email: 'not-an-email@',
@@ -118,13 +117,13 @@ describe('userCtrl.create(userData)', function () {
 
   it('should prevent creation of an account with duplicate username', function () {
       
-    return ASSETS.authApp.controllers.user.create({
+    return ASSETS.accountApp.controllers.account.create({
       username: 'test-user',
       password: 'test-password',
       email: 'test-user@dev.habem.us',
     })
-    .then((user) => {
-      return ASSETS.authApp.controllers.user.create({
+    .then((account) => {
+      return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         password: 'another-password',
         email: 'another-email-user@dev.habem.us',
@@ -138,13 +137,13 @@ describe('userCtrl.create(userData)', function () {
 
   it('should prevent creation of an account with duplicate email', function () {
       
-    return ASSETS.authApp.controllers.user.create({
+    return ASSETS.accountApp.controllers.account.create({
       username: 'test-user',
       password: 'test-password',
       email: 'test-user@dev.habem.us',
     })
-    .then((user) => {
-      return ASSETS.authApp.controllers.user.create({
+    .then((account) => {
+      return ASSETS.accountApp.controllers.account.create({
         username: 'another-user',
         password: 'another-password',
         email: 'test-user@dev.habem.us',

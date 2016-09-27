@@ -39,20 +39,20 @@ describe('protectedRequestCtrl', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
 
         // create some users
-        var create1 = ASSETS.authApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password',
         });
-        var create2 = ASSETS.authApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password',
         });
-        var create3 = ASSETS.authApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password',
@@ -79,7 +79,7 @@ describe('protectedRequestCtrl', function () {
 
   describe('create(userId, actionName, options)', function () {
     it('should require userId as the first argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .create(undefined, 'resetPassword')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -89,7 +89,7 @@ describe('protectedRequestCtrl', function () {
     });
 
     it('should require actionName as the second argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .create(uuid.v4(), undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -99,7 +99,7 @@ describe('protectedRequestCtrl', function () {
     });
 
     it('should require actionName to be either `resetPassword` or `verifyUserAccount`', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .create(uuid.v4(), 'someRandomAction')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -111,7 +111,7 @@ describe('protectedRequestCtrl', function () {
 
   describe('cancelUserRequests(userId, actionName, reason)', function () {
     it('should require userId as the first argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .cancelUserRequests(undefined, 'resetPassword', 'somereason')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -121,7 +121,7 @@ describe('protectedRequestCtrl', function () {
     });
 
     it('should require actionName as the second argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .cancelUserRequests(uuid.v4(), undefined, 'somereason')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -131,7 +131,7 @@ describe('protectedRequestCtrl', function () {
     });
 
     it('should require reason as third argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .cancelUserRequests(uuid.v4(), 'resetPassword', undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -143,7 +143,7 @@ describe('protectedRequestCtrl', function () {
 
   describe('verifyRequestConfirmationCode(userId, actionName, confirmationCode)', function () {
     it('should require userId as the first argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .verifyRequestConfirmationCode(undefined, 'resetPassword', 'CODE')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -153,7 +153,7 @@ describe('protectedRequestCtrl', function () {
     });
 
     it('should require actionName as the second argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .verifyRequestConfirmationCode(uuid.v4(), undefined, 'CODE')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -163,7 +163,7 @@ describe('protectedRequestCtrl', function () {
     });
 
     it('should require confirmationCode as third argument', function () {
-      return ASSETS.authApp.controllers.protectedRequest
+      return ASSETS.accountApp.controllers.protectedRequest
         .verifyRequestConfirmationCode(uuid.v4(), 'resetPassword', undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');

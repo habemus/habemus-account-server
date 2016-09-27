@@ -31,20 +31,20 @@ describe('authCtrl.decodeToken(token)', function () {
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
 
         // create some users
-        var create1 = ASSETS.authApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password-1',
         });
-        var create2 = ASSETS.authApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password-2',
         });
-        var create3 = ASSETS.authApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password-3',
@@ -71,10 +71,10 @@ describe('authCtrl.decodeToken(token)', function () {
   });
 
   it('should verify validity of a token and return its decoded contents', function () {
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .generateToken('test-user-1', 'test-password-1')
       .then((token) => {
-        return ASSETS.authApp.controllers.auth
+        return ASSETS.accountApp.controllers.auth
           .decodeToken(token);
       })
       .then((decoded) => {
@@ -100,7 +100,7 @@ describe('authCtrl.decodeToken(token)', function () {
       subject: uuid.v4(),
     });
 
-    return ASSETS.authApp.controllers.auth
+    return ASSETS.accountApp.controllers.auth
       .decodeToken(forgedToken)
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidToken');
@@ -108,7 +108,7 @@ describe('authCtrl.decodeToken(token)', function () {
   });
 
   it('should require the token to be passed as first argument', function () {
-    return ASSETS.authApp.controllers.auth.decodeToken(undefined)
+    return ASSETS.accountApp.controllers.auth.decodeToken(undefined)
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidOption');
         err.option.should.equal('token');

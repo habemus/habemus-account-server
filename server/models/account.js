@@ -107,7 +107,7 @@ module.exports = function (conn, app, options) {
   // statics
   accountSchema.statics.isEmail = isEmail;
 
-  var User = conn.model('User', accountSchema);
+  var Account = conn.model('Account', accountSchema);
   
-  return User;
+  return Account;
 };

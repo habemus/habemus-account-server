@@ -39,20 +39,20 @@ describe('pwdResetCtrl', function () {
         // the stub nodemailer instance events
         ASSETS.options = options;
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
 
         // create some users
-        var create1 = ASSETS.authApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password-1',
         });
-        var create2 = ASSETS.authApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password-2',
         });
-        var create3 = ASSETS.authApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.user.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password-3',
@@ -80,21 +80,21 @@ describe('pwdResetCtrl', function () {
 
   describe('createRequest(username)', function () {
     it('should create a `resetPassword` protectedActionRequest', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .createRequest('test-user-1')
         .then(() => {
           arguments.length.should.equal(0);
 
           // check that it is still possible to login
           // using old password
-          return ASSETS.authApp.controllers.auth
+          return ASSETS.accountApp.controllers.auth
             .generateToken('test-user-1', 'test-password-1');
         })
         .then((token) => {
           should(token).be.instanceof(String);
 
           // check that a protectedActionRequest database entry was registered
-          return ASSETS.authApp.models.ProtectedActionRequest.find({
+          return ASSETS.accountApp.models.ProtectedActionRequest.find({
             action: 'resetPassword',
             userId: ASSETS.users[0]._id,
           });
@@ -106,7 +106,7 @@ describe('pwdResetCtrl', function () {
     });
 
     it('should require username to be passed as first argument', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .createRequest(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -116,7 +116,7 @@ describe('pwdResetCtrl', function () {
     });
 
     it('should fail to create a request for a user that does not exist', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .createRequest('fake-user')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('UserNotFound');
@@ -146,23 +146,23 @@ describe('pwdResetCtrl', function () {
         }
       });
 
-      return ASSETS.authApp.controllers.pwdReset.createRequest('test-user-1')
+      return ASSETS.accountApp.controllers.pwdReset.createRequest('test-user-1')
         .then(() => {
           // wait 1000 just to ensure that _passwordResetCode is available
           return _wait(1000);
         })
         .then(() => {
-          return ASSETS.authApp.controllers.pwdReset
+          return ASSETS.accountApp.controllers.pwdReset
             .resetPassword('test-user-1', _passwordResetCode, 'new-test-user-1-password');
         })
         .then(() => {
           // generate auth token using new password
           // and query for protectedActionRequests
-          var genToken = ASSETS.authApp.controllers.auth.generateToken(
+          var genToken = ASSETS.accountApp.controllers.auth.generateToken(
             'test-user-1',
             'new-test-user-1-password'
           );
-          var actionRequestQuery = ASSETS.authApp.models.ProtectedActionRequest.find({
+          var actionRequestQuery = ASSETS.accountApp.models.ProtectedActionRequest.find({
             userId: ASSETS.users[0]._id,
             action: 'resetPassword',
           });
@@ -184,13 +184,13 @@ describe('pwdResetCtrl', function () {
     });
     
     it('should fail to reset the password if there is no corresponding request', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .resetPassword('test-user-1', '123456', 'new-password')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidCredentials');
 
           // login with original password
-          return ASSETS.authApp.controllers.auth.generateToken('test-user-1', 'test-password-1');
+          return ASSETS.accountApp.controllers.auth.generateToken('test-user-1', 'test-password-1');
         })
         .then((token) => {
           should(token).be.instanceof(String);
@@ -198,9 +198,9 @@ describe('pwdResetCtrl', function () {
     });
 
     it('should fail to reset the password if the confirmationCode is incorrect', function () {
-      return ASSETS.authApp.controllers.pwdReset.createRequest('test-user-1')
+      return ASSETS.accountApp.controllers.pwdReset.createRequest('test-user-1')
         .then(() => {
-          return ASSETS.authApp.controllers.pwdReset
+          return ASSETS.accountApp.controllers.pwdReset
             .resetPassword('test-user-1', 'obviously-wrong-code', 'new-1-password');
         })
         .then(aux.errorExpected, (err) => {
@@ -209,7 +209,7 @@ describe('pwdResetCtrl', function () {
           console.log(err);
 
           // login with original password
-          return ASSETS.authApp.controllers.auth
+          return ASSETS.accountApp.controllers.auth
             .generateToken('test-user-1', 'test-password-1');
         })
         .then((token) => {
@@ -218,7 +218,7 @@ describe('pwdResetCtrl', function () {
     });
 
     it('should require username to be passed as first argument', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .resetPassword(undefined, '123456', 'new-password')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -228,7 +228,7 @@ describe('pwdResetCtrl', function () {
     });
 
     it('should require confirmationCode to be passed as second argument', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .resetPassword('test-user-1', undefined, 'new-password')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
@@ -238,7 +238,7 @@ describe('pwdResetCtrl', function () {
     });
 
     it('should require password to be passed as third argument', function () {
-      return ASSETS.authApp.controllers.pwdReset
+      return ASSETS.accountApp.controllers.pwdReset
         .resetPassword('test-user-1', '123456', undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');

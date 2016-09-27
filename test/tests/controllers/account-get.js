@@ -1,7 +1,6 @@
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 const Bluebird = require('bluebird');
 
 // auxiliary
@@ -9,7 +8,7 @@ const aux = require('../../auxiliary');
 
 const hAccount = require('../../../server');
 
-describe('userCtrl `get` methods', function () {
+describe('accountCtrl `get` methods', function () {
 
   var ASSETS;
 
@@ -21,28 +20,32 @@ describe('userCtrl `get` methods', function () {
         var options = {
           apiVersion: '0.0.0',
           mongodbURI: assets.dbURI,
+          rabbitMQURI: assets.rabbitMQURI,
           secret: 'fake-secret',
 
-          nodemailerTransport: stubTransort(),
           fromEmail: 'from@dev.habem.us',
 
           host: 'http://localhost'
         };
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
+
+        return ASSETS.accountApp.ready;
+      })
+      .then(() => {
 
         // create some users
-        var create1 = ASSETS.authApp.controllers.user.create({
+        var create1 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password',
         });
-        var create2 = ASSETS.authApp.controllers.user.create({
+        var create2 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password',
         });
-        var create3 = ASSETS.authApp.controllers.user.create({
+        var create3 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password',
@@ -68,9 +71,9 @@ describe('userCtrl `get` methods', function () {
     aux.teardown().then(done).catch(done);
   });
 
-  describe('userCtrl.getByUsername(username)', function () {
+  describe('accountCtrl.getByUsername(username)', function () {
     it('should retrieve the user by its username', function () {
-      return ASSETS.authApp.controllers.user.getByUsername('test-user-1')
+      return ASSETS.accountApp.controllers.account.getByUsername('test-user-1')
         .then((user) => {
           user.username.should.equal('test-user-1');
           user.email.should.equal('test-1@dev.habem.us');
@@ -78,7 +81,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should return error if username does not exist', function () {
-      return ASSETS.authApp.controllers.user.getByUsername('fake-username')
+      return ASSETS.accountApp.controllers.account.getByUsername('fake-username')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('UserNotFound');
           err.identifier.should.equal('fake-username');
@@ -86,7 +89,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should require username as first argument', function () {
-      return ASSETS.authApp.controllers.user.getByUsername(undefined)
+      return ASSETS.accountApp.controllers.account.getByUsername(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('username');
@@ -95,9 +98,9 @@ describe('userCtrl `get` methods', function () {
     });
   });
 
-  describe('userCtrl.getByEmail(email)', function () {
+  describe('accountCtrl.getByEmail(email)', function () {
     it('should retrieve the user by its username', function () {
-      return ASSETS.authApp.controllers.user.getByEmail('test-2@dev.habem.us')
+      return ASSETS.accountApp.controllers.account.getByEmail('test-2@dev.habem.us')
         .then((user) => {
           user.username.should.equal('test-user-2');
           user.email.should.equal('test-2@dev.habem.us');
@@ -105,7 +108,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should return error if email does not exist', function () {
-      return ASSETS.authApp.controllers.user.getByEmail('fake-email@dev.habem.us')
+      return ASSETS.accountApp.controllers.account.getByEmail('fake-email@dev.habem.us')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('UserNotFound');
           err.identifier.should.equal('fake-email@dev.habem.us');
@@ -113,7 +116,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should require email as first argument', function () {
-      return ASSETS.authApp.controllers.user.getByEmail(undefined)
+      return ASSETS.accountApp.controllers.account.getByEmail(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('email');
@@ -123,9 +126,9 @@ describe('userCtrl `get` methods', function () {
   });
   
 
-  describe('userCtrl.getById(id)', function () {
+  describe('accountCtrl.getById(id)', function () {
     it('should retrieve the user by its username', function () {
-      return ASSETS.authApp.controllers.user.getById(ASSETS.users[1]._id)
+      return ASSETS.accountApp.controllers.account.getById(ASSETS.users[1]._id)
         .then((user) => {
           user.username.should.equal('test-user-2');
           user.email.should.equal('test-2@dev.habem.us');
@@ -133,7 +136,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should return error if _id does not exist', function () {
-      return ASSETS.authApp.controllers.user.getById('578e8e7dae522ad62c4ee9ae')
+      return ASSETS.accountApp.controllers.account.getById('578e8e7dae522ad62c4ee9ae')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('UserNotFound');
           err.identifier.should.equal('578e8e7dae522ad62c4ee9ae');
@@ -141,7 +144,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should require _id as first argument', function () {
-      return ASSETS.authApp.controllers.user.getById(undefined)
+      return ASSETS.accountApp.controllers.account.getById(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('id');
@@ -151,9 +154,9 @@ describe('userCtrl `get` methods', function () {
   });
   
 
-  describe('userCtrl.getByUsernameOrEmail(usernameOrEmail)', function () {
+  describe('accountCtrl.getByUsernameOrEmail(usernameOrEmail)', function () {
     it('should retrieve the user by its username if given the username', function () {
-      return ASSETS.authApp.controllers.user.getByUsernameOrEmail(ASSETS.users[1].username)
+      return ASSETS.accountApp.controllers.account.getByUsernameOrEmail(ASSETS.users[1].username)
         .then((user) => {
           user.username.should.equal('test-user-2');
           user.email.should.equal('test-2@dev.habem.us');
@@ -161,7 +164,7 @@ describe('userCtrl `get` methods', function () {
     });
 
     it('should retrieve the user by its email if given the email', function () {
-      return ASSETS.authApp.controllers.user.getByUsernameOrEmail(ASSETS.users[1].email)
+      return ASSETS.accountApp.controllers.account.getByUsernameOrEmail(ASSETS.users[1].email)
         .then((user) => {
           user.username.should.equal('test-user-2');
           user.email.should.equal('test-2@dev.habem.us');
@@ -171,13 +174,13 @@ describe('userCtrl `get` methods', function () {
     it('should attempt to get user by email if argument passed looks like email and upon UserNotFound error, attempt to get the user by its username', function () {
       
       // create a user that has an 'email'-like username
-      return ASSETS.authApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.account.create({
           username: 'email-like@username.com',
           email: 'some-email@dev.habem.us',
           password: 'test-password',
         })
         .then((user) => {
-          return ASSETS.authApp.controllers.user.getByUsernameOrEmail('email-like@username.com')
+          return ASSETS.accountApp.controllers.account.getByUsernameOrEmail('email-like@username.com')
         })
         .then((user) => {
           user.username.should.equal('email-like@username.com');
@@ -186,7 +189,7 @@ describe('userCtrl `get` methods', function () {
     });
     
     it('should require usernameOrEmail as first argument', function () {
-      return ASSETS.authApp.controllers.user.getByUsernameOrEmail(undefined)
+      return ASSETS.accountApp.controllers.account.getByUsernameOrEmail(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('usernameOrEmail');

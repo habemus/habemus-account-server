@@ -13,7 +13,7 @@ const DEFAULT_CODE_LENGTH = 7;
 const DEFAULT_VERIFICATION_EXPIRY = ms('1d');
 
 const VALID_ACTIONS = [
-  'verifyUserAccount',
+  'verifyAccountEmail',
   'resetPassword',
 ];
 
@@ -88,7 +88,7 @@ module.exports = function (app, options) {
     return protectedRequestCtrl.cancelUserRequests(userId, actionName, 'NewRequestMade')
       .then(() => {
         // create a lock using the confirmationCode
-        return app.services._auxiliaryLock.create(confirmationCode);
+        return app.services.verificationLock.create(confirmationCode);
       })
       .then((lockId) => {
 
@@ -254,7 +254,7 @@ module.exports = function (app, options) {
         // get the lock and attempt to unlock it
         var lockId = request.get('lockId');
 
-        return app.services._auxiliaryLock.unlock(
+        return app.services.verificationLock.unlock(
           // unlock the lock
           lockId,
           // using code

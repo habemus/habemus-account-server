@@ -39,7 +39,7 @@ describe('accVerificationCtrl', function () {
         // the stub nodemailer instance events
         ASSETS.options = options;
 
-        ASSETS.authApp = hAccount(options);
+        ASSETS.accountApp = hAccount(options);
 
         done();
       })
@@ -56,7 +56,7 @@ describe('accVerificationCtrl', function () {
 
       var _user;
 
-      return ASSETS.authApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.user.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password',
@@ -64,7 +64,7 @@ describe('accVerificationCtrl', function () {
       .then((user) => {
         _user = user;
         // check that a protected action request was created
-        return Bluebird.resolve(ASSETS.authApp.models.ProtectedActionRequest.find());
+        return Bluebird.resolve(ASSETS.accountApp.models.ProtectedActionRequest.find());
       })
       .then((protectedActionRequests) => {
         protectedActionRequests.length.should.equal(1);
@@ -103,7 +103,7 @@ describe('accVerificationCtrl', function () {
         }
       });
 
-      return ASSETS.authApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.user.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password'
@@ -116,14 +116,14 @@ describe('accVerificationCtrl', function () {
         return _wait(1000);
       })
       .then(() => {
-        return ASSETS.authApp.controllers.accVerification
+        return ASSETS.accountApp.controllers.accVerification
           .verifyUserAccount('test-user', _userVerificationCode);
       })
       .then(() => {
         // check that the user's status
         // and the projetectedActionRequest have been updated
-        var userQuery = ASSETS.authApp.controllers.user.getByUsername('test-user');
-        var actionRequestQuery = ASSETS.authApp.models.ProtectedActionRequest.find();
+        var userQuery = ASSETS.accountApp.controllers.user.getByUsername('test-user');
+        var actionRequestQuery = ASSETS.accountApp.models.ProtectedActionRequest.find();
 
         return Bluebird.all([
           userQuery,
@@ -148,13 +148,13 @@ describe('accVerificationCtrl', function () {
 
     it('should fail verification upon providing wrong code', function () {
 
-      return ASSETS.authApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.user.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password'
       })
       .then((user) => {
-        return ASSETS.authApp.controllers.accVerification
+        return ASSETS.accountApp.controllers.accVerification
           .verifyUserAccount('test-user', 'WRONG_CODE');
       })
       .then(aux.errorExpected, (err) => {
@@ -181,7 +181,7 @@ describe('accVerificationCtrl', function () {
         }
       });
 
-      return ASSETS.authApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.user.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password'
@@ -194,7 +194,7 @@ describe('accVerificationCtrl', function () {
         return _wait(1000);
       })
       .then(() => {
-        return ASSETS.authApp.controllers.accVerification
+        return ASSETS.accountApp.controllers.accVerification
           .verifyUserAccount('wrong-username', _userVerificationCode);
       })
       .then(aux.errorExpected, (err) => {
@@ -208,13 +208,13 @@ describe('accVerificationCtrl', function () {
 
     beforeEach(function () {
 
-      var create1 = ASSETS.authApp.controllers.user.create({
+      var create1 = ASSETS.accountApp.controllers.user.create({
         username: 'test-user-1',
         email: 'test-user-1@dev.habem.us',
         password: 'test-password'
       });
 
-      var create2 = ASSETS.authApp.controllers.user.create({
+      var create2 = ASSETS.accountApp.controllers.user.create({
         username: 'test-user-2',
         email: 'test-user-2@dev.habem.us',
         password: 'test-password'
@@ -230,13 +230,13 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should create a new verification request for the userId and cancel the previously created', function () {
-      return ASSETS.authApp.controllers
+      return ASSETS.accountApp.controllers
         .accVerification.createRequest(ASSETS.users[0].username)
         .then(() => {
           arguments.length.should.equal(0);
 
           // verify the request was created
-          return ASSETS.authApp.models.ProtectedActionRequest.find({
+          return ASSETS.accountApp.models.ProtectedActionRequest.find({
             action: 'verifyUserAccount',
             userId: ASSETS.users[0]._id
           });
@@ -260,12 +260,12 @@ describe('accVerificationCtrl', function () {
 
           // create yet another request, and check that previously generated requests
           // were cancelled
-          return ASSETS.authApp.controllers
+          return ASSETS.accountApp.controllers
             .accVerification.createRequest(ASSETS.users[0].username);
         })
         .then(() => {
 
-          return ASSETS.authApp.models.ProtectedActionRequest.find({
+          return ASSETS.accountApp.models.ProtectedActionRequest.find({
             action: 'verifyUserAccount',
             userId: ASSETS.users[0]._id
           })
@@ -288,7 +288,7 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should require username as the first argument', function () {
-      return ASSETS.authApp.controllers.accVerification.createRequest(undefined)
+      return ASSETS.accountApp.controllers.accVerification.createRequest(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('username')
@@ -301,13 +301,13 @@ describe('accVerificationCtrl', function () {
 
     beforeEach(function () {
 
-      var create1 = ASSETS.authApp.controllers.user.create({
+      var create1 = ASSETS.accountApp.controllers.user.create({
         username: 'test-user-1',
         email: 'test-user-1@dev.habem.us',
         password: 'test-password'
       });
 
-      var create2 = ASSETS.authApp.controllers.user.create({
+      var create2 = ASSETS.accountApp.controllers.user.create({
         username: 'test-user-2',
         email: 'test-user-2@dev.habem.us',
         password: 'test-password'
@@ -342,7 +342,7 @@ describe('accVerificationCtrl', function () {
 
       // create a new user so that we can
       // sniff the verification code
-      return ASSETS.authApp.controllers.user.create({
+      return ASSETS.accountApp.controllers.user.create({
         username: 'test-user-3',
         email: 'test-user-3@dev.habem.us',
         password: 'test-password'
@@ -355,14 +355,14 @@ describe('accVerificationCtrl', function () {
         return _wait(1000);
       })
       .then(() => {
-        return ASSETS.authApp.controllers.accVerification
+        return ASSETS.accountApp.controllers.accVerification
           .verifyUserAccount(_user.username, _userVerificationCode);
       })
       .then(() => {
         // refetch user's data
         // and query for protectedActionRequests
-        var userQuery = ASSETS.authApp.controllers.user.getByUsername(_user.username);
-        var actionRequestQuery = ASSETS.authApp.models.ProtectedActionRequest.find({
+        var userQuery = ASSETS.accountApp.controllers.user.getByUsername(_user.username);
+        var actionRequestQuery = ASSETS.accountApp.models.ProtectedActionRequest.find({
           userId: _user._id
         });
 
@@ -383,7 +383,7 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should require username as the first argument', function () {
-      return ASSETS.authApp.controllers.accVerification.verifyUserAccount(undefined, 'CODE')
+      return ASSETS.accountApp.controllers.accVerification.verifyUserAccount(undefined, 'CODE')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('username')
@@ -392,7 +392,7 @@ describe('accVerificationCtrl', function () {
     });
 
     it('should require confirmationCode as the second argument', function () {
-      return ASSETS.authApp.controllers.accVerification.verifyUserAccount('username', undefined)
+      return ASSETS.accountApp.controllers.accVerification.verifyUserAccount('username', undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
           err.option.should.equal('confirmationCode')

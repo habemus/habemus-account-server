@@ -27,6 +27,16 @@ exports.errorExpected = function () {
 };
 
 /**
+ * Logs error and throws.
+ * @param  {Error} err
+ * @return {Error}
+ */
+exports.logError = function (err) {
+  console.warn(err);
+  throw err;
+};
+
+/**
  * Starts a server and keeps reference to it.
  * This reference will be used for teardown.
  */

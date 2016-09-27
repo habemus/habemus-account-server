@@ -56,7 +56,7 @@ module.exports = function (app, options) {
 
     // variable to hold reference to data needed throughout multiple 
     // steps
-    var _user;
+    var _account;
     
     return Bluebird.resolve(app.services.accountLock.create(password))
       .then((accountLockId) => {
@@ -122,7 +122,7 @@ module.exports = function (app, options) {
         return app.controllers.emailVerification.createRequest(account.username);
       })
       .then(() => {
-        return _user;
+        return _account;
       });
   };
   
@@ -136,7 +136,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    return Bluebird.resolve(User.findOneAndRemove({ username: username }))
+    return Bluebird.resolve(Account.findOneAndRemove({ username: username }))
       .then((user) => {
         // make sure to return nothing
         return;
@@ -153,7 +153,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    return Bluebird.resolve(User.findOne({ _id: id }))
+    return Bluebird.resolve(Account.findOne({ _id: id }))
       .then((user) => {
         if (!user) {
           return Bluebird.reject(new errors.UserNotFound(id));
@@ -173,7 +173,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    return Bluebird.resolve(User.findOne({ username: username }))
+    return Bluebird.resolve(Account.findOne({ username: username }))
       .then((user) => {
         if (!user) {
           return Bluebird.reject(new errors.UserNotFound(username));
@@ -192,7 +192,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    return Bluebird.resolve(User.findOne({ email: email }))
+    return Bluebird.resolve(Account.findOne({ email: email }))
       .then((user) => {
         if (!user) {
           return Bluebird.reject(new errors.UserNotFound(email));
@@ -211,7 +211,7 @@ module.exports = function (app, options) {
       ));
     }
 
-    if (User.isEmail(usernameOrEmail)) {
+    if (Account.isEmail(usernameOrEmail)) {
       // start trying to get the user by email
       return accountCtrl.getByEmail(usernameOrEmail).catch((err) => {
         if (err instanceof errors.UserNotFound) {
