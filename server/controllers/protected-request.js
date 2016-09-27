@@ -36,8 +36,8 @@ module.exports = function (app, options) {
 
   const errors = app.errors;
 
-  const ProtectedActionRequest = app.models.ProtectedActionRequest;
-  const User                   = app.models.User;
+  const ProtectedActionRequest = app.services.mongoose.models.ProtectedActionRequest;
+  const User                   = app.services.mongoose.models.User;
 
   const FROM_EMAIL = options.fromEmail;
 

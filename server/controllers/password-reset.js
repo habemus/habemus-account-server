@@ -12,7 +12,7 @@ module.exports = function (app, options) {
 
   const errors = app.errors;
 
-  const User = app.models.User;
+  const User = app.services.mongoose.models.User;
 
   const FROM_EMAIL = options.fromEmail;
 

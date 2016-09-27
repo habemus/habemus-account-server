@@ -4,7 +4,6 @@ const assert = require('assert');
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
-const stubTransort = require('nodemailer-stub-transport');
 
 // auxiliary
 const aux = require('../auxiliary');
@@ -14,9 +13,8 @@ const hAccountApp = require('../../');
 const REQUIRED_OPTIONS = {
   apiVersion: '0.0.0',
   mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
+  rabbitMQURI: 'amqp://192.168.99.100',
   secret: 'fake-secret',
-
-  nodemailerTransport: stubTransort(),
   fromEmail: 'from@dev.habem.us',
 
   host: 'http://localhost'
@@ -72,16 +70,6 @@ describe('server initialization', function () {
     });
   });
 
-  it('should require nodemailerTransport', function () {
-    var options = clone(REQUIRED_OPTIONS);
-    delete options.nodemailerTransport;
-
-    assert.throws(function () {
-      hAccountApp(options);
-    });
-  });
-
-
   it('should require fromEmail', function () {
     var options = clone(REQUIRED_OPTIONS);
     delete options.fromEmail;
@@ -92,11 +80,15 @@ describe('server initialization', function () {
   });
 
   it('should instantiate an express app', function (done) {
+
+    // allow greater timeout for rabbitMQ connection
+    this.timeout(10000);
+
     var app = hAccountApp({
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
+      rabbitMQURI: 'amqp://192.168.99.100',
       secret: 'fake-secret',
-      nodemailerTransport: stubTransort(),
       fromEmail: 'from@dev.habem.us',
 
       host: 'http://localhost'
@@ -107,17 +99,22 @@ describe('server initialization', function () {
     // make sure the server responds to the /who route
     aux.startServer(4000, app)
       .then(() => {
+
+        return app.ready;
+      })
+      .then(() => {
         superagent
           .get('http://localhost:4000/who')
           .end((err, res) => {
             res.statusCode.should.equal(200);
 
-            res.body.data.name.should.equal('h-auth');
+            res.body.data.name.should.equal('h-account');
 
             aux.teardown()
               .then(done);
           });
-      });
+      })
+      .catch(done);
   });
 
 });

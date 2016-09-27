@@ -7,7 +7,6 @@ const morgan   = require('morgan');
 const cors     = require('cors');
 const mongoose = require('mongoose');
 const jsonMessage = require('json-message');
-const nodemailer  = require('nodemailer');
 
 // h-dependencies
 const hToken = require('h-token');
@@ -23,13 +22,13 @@ const setupServices = require('./services');
 function hAccount(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
   if (!options.mongodbURI) { throw new Error('mongodbURI is required'); }
+  if (!options.rabbitMQURI) { throw new Error('rabbitMQURI is required'); }
   if (!options.secret) { throw new Error('secret is required'); }
 
   // host is used for the account verification email
   if (!options.host) { throw new Error('host is required'); }
   
-  // nodemailer
-  if (!options.nodemailerTransport) { throw new Error('nodemailerTransport is required'); }
+  // mailing
   if (!options.fromEmail) { throw new Error('fromEmail is required'); }
 
   // create express app instance
@@ -41,7 +40,7 @@ function hAccount(options) {
   // constants
   app.constants = require('../shared/constants');
 
-  setupServices(app, options).then(() => {
+  app.ready = setupServices(app, options).then(() => {
     // instantiate controllers
     app.controllers = {};
     app.controllers.account = require('./controllers/account')(app, options);
@@ -58,7 +57,7 @@ function hAccount(options) {
 
     // define description route
     app.get('/who', function (req, res) {
-      var msg = app.format.item({ name: 'h-auth' }, { name: true });
+      var msg = app.format.item({ name: 'h-account' }, { name: true });
       res.json(msg);
     });
 

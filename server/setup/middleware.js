@@ -10,14 +10,14 @@ module.exports = function (app, options) {
   corsWhitelist = (typeof corsWhitelist === 'string') ?
     corsWhitelist.split(',') : corsWhitelist;
 
-  app.log.info('cors whitelist', corsWhitelist);
+  app.services.log.info('cors whitelist', corsWhitelist);
 
   var _corsMiddleware = cors({
     origin: function (origin, cb) {
       var originIsWhitelisted = (corsWhitelist.indexOf(origin) !== -1);
 
       if (!originIsWhitelisted) {
-        app.log.warn('request from not-whitelisted origin %s', origin, corsWhitelist);
+        app.services.log.warn('request from not-whitelisted origin %s', origin, corsWhitelist);
       }
 
       cb(null, originIsWhitelisted);

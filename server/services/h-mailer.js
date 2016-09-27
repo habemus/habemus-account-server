@@ -9,6 +9,8 @@ module.exports = function (app, options) {
 
   return hMailer.connect(app.services.rabbitMQ.connection)
     .then(() => {
+
+      console.log('hMailer connected')
       
       hMailer.on('result:success', function (mailRequestId, report) {
         app.services.log.info('mail sent with success', mailRequestId, report);

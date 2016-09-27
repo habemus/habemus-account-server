@@ -63,6 +63,6 @@ module.exports = function (app, options) {
     }
   );
 
-  require('./account-verification')(app, options);
+  require('./email-verification')(app, options);
   require('./password-reset')(app, options);
 };

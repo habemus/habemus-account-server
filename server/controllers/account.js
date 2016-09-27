@@ -3,26 +3,18 @@ const fs   = require('fs');
 const path = require('path');
 
 // third-party dependencies
-const uuid     = require('node-uuid');
-const mustache = require('mustache');
 const mongoose = require('mongoose');
 const Bluebird = require('bluebird');
 
 const ValidationError = mongoose.Error.ValidationError;
 const ValidatorError  = mongoose.Error.ValidatorError;
 
-const hLock = require('h-lock');
-
-// 
-const verifyAccountEmailTemplate = fs.readFileSync(path.join(__dirname, '../email-templates/verify-account.html'), 'utf8');
-const ATTEMPTER_ID = 'h-auth-attempter';
-
 const CONSTANTS = require('../../shared/constants');
 
 module.exports = function (app, options) {
 
   const errors  = app.errors;
-  const Account = app.models.Account;
+  const Account = app.services.mongoose.models.Account;
 
   var accountCtrl = {};
 

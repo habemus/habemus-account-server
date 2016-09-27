@@ -59,26 +59,6 @@ module.exports = function (app, options) {
             code: confirmationCode,
           }
         });
-
-        // // setup e-mail data
-        // var mailOptions = {
-        //   from: FROM_EMAIL,
-        //   to: _account.get('email'),
-        //   subject: 'Welcome to Habemus',
-        //   html: mustache.render(verifyAccountEmailTemplate, {
-        //     email: _account.get('email'),
-        //     code: confirmationCode,
-        //   }),
-        // };
-
-        // return new Bluebird((resolve, reject) => {
-        //   app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
-        //     if (err) { reject(err); }
-
-        //     // make sure to return nothing
-        //     resolve();
-        //   });
-        // });
       })
       .then((verificationMailRequestId) => {
         _account.set('status.detail', {

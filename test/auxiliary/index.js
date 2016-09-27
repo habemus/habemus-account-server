@@ -14,6 +14,7 @@ if (process.env.DEBUG === 'TRUE') {
 
 // constants
 const TEST_DB_URI = 'mongodb://localhost:27017/h-auth-test-db';
+const TEST_RABBIT_MQ_URI = 'amqp://192.168.99.100';
 
 exports.dbURI = TEST_DB_URI;
 
@@ -69,6 +70,7 @@ exports.setup = function () {
 
   var _assets = {
     dbURI: TEST_DB_URI,
+    rabbitMQURI: TEST_RABBIT_MQ_URI,
   };
 
   return MongoClient.connect(TEST_DB_URI)
