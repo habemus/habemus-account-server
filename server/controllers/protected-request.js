@@ -4,7 +4,7 @@ const path = require('path');
 
 // third-party
 const Bluebird = require('bluebird');
-const uuid     = require('node-uuid');
+const uuid     = require('uuid');
 const ms       = require('ms');
 
 const hLock  = require('h-lock');
@@ -97,13 +97,14 @@ module.exports = function (app, options) {
           userId: userId,
           action: actionName,
           lockId: lockId,
-          status: {
-            value: app.constants.REQUEST_STATUSES.PENDING,
-            reason: 'UserRequested',
-          },
           // status: app.constants.REQUEST_STATUSES.PENDING,
           expiresAt: Date.now() + expiresIn,
         });
+
+        actionRequest.setStatus(
+          app.constants.REQUEST_STATUSES.PENDING,
+          'UserRequested'
+        );
 
         return actionRequest.save();
       })
@@ -151,9 +152,12 @@ module.exports = function (app, options) {
       userId: userId,
       // for the verification action
       action: actionName,
-      // whose status is at pending
-      'status.value': app.constants.REQUEST_STATUSES.PENDING,
     };
+
+    // scope the query to PENDING status
+    ProtectedActionRequest.scopeQueryByStatuses(requestQuery, [
+      app.constants.REQUEST_STATUSES.PENDING
+    ]);
 
     return Bluebird.resolve(ProtectedActionRequest.update(requestQuery, {
       status: {
@@ -203,12 +207,15 @@ module.exports = function (app, options) {
       userId: userId,
       // for the verification action
       action: actionName,
-      // which status is at pending (was not cancelled nor fulfilled)
-      'status.value': app.constants.REQUEST_STATUSES.PENDING,
       // let the expiry verification be made at the application
       // level so that we may inform the user about the expiry
       // expiresAt:
-    }
+    };
+
+    // scope query to PENDING status
+    ProtectedActionRequest.scopeQueryByStatuses(requestQuery, [
+      app.constants.REQUEST_STATUSES.PENDING,
+    ]);
 
     /**
      * These options are to guarantee that only the latest
@@ -260,10 +267,11 @@ module.exports = function (app, options) {
       })
       .then(() => {
         // set the request's status
-        _request.set('status', {
-          value: app.constants.REQUEST_STATUSES.FULFILLED,
-          reason: 'VerificationSuccessful',
-        });
+        _request.setStatus(
+          app.constants.REQUEST_STATUSES.FULFILLED,
+          'VerificationSuccessful'
+        );
+        
         return _request.save();
       })
       .then(() => {

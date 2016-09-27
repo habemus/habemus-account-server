@@ -128,7 +128,10 @@ module.exports = function (app, options) {
         // successfully unlocked
         
         // change the account status to active
-        _account.setStatus(CONSTANTS.ACCOUNT_STATUSES.VERIFIED, 'VerificationSuccess');
+        _account.setStatus(
+          CONSTANTS.ACCOUNT_STATUSES.VERIFIED,
+          'VerificationSuccess'
+        );
 
         return _account.save();
       })

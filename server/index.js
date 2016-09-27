@@ -44,11 +44,11 @@ function hAccount(options) {
   setupServices(app, options).then(() => {
     // instantiate controllers
     app.controllers = {};
-    app.controllers.user = require('./controllers/user')(app, options);
+    app.controllers.account = require('./controllers/account')(app, options);
     app.controllers.auth = require('./controllers/auth')(app, options);
     app.controllers.protectedRequest = require('./controllers/protected-request')(app, options);
-    app.controllers.accVerification = require('./controllers/acc-verification')(app, options);
-    app.controllers.pwdReset = require('./controllers/pwd-reset')(app, options);
+    app.controllers.emailVerification = require('./controllers/email-verification')(app, options);
+    app.controllers.passwordReset = require('./controllers/password-reset')(app, options);
 
     // instantiate middleware for usage in routes
     app.middleware = {};

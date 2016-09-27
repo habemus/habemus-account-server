@@ -4,20 +4,9 @@ const path = require('path');
 
 // third-party
 const Bluebird = require('bluebird');
-const uuid     = require('node-uuid');
-const ms       = require('ms');
-
-const hLock  = require('h-lock');
 
 const ACTION_NAME = 'resetPassword';
 const CODE_LENGTH = 15;
-
-/**
- * Emailing stuff.
- * TODO: study whether this should be moved to a separate service
- */
-const mustache = require('mustache');
-const resetPasswordEmailTemplate = fs.readFileSync(path.join(__dirname, '../email-templates/reset-password.html'), 'utf8');
 
 module.exports = function (app, options) {
 
@@ -61,25 +50,19 @@ module.exports = function (app, options) {
       })
       .then((confirmationCode) => {
 
-        // setup e-mail data
-        var mailOptions = {
+        return app.services.hMailer.schedule({
           from: FROM_EMAIL,
           to: _user.get('email'),
-          subject: 'Habemus password reset',
-          html: mustache.render(resetPasswordEmailTemplate, {
+          template: 'account/password-reset.html',
+          data: {
+            name: _user.get('name'),
             email: _user.get('email'),
             code: confirmationCode,
-          }),
-        };
-
-        return new Bluebird((resolve, reject) => {
-          app.services.nodemailer.sendMail(mailOptions, function (err, sentEmailInfo) {
-            if (err) { reject(err); }
-
-            // make sure returns nothing
-            resolve();
-          });
+          },
         });
+      })
+      .then((passwordResetMailRequestId) => {
+        return;
       });
   };
 

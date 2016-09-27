@@ -1,11 +1,10 @@
 // third-party
-const mongoose = require('mongoose');
+const mongoose   = require('mongoose');
+const makeStatus = require('mongoose-make-status');
 
 // constants
 const Schema = mongoose.Schema;
-
-// internal dependencies
-const Status = require('./sub-schemas/status');
+const CONSTANTS = require('../../shared/constants');
 
 var protectedActionRequestSchema = new Schema({
   createdAt: {
@@ -43,29 +42,7 @@ var protectedActionRequestSchema = new Schema({
       expires: 30 * 24 * 60 * 60
     }
   },
-
-  status: {
-    type: Status,
-    required: true,
-  },
-
-  /**
-   * Status at which the request is
-   * @type {String}
-   */
-  // status: {
-  //   type: String,
-  //   required: true
-  // },
-
-  /**
-   * Special property to store the reason for request cancellation
-   * @type {String}
-   */
-  cancelReason: {
-    type: String,
-  },
-
+  
   /**
    * Reference to the lock that protects this action
    * @type {String}
@@ -74,6 +51,10 @@ var protectedActionRequestSchema = new Schema({
     type: String,
     required: true
   }
+});
+
+makeStatus(protectedActionRequestSchema, {
+  statuses: CONSTANTS.VALID_REQUEST_STATUSES
 });
 
 module.exports = function (conn, app, options) {

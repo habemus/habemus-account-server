@@ -10,7 +10,7 @@ module.exports = function (app, options) {
       var username = req.body.username;
 
       // find the user
-      app.controllers.pwdReset.createRequest(username)
+      app.controllers.passwordReset.createRequest(username)
         .then(() => {
           res.status(204).send();
         })
@@ -26,7 +26,7 @@ module.exports = function (app, options) {
       var code     = req.body.code;
       var password = req.body.password;
 
-      app.controllers.pwdReset
+      app.controllers.passwordReset
         .resetPassword(username, code, password)
         .then(() => {
 

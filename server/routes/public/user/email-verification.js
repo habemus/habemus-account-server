@@ -7,7 +7,7 @@ module.exports = function (app, options) {
     bodyParser.json(),
     function (req, res, next) {
 
-      app.controllers.accVerification.createRequest(req.params.username)
+      app.controllers.emailVerification.createRequest(req.params.username)
         .then(() => {
           res.status(201).send();
         })
@@ -15,11 +15,11 @@ module.exports = function (app, options) {
     }
   );
 
-  app.post('/user/:username/verify-account',
+  app.post('/user/:username/verify-email',
     bodyParser.json(),
     function (req, res, next) {
 
-      app.controllers.accVerification.verifyUserAccount(
+      app.controllers.emailVerification.verifyUserAccount(
         req.params.username,
         req.body.code
       ).then(() => {
@@ -30,9 +30,9 @@ module.exports = function (app, options) {
     }
   );
 
-  app.get('/user/:username/verify-account', function (req, res, next) {
+  app.get('/user/:username/verify-email', function (req, res, next) {
 
-    app.controllers.accVerification.verifyUserAccount(
+    app.controllers.emailVerification.verifyUserAccount(
       req.params.username,
       req.query.code
     ).then((user) => {
