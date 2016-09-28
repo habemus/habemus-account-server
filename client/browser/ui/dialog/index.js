@@ -8,7 +8,7 @@ const DataObj = require('data-obj');
 const Bluebird = require('bluebird');
 
 // internal
-const HAuthClient = require('../../');
+const HAccountClient = require('../../');
 const dialogTemplate = fs.readFileSync(__dirname + '/template.html', 'utf8');
 const dialogStyles   = fs.readFileSync(__dirname + '/styles.css', 'utf8');
 // according to brfs docs, require.resolve() may be used as well
@@ -63,10 +63,10 @@ function _toArray(obj) {
  * Auth Dialog constructor
  * @param {Object} options
  */
-function HAuthDialog(options) {
+function HAccountDialog(options) {
 
   // instantiate auth client if none is passed as option
-  this.auth = options.auth || new HAuthClient(options);
+  this.auth = options.auth || new HAccountClient(options);
 
   /**
    * Data store for the modal model
@@ -113,7 +113,7 @@ function HAuthDialog(options) {
   }
 }
 
-HAuthDialog.prototype._domSetup = function () {
+HAccountDialog.prototype._domSetup = function () {
   domSetup.setupSelector(this);
   domSetup.setupLoginForm(this);
   domSetup.setupSignupForm(this);
@@ -125,7 +125,7 @@ HAuthDialog.prototype._domSetup = function () {
  * containerElement
  * @param  {DOM Element} containerElement
  */
-HAuthDialog.prototype.attach = function (containerElement) {
+HAccountDialog.prototype.attach = function (containerElement) {
   this.containerElement = containerElement;
 
   containerElement.appendChild(this.element);
@@ -135,7 +135,7 @@ HAuthDialog.prototype.attach = function (containerElement) {
  * Shows the modal on the login ui
  * @return {Bluebird}
  */
-HAuthDialog.prototype.logIn = function () {
+HAccountDialog.prototype.logIn = function () {
   this.model.set({
     state: STATE_LOGIN,
     action: 'logIn',
@@ -153,7 +153,7 @@ HAuthDialog.prototype.logIn = function () {
  * Shows the dialog on the signup ui
  * @return {Bluebird}
  */
-HAuthDialog.prototype.signUp = function () {
+HAccountDialog.prototype.signUp = function () {
   this.model.set({
     state: STATE_SIGNUP,
     action: 'signUp'
@@ -167,7 +167,7 @@ HAuthDialog.prototype.signUp = function () {
   }.bind(this));
 };
 
-HAuthDialog.prototype.clear = function () {
+HAccountDialog.prototype.clear = function () {
 
   _toArray(this.element.querySelectorAll('input')).forEach(function (el) {
     el.value = '';
@@ -179,7 +179,7 @@ HAuthDialog.prototype.clear = function () {
   delete this._signUpReject;
 };
 
-HAuthDialog.prototype.resolve = function (user) {
+HAccountDialog.prototype.resolve = function (user) {
   var action = this.model.get('action');
 
   if (action === 'logIn') {
@@ -189,7 +189,7 @@ HAuthDialog.prototype.resolve = function (user) {
   }
 };
 
-HAuthDialog.prototype.reject = function (error) {
+HAccountDialog.prototype.reject = function (error) {
   var action = this.model.get('action');
 
   if (action === 'logIn') {
@@ -202,7 +202,7 @@ HAuthDialog.prototype.reject = function (error) {
 /**
  * Closes the dialog
  */
-HAuthDialog.prototype.close = function () {
+HAccountDialog.prototype.close = function () {
   this.clear();
   this.element.close();
 };
@@ -213,7 +213,7 @@ HAuthDialog.prototype.close = function () {
  * Otherwise, simply returns the current user.
  * @return {UserData}
  */
-HAuthDialog.prototype.ensureUser = function () {
+HAccountDialog.prototype.ensureUser = function () {
 
   var self = this;
 
@@ -223,7 +223,7 @@ HAuthDialog.prototype.ensureUser = function () {
     })
     .catch(function (err) {
       if (err.name === 'NotLoggedIn') {
-
+        
         return self.logIn()
           .then(function () {
             // the method MUST return the current user
@@ -243,14 +243,17 @@ const AUTH_PROXY_METHODS = [
   'getAuthToken',
   'getCurrentUser',
   'logOut',
+  'on',
+  'emit',
+  'removeEventListener',
 ];
 
 AUTH_PROXY_METHODS.forEach(function (method) {
-  HAuthDialog.prototype[method] = function () {
+  HAccountDialog.prototype[method] = function () {
     var args = Array.prototype.slice.call(arguments, 0);
 
     return this.auth[method].apply(this.auth, args);
   };
 });
 
-module.exports = HAuthDialog;
+module.exports = HAccountDialog;

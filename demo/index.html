@@ -9,6 +9,8 @@
   <button onclick="ensureUser()">ensure user</button>
   <button onclick="logOut()">log out</button>
 
+  <h1 id="status"></h1>
+
   <p>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis vel pellentesque tortor. Sed bibendum ullamcorper nulla a blandit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce commodo justo nec metus lobortis, rutrum cursus neque rutrum. Aliquam quis quam id urna egestas molestie sit amet a purus. Nam auctor erat metus, quis ornare metus fringilla non. Nam diam quam, hendrerit commodo libero ut, lacinia aliquam leo. Nulla a nisl efficitur, bibendum arcu id, bibendum leo. Mauris eget metus imperdiet, luctus erat eget, sodales augue. Etiam porta ullamcorper egestas.
   </p>
@@ -29,16 +31,20 @@
     Donec ultricies consequat sapien consequat venenatis. Nam in venenatis neque, ac volutpat mauris. Maecenas erat orci, commodo id sem sed, mattis rhoncus sem. Praesent rhoncus congue leo, eu bibendum est efficitur in. Praesent egestas tortor vitae arcu ornare aliquet in in ante. Vivamus non pharetra leo. Morbi pretium, dolor nec porttitor malesuada, ipsum metus porttitor dui, sed imperdiet massa tortor quis leo. In eleifend lobortis ligula, vel sagittis mauris dictum eu. Nunc nec volutpat nisl, eget tincidunt nibh. Aliquam semper ligula ut tellus maximus molestie. Proin maximus mauris et dolor condimentum tristique. Maecenas mattis elit vitae nulla condimentum varius. Aenean quis eleifend augue, commodo posuere lorem.
   </p>
 
-  <script src="h-auth-dialog.js"></script>
+  <script src="h-account-dialog.js"></script>
   <script>
-    var authDialog = new HAuthDialog({
+    var accountDialog = new HAccountDialog({
       serverURI: 'http://localhost:4000',
     });
 
-    authDialog.attach(document.body);
+    accountDialog.on('auth-status-change', function (status) {
+      console.log('auth-status-change', status);
+    });
+
+    accountDialog.attach(document.body);
 
     function logIn() {
-      authDialog.logIn()
+      accountDialog.logIn()
         .then(function (user) {
           console.log('logged user in ', user);
         })
@@ -48,7 +54,7 @@
     }
 
     function signUp() {
-      authDialog.signUp()
+      accountDialog.signUp()
         .then(function (user) {
           console.log('signUp success', user);
         })
@@ -58,7 +64,7 @@
     }
 
     function ensureUser() {
-      authDialog.ensureUser()
+      accountDialog.ensureUser()
         .then(function (user) {
           console.log('ensureUser success', user);
         })
@@ -68,7 +74,7 @@
     }
 
     function logOut() {
-      authDialog.logOut()
+      accountDialog.logOut()
         .then(function () {
           console.log('logOut success');
         })

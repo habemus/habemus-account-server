@@ -17,7 +17,7 @@ const errors = require('../shared/errors');
 const setupServices = require('./services');
 
 /**
- * Function that starts the host server
+ * Function that creates an express app
  */
 function hAccount(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
@@ -25,9 +25,6 @@ function hAccount(options) {
   if (!options.rabbitMQURI) { throw new Error('rabbitMQURI is required'); }
   if (!options.secret) { throw new Error('secret is required'); }
 
-  // host is used for the account verification email
-  if (!options.host) { throw new Error('host is required'); }
-  
   // mailing
   if (!options.fromEmail) { throw new Error('fromEmail is required'); }
 

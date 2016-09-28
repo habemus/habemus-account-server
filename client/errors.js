@@ -2,7 +2,7 @@ const util = require('util');
 
 var errors = require('../shared/errors');
 
-const HAuthError = errors.HAuthError;
+const HAccountError = errors.HAccountError;
 
 /**
  * Client errors
@@ -13,9 +13,9 @@ const HAuthError = errors.HAuthError;
  * @param {String} message
  */
 function NotLoggedIn(message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 }
-util.inherits(NotLoggedIn, HAuthError);
+util.inherits(NotLoggedIn, HAccountError);
 NotLoggedIn.prototype.name = 'NotLoggedIn';
 exports.NotLoggedIn = NotLoggedIn;
 
@@ -24,8 +24,10 @@ exports.NotLoggedIn = NotLoggedIn;
  * @param {String} message
  */
 function UserCancelled(message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 }
-util.inherits(UserCancelled, HAuthError);
+util.inherits(UserCancelled, HAccountError);
 UserCancelled.prototype.name = 'UserCancelled';
 exports.UserCancelled = UserCancelled;
+
+Object.assign(exports, errors);

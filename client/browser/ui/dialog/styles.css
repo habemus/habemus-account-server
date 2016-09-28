@@ -2,7 +2,7 @@
   to { background: rgba(0,0,0,0.9); }
 }
 
-#h-auth-dialog {
+#h-account-dialog {
   font-family: sans-serif;
 
   padding: 30px 30px 30px 30px;
@@ -10,14 +10,14 @@
   border: none;
 }
 
-#h-auth-dialog button {
+#h-account-dialog button {
   outline: none;
   border: none;
 
   padding: 10px 20px 10px 20px;
 }
 
-#h-auth-dialog > button.dialog-close {
+#h-account-dialog > button.dialog-close {
   position: absolute;
 
   padding: 2px 2px;
@@ -43,11 +43,11 @@
 /**
  * State management
  */
-#h-auth-dialog section[data-state] {
+#h-account-dialog section[data-state] {
   display: none;
 }
 
-#h-auth-dialog section[data-state].active {
+#h-account-dialog section[data-state].active {
   display: block;
 }
 
@@ -66,7 +66,7 @@
 /**
  * Forms
  */
-#h-auth-dialog form {
+#h-account-dialog form {
   display: flex;
   flex-direction: column;
 
@@ -74,17 +74,17 @@
   margin-bottom: 0;
 }
 
-#h-auth-dialog form label > * {
+#h-account-dialog form label > * {
   display: block;
 }
 
-#h-auth-dialog form label > span {
+#h-account-dialog form label > span {
   font-size: 12px;
 }
 
-#h-auth-dialog form input[type="text"],
-#h-auth-dialog form input[type="email"],
-#h-auth-dialog form input[type="password"] {
+#h-account-dialog form input[type="text"],
+#h-account-dialog form input[type="email"],
+#h-account-dialog form input[type="password"] {
   margin-top: 10px;
   margin-bottom: 10px;
 
@@ -93,6 +93,6 @@
   outline: none;
 }
 
-#h-auth-dialog form button[type="submit"] {
+#h-account-dialog form button[type="submit"] {
   margin-top: 10px;
 }

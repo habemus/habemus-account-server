@@ -1,53 +1,60 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.HAuthDialog = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.HAccountDialog = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// native
+const util         = require('util');
+const EventEmitter = require('events');
+
+// third-party
+const Bluebird       = require('bluebird');
+const cachePromiseFn = require('cache-promise-fn');
+
+// constants
+const LOGGED_IN  = 'logged_in';
+const LOGGED_OUT = 'logged_out';
+
+const errors = require('../errors');
+
+/**
+ * The public core client
+ * @type {Function}
+ */
+const HAccountClient = require('../index');
+
 /**
  * Light version that only decodes the token's Payload
  * @param  {String|JWT} token
  * @return {Object}
  */
-exports.decodeJWTPayload = function (token) {
+function _decodeJWTPayload(token) {
 
   var payload = token.split('.')[1];
 
   if (!payload) {
-    throw new Error('Invalid token');
+    throw new errors.InvalidToken(token);
   }
 
   return JSON.parse(atob(payload));
 };
 
 /**
- * Regular expression that matches a trailing forward slash (/)
- * @type {RegExp}
- */
-exports.TRAILING_SLASH_RE = /\/$/;
-
-},{}],2:[function(require,module,exports){
-// native
-const util         = require('util');
-const EventEmitter = require('events');
-
-// third-party
-const superagent = require('superagent');
-const Bluebird   = require('bluebird');
-
-// constants
-const TRAILING_SLASH_RE = /\/$/;
-const LOGGED_IN  = 'logged_in';
-const LOGGED_OUT = 'logged_out';
-
-const errors = require('../errors');
-const aux    = require('../auxiliary');
-
-/**
  * Auth client constructor
  * @param {Object} options
  */
-function HAccountClient(options) {
+function HAccountBrowserClient(options) {
 
   if (!options.serverURI) { throw new TypeError('serverURI is required'); }
 
-  this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
+  /**
+   * Client core defines all API communication methods.
+   * 
+   * @type {HAccountClient}
+   */
+  this.core = new HAccountClient(options);
 
+  /**
+   * Prefix for storing data on localStorage
+   * 
+   * @type {String}
+   */
   this.localStoragePrefix = options.localStoragePrefix || 'h_account_';
 
   /**
@@ -62,25 +69,31 @@ function HAccountClient(options) {
    */
   this._cachedUser = undefined;
 
-  // check initial authentication status
-  this.getCurrentUser();
+  /**
+   * Make calls to `getCurrentUser` cached
+   */
+  this.getCurrentUser = cachePromiseFn(this.getCurrentUser.bind(this), {
+    cacheKey: function cacheKey() {
+      // constant cache key, at this method takes no arguments
+      return 'constant';
+    }
+  });
 }
+util.inherits(HAccountBrowserClient, EventEmitter);
 
-util.inherits(HAccountClient, EventEmitter);
-
-HAccountClient.prototype.constants = {
+HAccountBrowserClient.prototype.constants = {
   LOGGED_IN: LOGGED_IN,
   LOGGED_OUT: LOGGED_OUT
 };
 
 // static properties
-HAccountClient.errors = errors;
+HAccountBrowserClient.errors = errors;
 
 /**
  * Loads the auth token from the browser's localstorage
  * @return {String|Boolean}
  */
-HAccountClient.prototype.getAuthToken = function () {
+HAccountBrowserClient.prototype.getAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   return window.localStorage.getItem(tokenStorageKey) || false;
@@ -94,66 +107,24 @@ HAccountClient.prototype.getAuthToken = function () {
  *         - immediatelyLogIn
  * @return {Promise->userData}         
  */
-HAccountClient.prototype.signUp = function (username, password, email, options) {
-  if (!username) {
-    return Bluebird.reject(new errors.InvalidOption(
-      'username',
-      'required',
-      'username is required for signUp'
-    ));
-  }
-
-  if (!password) {
-    return Bluebird.reject(new errors.InvalidOption(
-      'password',
-      'required',
-      'password is required for signUp'
-    ));
-  }
-
-  if (!email) {
-    return Bluebird.reject(new errors.InvalidOption(
-      'email',
-      'required',
-      'email is required for signUp'
-    ));
-  }
-
+HAccountBrowserClient.prototype.signUp = function (username, password, email, options) {
   options = options || {};
 
-  return new Bluebird(function (resolve, reject) {
-
-    superagent
-      .post(this.serverURI + '/users')
-      .send({
-        username: username,
-        password: password,
-        email: email,
-      })
-      .end(function (err, res) {
-        if (err) {
-          if (res && res.body && res.body.error) {
-            reject(res.body.error);
-          } else {
-            reject(err);
-          }
-          return;
-        }
-
-        resolve(res.body.data);
-      });
-    
-  }.bind(this))
-  .then(function (user) {
+  return this.core.createAccount({
+    username: username,
+    email: email,
+    password: password,
+  })
+  .then(function (accountData) {
 
     if (options.immediatelyLogIn) {
       return this.logIn(username, password)
         .then(function () {
-          // ensure signup function returns the user
-          return user;
+          // ensure signup function returns the accountData
+          return accountData;
         });
     } else {
-      return user;
+      return accountData;
     }
 
   }.bind(this));
@@ -161,18 +132,19 @@ HAccountClient.prototype.signUp = function (username, password, email, options) 
 
 /**
  * Retrieves the current user data from the server
- * @param  {Object} options
+ * 
  * @return {Promise->userData}        
  */
-HAccountClient.prototype.getCurrentUser = function (options) {
+HAccountBrowserClient.prototype.getCurrentUser = function () {
 
   return new Bluebird(function (resolve, reject) {
 
     var token = this.getAuthToken();
 
     if (!token) {
+
       this._setAuthStatus(LOGGED_OUT);
-      reject(new HAccountClient.errors.NotLoggedIn());
+      reject(new errors.NotLoggedIn());
     } else {
 
       // check if there is a cached version of the userData
@@ -182,31 +154,33 @@ HAccountClient.prototype.getCurrentUser = function (options) {
         resolve(this._cachedUser);
 
       } else {
-        var tokenData = aux.decodeJWTPayload(token);
+        var tokenData = _decodeJWTPayload(token);
+        var username  = tokenData.username;
 
-        superagent
-          .get(this.serverURI + '/user/' + tokenData.username)
-          .set({
-            'Authorization': 'Bearer ' + token
-          })
-          .end(function (err, res) {
-            if (err) {
-              if (res.statusCode === 401 || res.statusCode === 403) {
-                // token is invalid, destroy it
-                this._destroyAuthToken();
-                this._setAuthStatus(LOGGED_OUT);
-              }
+        this.core.getAccount(token, username)
+          .then(function (accountData) {
 
-              reject(res.body.error);
-              return;
-            }
-
-            this._cachedUser = res.body.data;
+            this._cachedUser = accountData;
             this._setAuthStatus(LOGGED_IN);
-            resolve(res.body.data);
+
+            resolve(accountData);
+
           }.bind(this));
       }
     }
+
+  }.bind(this))
+  .catch(function (err) {
+
+    if (err.name === 'InvalidToken' || err.name === 'Unauthorized') {
+      // token is invalid, destroy it
+      this._destroyAuthToken();
+      this._setAuthStatus(LOGGED_OUT);
+
+      return Bluebird.reject(new errors.NotLoggedIn())
+    }
+
+    return Bluebird.reject(err);
 
   }.bind(this));
 };
@@ -217,51 +191,39 @@ HAccountClient.prototype.getCurrentUser = function (options) {
  * @param  {String} password
  * @return {Promise -> userData}         
  */
-HAccountClient.prototype.logIn = function (username, password) {
+HAccountBrowserClient.prototype.logIn = function (username, password) {
 
-  return new Bluebird(function (resolve, reject) {
+  return this.core.generateToken(username, password)
+    .then(function (token) {
+      // save the token
+      this._saveAuthToken(token);
 
-    superagent
-      .post(this.serverURI + '/auth/token/generate')
-      .send({
-        username: username,
-        password: password
-      })
-      .end(function (err, res) {
-        if (err) {
-          reject(res.body.error);
+      // decode the token and save the decoded data
+      // as the _cachedUser
+      var tokenData = _decodeJWTPayload(token);
 
-          delete this._cachedUser;
-          this._setAuthStatus(LOGGED_OUT);
-          return;
-        }
+      this._cachedUser = tokenData;
+      // set authentication status
+      this._setAuthStatus(LOGGED_IN);
 
-        var token = res.body.data.token;
+      return tokenData;
 
-        // save the token
-        this._saveAuthToken(token);
+    }.bind(this))
+    .catch(function (err) {
 
-        // decode the token and save the decoded data
-        // as the _cachedUser
-        var tokenData = aux.decodeJWTPayload(token);
+      delete this._cachedUser;
+      this._setAuthStatus(LOGGED_OUT);
 
-        this._cachedUser = tokenData;
-        // set authentication status
-        this._setAuthStatus(LOGGED_OUT);
+      return Bluebird.reject(err);
 
-        // resolve with the response data
-        resolve(res.body.data);
-      }.bind(this));
-
-  }.bind(this));
-
+    }.bind(this));
 };
 
 /**
  * Logs currently logged in user out.
  * @return {Promise}
  */
-HAccountClient.prototype.logOut = function () {
+HAccountBrowserClient.prototype.logOut = function () {
 
   return new Bluebird(function (resolve, reject) {
 
@@ -275,18 +237,12 @@ HAccountClient.prototype.logOut = function () {
     this._destroyAuthToken();
     delete this._cachedUser;
 
-    superagent
-      .post(this.serverURI + '/auth/token/revoke')
-      .set('Authorization', 'Bearer ' + token)
-      .end(function (err, res) {
-        if (err) {
-          reject(res.body.error);
+    this.core.revokeToken(token)
+      .then(function () {
 
-          this._setAuthStatus(LOGGED_OUT);
-          return;
-        }
-
+        this._setAuthStatus(LOGGED_OUT);
         resolve();
+
       }.bind(this));
 
   }.bind(this));
@@ -301,7 +257,7 @@ HAccountClient.prototype.logOut = function () {
  * @private
  * @param  {String} token
  */
-HAccountClient.prototype._saveAuthToken = function (token) {
+HAccountBrowserClient.prototype._saveAuthToken = function (token) {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.setItem(tokenStorageKey, token);
@@ -311,7 +267,7 @@ HAccountClient.prototype._saveAuthToken = function (token) {
  * Deletes the token from the browser's localstorage
  * @private
  */
-HAccountClient.prototype._destroyAuthToken = function () {
+HAccountBrowserClient.prototype._destroyAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.removeItem(tokenStorageKey);
@@ -321,7 +277,7 @@ HAccountClient.prototype._destroyAuthToken = function () {
  * Changes the authentication status and emits `auth-status-change` event
  * if the auth-status has effectively been changed by the new value setting.
  */
-HAccountClient.prototype._setAuthStatus = function (status) {
+HAccountBrowserClient.prototype._setAuthStatus = function (status) {
 
   var hasChanged = (this.status !== status);
 
@@ -332,9 +288,9 @@ HAccountClient.prototype._setAuthStatus = function (status) {
   }
 };
 
-module.exports = HAccountClient;
+module.exports = HAccountBrowserClient;
 
-},{"../auxiliary":1,"../errors":5,"bluebird":6,"events":10,"superagent":14,"util":19}],3:[function(require,module,exports){
+},{"../errors":4,"../index":5,"bluebird":7,"cache-promise-fn":8,"events":12,"util":21}],2:[function(require,module,exports){
 // internal dependencies
 const errors = require('../../../errors');
 
@@ -447,7 +403,7 @@ exports.setupSignupForm = function (dialog) {
 
     if (password !== passwordConfirm) {
       dialog.model.set('state', 'signup-error');
-
+      
       signupErrorMessage.innerHTML = 'Passwords do not match';
 
       _focusAndSelectAll(signupPasswordConfirm);
@@ -507,7 +463,7 @@ exports.closeButtons = function (dialog) {
   });
 };
 
-},{"../../../errors":5}],4:[function(require,module,exports){
+},{"../../../errors":4}],3:[function(require,module,exports){
 // native
 
 const util = require('util');
@@ -518,9 +474,9 @@ const DataObj = require('data-obj');
 const Bluebird = require('bluebird');
 
 // internal
-const HAuthClient = require('../../');
-const dialogTemplate = "<dialog id=\"h-auth-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-auth-action-selector\">\n    <button data-state=\"login login-error\" data-value=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-value=\"signup\">\n      Sign up\n    </button>\n  </section>\n\n  <section data-state=\"login login-error\">\n    <form id=\"h-auth-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n  </section>\n\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-auth-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-auth-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n\n</dialog>";
-const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-auth-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-auth-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-auth-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-auth-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-auth-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-auth-dialog section[data-state] {\n  display: none;\n}\n\n#h-auth-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-auth-action-selector button {\n\n}\n\n#h-auth-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-auth-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-auth-dialog form label > * {\n  display: block;\n}\n\n#h-auth-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-auth-dialog form input[type=\"text\"],\n#h-auth-dialog form input[type=\"email\"],\n#h-auth-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-auth-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
+const HAccountClient = require('../../');
+const dialogTemplate = "<dialog id=\"h-account-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-auth-action-selector\">\n    <button data-state=\"login login-error\" data-value=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-value=\"signup\">\n      Sign up\n    </button>\n  </section>\n\n  <section data-state=\"login login-error\">\n    <form id=\"h-auth-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n  </section>\n\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-auth-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-auth-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n\n</dialog>";
+const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-account-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-account-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-account-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-auth-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-auth-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-account-dialog section[data-state] {\n  display: none;\n}\n\n#h-account-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-auth-action-selector button {\n\n}\n\n#h-auth-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-account-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-account-dialog form label > * {\n  display: block;\n}\n\n#h-account-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-account-dialog form input[type=\"text\"],\n#h-account-dialog form input[type=\"email\"],\n#h-account-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-account-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
 // according to brfs docs, require.resolve() may be used as well
 // https://www.npmjs.com/package/brfs#methods
 const dialogPolyfillStyles = "dialog {\n  position: absolute;\n  left: 0; right: 0;\n  width: -moz-fit-content;\n  width: -webkit-fit-content;\n  width: fit-content;\n  height: -moz-fit-content;\n  height: -webkit-fit-content;\n  height: fit-content;\n  margin: auto;\n  border: solid;\n  padding: 1em;\n  background: white;\n  color: black;\n  display: none;\n}\n\ndialog[open] {\n  display: block;\n}\n\ndialog + .backdrop {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n  background: rgba(0,0,0,0.1);\n}\n\n/* for small devices, modal dialogs go full-screen */\n@media screen and (max-width: 540px) {\n  dialog[_polyfill_modal] {  /* TODO: implement */\n    top: 0;\n    width: auto;\n    margin: 1em;\n  }\n}\n\n._dialog_overlay {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n}"
@@ -573,10 +529,10 @@ function _toArray(obj) {
  * Auth Dialog constructor
  * @param {Object} options
  */
-function HAuthDialog(options) {
+function HAccountDialog(options) {
 
   // instantiate auth client if none is passed as option
-  this.auth = options.auth || new HAuthClient(options);
+  this.auth = options.auth || new HAccountClient(options);
 
   /**
    * Data store for the modal model
@@ -623,7 +579,7 @@ function HAuthDialog(options) {
   }
 }
 
-HAuthDialog.prototype._domSetup = function () {
+HAccountDialog.prototype._domSetup = function () {
   domSetup.setupSelector(this);
   domSetup.setupLoginForm(this);
   domSetup.setupSignupForm(this);
@@ -635,7 +591,7 @@ HAuthDialog.prototype._domSetup = function () {
  * containerElement
  * @param  {DOM Element} containerElement
  */
-HAuthDialog.prototype.attach = function (containerElement) {
+HAccountDialog.prototype.attach = function (containerElement) {
   this.containerElement = containerElement;
 
   containerElement.appendChild(this.element);
@@ -645,7 +601,7 @@ HAuthDialog.prototype.attach = function (containerElement) {
  * Shows the modal on the login ui
  * @return {Bluebird}
  */
-HAuthDialog.prototype.logIn = function () {
+HAccountDialog.prototype.logIn = function () {
   this.model.set({
     state: STATE_LOGIN,
     action: 'logIn',
@@ -663,7 +619,7 @@ HAuthDialog.prototype.logIn = function () {
  * Shows the dialog on the signup ui
  * @return {Bluebird}
  */
-HAuthDialog.prototype.signUp = function () {
+HAccountDialog.prototype.signUp = function () {
   this.model.set({
     state: STATE_SIGNUP,
     action: 'signUp'
@@ -677,7 +633,7 @@ HAuthDialog.prototype.signUp = function () {
   }.bind(this));
 };
 
-HAuthDialog.prototype.clear = function () {
+HAccountDialog.prototype.clear = function () {
 
   _toArray(this.element.querySelectorAll('input')).forEach(function (el) {
     el.value = '';
@@ -689,7 +645,7 @@ HAuthDialog.prototype.clear = function () {
   delete this._signUpReject;
 };
 
-HAuthDialog.prototype.resolve = function (user) {
+HAccountDialog.prototype.resolve = function (user) {
   var action = this.model.get('action');
 
   if (action === 'logIn') {
@@ -699,7 +655,7 @@ HAuthDialog.prototype.resolve = function (user) {
   }
 };
 
-HAuthDialog.prototype.reject = function (error) {
+HAccountDialog.prototype.reject = function (error) {
   var action = this.model.get('action');
 
   if (action === 'logIn') {
@@ -712,7 +668,7 @@ HAuthDialog.prototype.reject = function (error) {
 /**
  * Closes the dialog
  */
-HAuthDialog.prototype.close = function () {
+HAccountDialog.prototype.close = function () {
   this.clear();
   this.element.close();
 };
@@ -723,7 +679,7 @@ HAuthDialog.prototype.close = function () {
  * Otherwise, simply returns the current user.
  * @return {UserData}
  */
-HAuthDialog.prototype.ensureUser = function () {
+HAccountDialog.prototype.ensureUser = function () {
 
   var self = this;
 
@@ -733,7 +689,6 @@ HAuthDialog.prototype.ensureUser = function () {
     })
     .catch(function (err) {
       if (err.name === 'NotLoggedIn') {
-
         return self.logIn()
           .then(function () {
             // the method MUST return the current user
@@ -753,24 +708,27 @@ const AUTH_PROXY_METHODS = [
   'getAuthToken',
   'getCurrentUser',
   'logOut',
+  'on',
+  'emit',
+  'removeEventListener',
 ];
 
 AUTH_PROXY_METHODS.forEach(function (method) {
-  HAuthDialog.prototype[method] = function () {
+  HAccountDialog.prototype[method] = function () {
     var args = Array.prototype.slice.call(arguments, 0);
 
     return this.auth[method].apply(this.auth, args);
   };
 });
 
-module.exports = HAuthDialog;
+module.exports = HAccountDialog;
 
-},{"../../":2,"../../../errors":5,"./dom-setup":3,"bluebird":6,"data-obj":8,"dialog-polyfill":9,"util":19}],5:[function(require,module,exports){
+},{"../../":1,"../../../errors":4,"./dom-setup":2,"bluebird":7,"data-obj":10,"dialog-polyfill":11,"util":21}],4:[function(require,module,exports){
 const util = require('util');
 
 var errors = require('../shared/errors');
 
-const HAuthError = errors.HAuthError;
+const HAccountError = errors.HAccountError;
 
 /**
  * Client errors
@@ -781,9 +739,9 @@ const HAuthError = errors.HAuthError;
  * @param {String} message
  */
 function NotLoggedIn(message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 }
-util.inherits(NotLoggedIn, HAuthError);
+util.inherits(NotLoggedIn, HAccountError);
 NotLoggedIn.prototype.name = 'NotLoggedIn';
 exports.NotLoggedIn = NotLoggedIn;
 
@@ -792,12 +750,230 @@ exports.NotLoggedIn = NotLoggedIn;
  * @param {String} message
  */
 function UserCancelled(message) {
-  HAuthError.call(this, message);
+  HAccountError.call(this, message);
 }
-util.inherits(UserCancelled, HAuthError);
+util.inherits(UserCancelled, HAccountError);
 UserCancelled.prototype.name = 'UserCancelled';
 exports.UserCancelled = UserCancelled;
-},{"../shared/errors":20,"util":19}],6:[function(require,module,exports){
+
+Object.assign(exports, errors);
+
+},{"../shared/errors":22,"util":21}],5:[function(require,module,exports){
+// third-party
+const superagent = require('superagent');
+const Bluebird   = require('bluebird');
+
+// constants
+const TRAILING_SLASH_RE = /\/$/;
+
+/**
+ * Constructor
+ * @param {Object} options
+ *        - serverURI
+ */
+function PrivateHAccount(options) {
+
+  if (!options.serverURI) {
+    throw new Error('serverURI is required');
+  }
+
+  this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
+}
+
+Object.assign(PrivateHAccount.prototype, require('./methods/public'));
+
+module.exports = PrivateHAccount;
+
+},{"./methods/public":6,"bluebird":7,"superagent":16}],6:[function(require,module,exports){
+// third-party
+const Bluebird   = require('bluebird');
+const superagent = require('superagent');
+
+const errors = require('../errors');
+
+/**
+ * Creates a new account
+ * 
+ * @param  {Object} accountData
+ *         - email
+ *         - username
+ *         - password
+ * @return {Bluebird -> AccountData}
+ */
+exports.createAccount = function (accountData) {
+  if (!accountData) {
+    return Bluebird.reject(new errors.InvalidOption('accountData', 'required'));
+  }
+
+  if (!accountData.username) {
+    return Bluebird.reject(new errors.InvalidOption('username', 'required'));
+  }
+
+  if (!accountData.email) {
+    return Bluebird.reject(new errors.InvalidOption('email', 'required'));
+  }
+
+  if (!accountData.password) {
+    return Bluebird.reject(new errors.InvalidOption('password', 'required'));
+  }
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/accounts')
+      .send(accountData)
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.body && res.body.error) {
+            reject(res.body.error);
+          } else {
+            reject(err);
+          }
+          return;
+        }
+
+        resolve(res.body.data);
+      });
+    
+  }.bind(this));
+};
+
+/**
+ * Retrieves an account by its username
+ * 
+ * @param  {String} authToken
+ * @param  {String} username
+ * @return {Bluebird -> AccountData}
+ */
+exports.getAccount = function (authToken, username) {
+
+  if (!authToken) {
+    return Bluebird.reject(new errors.InvalidOption('authToken', 'required'));
+  }
+
+  if (!username) {
+    return Bluebird.reject(new errors.InvalidOption('username', 'required'));
+  }
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .get(this.serverURI + '/account/' + username)
+      .set({
+        'Authorization': 'Bearer ' + authToken
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.statusCode === 401) {
+
+            // invalid token
+            reject(new errors.InvalidToken(authToken));
+
+          } else if (res && res.statusCode === 403) {
+
+            // unauthorized
+            reject(new errors.Unauthorized());
+
+          } else {
+
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve(res.body.data);
+
+      }.bind(this));
+
+  }.bind(this));
+};
+
+/**
+ * Generates an auth token for the account idenfied by combination
+ * of username and password
+ * 
+ * @param  {String} username
+ * @param  {String} password
+ * @return {Bluebird -> Token}
+ */
+exports.generateToken = function (username, password) {
+
+  if (!username) {
+    return Bluebird.reject(new errors.InvalidOption('username', 'required'));
+  }
+
+  if (!password) {
+    return Bluebird.reject(new errors.InvalidOption('password', 'required'));
+  }
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/auth/token/generate')
+      .send({
+        username: username,
+        password: password
+      })
+      .end(function (err, res) {
+        if (err) {
+
+          if (res && res.body && res.body.error) {
+            reject(res.body.error);
+          } else {
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve(res.body.data.token);
+
+      }.bind(this));
+
+  }.bind(this));
+};
+
+/**
+ * Revokes the given token.
+ * Uses the token itself as authorization token.
+ * 
+ * @param  {String} token
+ */
+exports.revokeToken = function (token) {
+
+  if (!token) {
+    return Bluebird.reject(new errors.InvalidOption('token', 'required'));
+  }
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/auth/token/revoke')
+      .set('Authorization', 'Bearer ' + token)
+      .end(function (err, res) {
+        if (err) {
+
+          if (res && res.body && res.body.error) {
+            reject(res.body.error);
+          } else {
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve();
+      }.bind(this));
+
+    }.bind(this));
+
+};
+
+},{"../errors":4,"bluebird":7,"superagent":16}],7:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -6276,7 +6452,121 @@ module.exports = ret;
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":12}],7:[function(require,module,exports){
+},{"_process":14}],8:[function(require,module,exports){
+function _toArray(obj) {
+  return Array.prototype.slice.call(obj, 0);
+}
+
+function cachePromiseFn(fn, options) {
+
+  if (typeof fn !== 'function') {
+    throw new TypeError('fn MUST be a function');
+  }
+
+  if (typeof options !== 'object') {
+    throw new TypeError('options MUST be an object');
+  }
+
+  var cacheKey = options.cacheKey;
+
+  if (typeof cacheKey !== 'function') {
+    throw new TypeError('cacheKey MUST be a function');
+  }
+
+  /**
+   * Array of calls to the fn
+   * This array is where calls to the function are 
+   * stored up to when their promises are resolved (or rejected).
+   * 
+   * @type {Array}
+   */
+  var fnCallStore = [];
+
+  /**
+   * Removes a call from the fnCallStore
+   * 
+   * @param  {String} callKey
+   */
+  function _removeCall(callKey) {
+    var callIndex = fnCallStore.findIndex(function (call) {
+      return call.key === callKey;
+    });
+
+    fnCallStore.splice(callIndex, 1);
+  }
+
+  /**
+   * Stores the promise in the fnCallStore
+   * 
+   * @param {Array} callArgs
+   */
+  function _addCallPromise(callArgs, promise) {
+    var callKey = cacheKey.apply(null, callArgs);
+
+    promise
+      .then(function (res) {
+        _removeCall(callKey);
+
+        return res;
+      })
+      .catch(function (err) {
+        _removeCall(callKey);
+
+        throw err;
+      });
+
+    fnCallStore.push({
+      key: callKey,
+      promise: promise
+    });
+  }
+
+  /**
+   * Retrieves the last call to the function with the same
+   * callArgs
+   * 
+   * @param  {Array} callArgs Array of callArgs to be used to call the function
+   * @return {Promise}
+   */
+  function _getCallPromise(callArgs) {
+    var callKey = cacheKey.apply(null, callArgs);
+
+    var call = fnCallStore.find(function (call) {
+      return call.key === callKey;
+    });
+
+    if (call) {
+      return call.promise;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * The resulting merger function
+   * 
+   * @return {Promise}
+   */
+  var cachedFn = function () {
+    var callArgs = _toArray(arguments);
+
+    var promise = _getCallPromise(callArgs);
+
+    if (!promise) {
+      promise = fn.apply(null, callArgs);
+
+      _addCallPromise(callArgs, promise);
+    }
+
+    return promise;
+  };
+
+  return cachedFn;
+}
+
+module.exports = cachePromiseFn;
+
+},{}],9:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -6441,7 +6731,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // native dependencies
 const util         = require('util');
 const EventEmitter = require('events');
@@ -6539,7 +6829,7 @@ DataModel.prototype.get = function (key) {
 
 module.exports = DataModel;
 
-},{"events":10,"util":19}],9:[function(require,module,exports){
+},{"events":12,"util":21}],11:[function(require,module,exports){
 (function() {
 
   var supportCustomEvent = window.CustomEvent;
@@ -7055,7 +7345,7 @@ module.exports = DataModel;
   }
 })();
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7359,7 +7649,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7384,7 +7674,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],12:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7505,7 +7795,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -7530,7 +7820,7 @@ module.exports = function(arr, fn, initial){
   
   return curr;
 };
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -8609,7 +8899,7 @@ request.put = function(url, data, fn){
   return req;
 };
 
-},{"./is-object":15,"./request":17,"./request-base":16,"emitter":7,"reduce":13}],15:[function(require,module,exports){
+},{"./is-object":17,"./request":19,"./request-base":18,"emitter":9,"reduce":15}],17:[function(require,module,exports){
 /**
  * Check if `obj` is an object.
  *
@@ -8624,7 +8914,7 @@ function isObject(obj) {
 
 module.exports = isObject;
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * Module of mixed-in functions shared between node and client code
  */
@@ -8792,7 +9082,7 @@ exports.field = function(name, val) {
   return this;
 };
 
-},{"./is-object":15}],17:[function(require,module,exports){
+},{"./is-object":17}],19:[function(require,module,exports){
 // The node and browser modules expose versions of this with the
 // appropriate constructor function bound as first argument
 /**
@@ -8826,14 +9116,14 @@ function request(RequestConstructor, method, url) {
 
 module.exports = request;
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9423,7 +9713,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":18,"_process":12,"inherits":11}],20:[function(require,module,exports){
+},{"./support/isBuffer":20,"_process":14,"inherits":13}],22:[function(require,module,exports){
 // native
 const util = require('util');
 
@@ -9434,7 +9724,7 @@ const util = require('util');
 function HAccountError(message) {
   Error.call(this);
 
-  this.message = message;
+  this.message = message || 'HAccountError';
 };
 util.inherits(HAccountError, Error);
 HAccountError.prototype.name = 'HAccountError';
@@ -9539,5 +9829,5 @@ util.inherits(UserNotFound, HAccountError);
 UserNotFound.prototype.name = 'UserNotFound';
 exports.UserNotFound = UserNotFound;
 
-},{"util":19}]},{},[4])(4)
+},{"util":21}]},{},[3])(3)
 });

@@ -8,7 +8,7 @@ const util = require('util');
 function HAccountError(message) {
   Error.call(this);
 
-  this.message = message;
+  this.message = message || 'HAccountError';
 };
 util.inherits(HAccountError, Error);
 HAccountError.prototype.name = 'HAccountError';

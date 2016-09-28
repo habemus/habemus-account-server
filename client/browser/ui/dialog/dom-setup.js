@@ -110,7 +110,7 @@ exports.setupSignupForm = function (dialog) {
 
     if (password !== passwordConfirm) {
       dialog.model.set('state', 'signup-error');
-
+      
       signupErrorMessage.innerHTML = 'Passwords do not match';
 
       _focusAndSelectAll(signupPasswordConfirm);

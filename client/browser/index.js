@@ -3,27 +3,57 @@ const util         = require('util');
 const EventEmitter = require('events');
 
 // third-party
-const superagent = require('superagent');
-const Bluebird   = require('bluebird');
+const Bluebird       = require('bluebird');
+const cachePromiseFn = require('cache-promise-fn');
 
 // constants
-const TRAILING_SLASH_RE = /\/$/;
 const LOGGED_IN  = 'logged_in';
 const LOGGED_OUT = 'logged_out';
 
 const errors = require('../errors');
-const aux    = require('../auxiliary');
+
+/**
+ * The public core client
+ * @type {Function}
+ */
+const HAccountClient = require('../index');
+
+/**
+ * Light version that only decodes the token's Payload
+ * @param  {String|JWT} token
+ * @return {Object}
+ */
+function _decodeJWTPayload(token) {
+
+  var payload = token.split('.')[1];
+
+  if (!payload) {
+    throw new errors.InvalidToken(token);
+  }
+
+  return JSON.parse(atob(payload));
+};
 
 /**
  * Auth client constructor
  * @param {Object} options
  */
-function HAccountClient(options) {
+function HAccountBrowserClient(options) {
 
   if (!options.serverURI) { throw new TypeError('serverURI is required'); }
 
-  this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
+  /**
+   * Client core defines all API communication methods.
+   * 
+   * @type {HAccountClient}
+   */
+  this.core = new HAccountClient(options);
 
+  /**
+   * Prefix for storing data on localStorage
+   * 
+   * @type {String}
+   */
   this.localStoragePrefix = options.localStoragePrefix || 'h_account_';
 
   /**
@@ -38,25 +68,31 @@ function HAccountClient(options) {
    */
   this._cachedUser = undefined;
 
-  // check initial authentication status
-  this.getCurrentUser();
+  /**
+   * Make calls to `getCurrentUser` cached
+   */
+  this.getCurrentUser = cachePromiseFn(this.getCurrentUser.bind(this), {
+    cacheKey: function cacheKey() {
+      // constant cache key, at this method takes no arguments
+      return 'constant';
+    }
+  });
 }
+util.inherits(HAccountBrowserClient, EventEmitter);
 
-util.inherits(HAccountClient, EventEmitter);
-
-HAccountClient.prototype.constants = {
+HAccountBrowserClient.prototype.constants = {
   LOGGED_IN: LOGGED_IN,
   LOGGED_OUT: LOGGED_OUT
 };
 
 // static properties
-HAccountClient.errors = errors;
+HAccountBrowserClient.errors = errors;
 
 /**
  * Loads the auth token from the browser's localstorage
  * @return {String|Boolean}
  */
-HAccountClient.prototype.getAuthToken = function () {
+HAccountBrowserClient.prototype.getAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   return window.localStorage.getItem(tokenStorageKey) || false;
@@ -70,66 +106,24 @@ HAccountClient.prototype.getAuthToken = function () {
  *         - immediatelyLogIn
  * @return {Promise->userData}         
  */
-HAccountClient.prototype.signUp = function (username, password, email, options) {
-  if (!username) {
-    return Bluebird.reject(new errors.InvalidOption(
-      'username',
-      'required',
-      'username is required for signUp'
-    ));
-  }
-
-  if (!password) {
-    return Bluebird.reject(new errors.InvalidOption(
-      'password',
-      'required',
-      'password is required for signUp'
-    ));
-  }
-
-  if (!email) {
-    return Bluebird.reject(new errors.InvalidOption(
-      'email',
-      'required',
-      'email is required for signUp'
-    ));
-  }
-
+HAccountBrowserClient.prototype.signUp = function (username, password, email, options) {
   options = options || {};
 
-  return new Bluebird(function (resolve, reject) {
-
-    superagent
-      .post(this.serverURI + '/users')
-      .send({
-        username: username,
-        password: password,
-        email: email,
-      })
-      .end(function (err, res) {
-        if (err) {
-          if (res && res.body && res.body.error) {
-            reject(res.body.error);
-          } else {
-            reject(err);
-          }
-          return;
-        }
-
-        resolve(res.body.data);
-      });
-    
-  }.bind(this))
-  .then(function (user) {
+  return this.core.createAccount({
+    username: username,
+    email: email,
+    password: password,
+  })
+  .then(function (accountData) {
 
     if (options.immediatelyLogIn) {
       return this.logIn(username, password)
         .then(function () {
-          // ensure signup function returns the user
-          return user;
+          // ensure signup function returns the accountData
+          return accountData;
         });
     } else {
-      return user;
+      return accountData;
     }
 
   }.bind(this));
@@ -137,18 +131,19 @@ HAccountClient.prototype.signUp = function (username, password, email, options) 
 
 /**
  * Retrieves the current user data from the server
- * @param  {Object} options
+ * 
  * @return {Promise->userData}        
  */
-HAccountClient.prototype.getCurrentUser = function (options) {
+HAccountBrowserClient.prototype.getCurrentUser = function () {
 
   return new Bluebird(function (resolve, reject) {
 
     var token = this.getAuthToken();
 
     if (!token) {
+
       this._setAuthStatus(LOGGED_OUT);
-      reject(new HAccountClient.errors.NotLoggedIn());
+      reject(new errors.NotLoggedIn());
     } else {
 
       // check if there is a cached version of the userData
@@ -158,31 +153,33 @@ HAccountClient.prototype.getCurrentUser = function (options) {
         resolve(this._cachedUser);
 
       } else {
-        var tokenData = aux.decodeJWTPayload(token);
+        var tokenData = _decodeJWTPayload(token);
+        var username  = tokenData.username;
 
-        superagent
-          .get(this.serverURI + '/user/' + tokenData.username)
-          .set({
-            'Authorization': 'Bearer ' + token
-          })
-          .end(function (err, res) {
-            if (err) {
-              if (res.statusCode === 401 || res.statusCode === 403) {
-                // token is invalid, destroy it
-                this._destroyAuthToken();
-                this._setAuthStatus(LOGGED_OUT);
-              }
+        this.core.getAccount(token, username)
+          .then(function (accountData) {
 
-              reject(res.body.error);
-              return;
-            }
-
-            this._cachedUser = res.body.data;
+            this._cachedUser = accountData;
             this._setAuthStatus(LOGGED_IN);
-            resolve(res.body.data);
+
+            resolve(accountData);
+
           }.bind(this));
       }
     }
+
+  }.bind(this))
+  .catch(function (err) {
+
+    if (err.name === 'InvalidToken' || err.name === 'Unauthorized') {
+      // token is invalid, destroy it
+      this._destroyAuthToken();
+      this._setAuthStatus(LOGGED_OUT);
+
+      return Bluebird.reject(new errors.NotLoggedIn())
+    }
+
+    return Bluebird.reject(err);
 
   }.bind(this));
 };
@@ -193,51 +190,39 @@ HAccountClient.prototype.getCurrentUser = function (options) {
  * @param  {String} password
  * @return {Promise -> userData}         
  */
-HAccountClient.prototype.logIn = function (username, password) {
+HAccountBrowserClient.prototype.logIn = function (username, password) {
 
-  return new Bluebird(function (resolve, reject) {
+  return this.core.generateToken(username, password)
+    .then(function (token) {
+      // save the token
+      this._saveAuthToken(token);
 
-    superagent
-      .post(this.serverURI + '/auth/token/generate')
-      .send({
-        username: username,
-        password: password
-      })
-      .end(function (err, res) {
-        if (err) {
-          reject(res.body.error);
+      // decode the token and save the decoded data
+      // as the _cachedUser
+      var tokenData = _decodeJWTPayload(token);
 
-          delete this._cachedUser;
-          this._setAuthStatus(LOGGED_OUT);
-          return;
-        }
+      this._cachedUser = tokenData;
+      // set authentication status
+      this._setAuthStatus(LOGGED_IN);
 
-        var token = res.body.data.token;
+      return tokenData;
 
-        // save the token
-        this._saveAuthToken(token);
+    }.bind(this))
+    .catch(function (err) {
 
-        // decode the token and save the decoded data
-        // as the _cachedUser
-        var tokenData = aux.decodeJWTPayload(token);
+      delete this._cachedUser;
+      this._setAuthStatus(LOGGED_OUT);
 
-        this._cachedUser = tokenData;
-        // set authentication status
-        this._setAuthStatus(LOGGED_OUT);
+      return Bluebird.reject(err);
 
-        // resolve with the response data
-        resolve(res.body.data);
-      }.bind(this));
-
-  }.bind(this));
-
+    }.bind(this));
 };
 
 /**
  * Logs currently logged in user out.
  * @return {Promise}
  */
-HAccountClient.prototype.logOut = function () {
+HAccountBrowserClient.prototype.logOut = function () {
 
   return new Bluebird(function (resolve, reject) {
 
@@ -251,18 +236,12 @@ HAccountClient.prototype.logOut = function () {
     this._destroyAuthToken();
     delete this._cachedUser;
 
-    superagent
-      .post(this.serverURI + '/auth/token/revoke')
-      .set('Authorization', 'Bearer ' + token)
-      .end(function (err, res) {
-        if (err) {
-          reject(res.body.error);
+    this.core.revokeToken(token)
+      .then(function () {
 
-          this._setAuthStatus(LOGGED_OUT);
-          return;
-        }
-
+        this._setAuthStatus(LOGGED_OUT);
         resolve();
+
       }.bind(this));
 
   }.bind(this));
@@ -277,7 +256,7 @@ HAccountClient.prototype.logOut = function () {
  * @private
  * @param  {String} token
  */
-HAccountClient.prototype._saveAuthToken = function (token) {
+HAccountBrowserClient.prototype._saveAuthToken = function (token) {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.setItem(tokenStorageKey, token);
@@ -287,7 +266,7 @@ HAccountClient.prototype._saveAuthToken = function (token) {
  * Deletes the token from the browser's localstorage
  * @private
  */
-HAccountClient.prototype._destroyAuthToken = function () {
+HAccountBrowserClient.prototype._destroyAuthToken = function () {
   var tokenStorageKey = this.localStoragePrefix + 'auth_token';
 
   window.localStorage.removeItem(tokenStorageKey);
@@ -297,7 +276,7 @@ HAccountClient.prototype._destroyAuthToken = function () {
  * Changes the authentication status and emits `auth-status-change` event
  * if the auth-status has effectively been changed by the new value setting.
  */
-HAccountClient.prototype._setAuthStatus = function (status) {
+HAccountBrowserClient.prototype._setAuthStatus = function (status) {
 
   var hasChanged = (this.status !== status);
 
@@ -308,4 +287,4 @@ HAccountClient.prototype._setAuthStatus = function (status) {
   }
 };
 
-module.exports = HAccountClient;
+module.exports = HAccountBrowserClient;

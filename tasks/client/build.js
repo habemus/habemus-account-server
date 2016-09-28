@@ -24,7 +24,7 @@ module.exports = function (gulp) {
       transform: [],
 
       // standalone global object for main module
-      standalone: 'HAuthClient'
+      standalone: 'HAccountClient'
     });
 
     return b.bundle()
@@ -49,7 +49,7 @@ module.exports = function (gulp) {
       transform: [brfs],
 
       // standalone global object for main module
-      standalone: 'HAuthDialog'
+      standalone: 'HAccountDialog'
     });
 
     return b.bundle()

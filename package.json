@@ -38,6 +38,7 @@
     "bluebird": "^3.4.0",
     "body-parser": "^1.15.0",
     "bunyan": "^1.8.1",
+    "cache-promise-fn": "0.0.0",
     "cors": "^2.7.1",
     "data-obj": "0.0.0",
     "dialog-polyfill": "^0.4.3",

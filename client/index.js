@@ -17,9 +17,8 @@ function PrivateHAccount(options) {
   }
 
   this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
-  this.serverURI = this.serverURI + '/_';
 }
 
-Object.assign(PrivateHAccount.prototype, require('./methods/private'));
+Object.assign(PrivateHAccount.prototype, require('./methods/public'));
 
 module.exports = PrivateHAccount;
