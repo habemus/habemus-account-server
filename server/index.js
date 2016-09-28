@@ -27,6 +27,7 @@ function hAccount(options) {
 
   // mailing
   if (!options.fromEmail) { throw new Error('fromEmail is required'); }
+  if (!options.uiHostURI) { throw new Error('uiHostURI is required'); }
 
   // create express app instance
   var app = express();

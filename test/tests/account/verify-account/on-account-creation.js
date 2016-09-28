@@ -41,18 +41,7 @@ describe('User Account verification', function () {
       .then((assets) => {
         ASSETS = assets;
 
-        var options = {
-          apiVersion: '0.0.0',
-          mongodbURI: assets.dbURI,
-          rabbitMQURI: assets.rabbitMQURI,
-          secret: 'fake-secret',
-
-          fromEmail: 'from@dev.habem.us',
-
-          host: 'http://localhost'
-        };
-
-        ASSETS.accountApp = hAccount(options);
+        ASSETS.accountApp = hAccount(aux.genOptions());
         ASSETS.accountURI = 'http://localhost:4000';
 
         return ASSETS.accountApp.ready;

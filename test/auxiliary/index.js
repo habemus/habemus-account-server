@@ -18,6 +18,20 @@ const TEST_RABBIT_MQ_URI = 'amqp://192.168.99.100';
 
 exports.dbURI = TEST_DB_URI;
 
+exports.defaultOptions = {
+  apiVersion: '0.0.0',
+  mongodbURI: TEST_DB_URI,
+  rabbitMQURI: TEST_RABBIT_MQ_URI,
+  secret: 'fake-secret',
+
+  fromEmail: 'from@dev.habem.us',
+  uiHostURI: 'http://localhost:8000',
+};
+
+exports.genOptions = function (opts) {
+  return Object.assign({}, exports.defaultOptions, opts);
+};
+
 /**
  * Used to reject successful promises that should have not been fulfilled
  * @return {Bluebird Rejection}

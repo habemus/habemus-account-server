@@ -15,7 +15,9 @@ const REQUIRED_OPTIONS = {
   mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
   rabbitMQURI: 'amqp://192.168.99.100',
   secret: 'fake-secret',
+  
   fromEmail: 'from@dev.habem.us',
+  uiHostURI: 'http://localhost:8000'
 };
 
 function clone(obj) {
@@ -80,7 +82,7 @@ describe('server initialization', function () {
       secret: 'fake-secret',
       fromEmail: 'from@dev.habem.us',
 
-      host: 'http://localhost'
+      uiHostURI: 'http://localhost'
     });
 
     app.should.be.a.Function();
