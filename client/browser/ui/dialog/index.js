@@ -165,7 +165,9 @@ HAccountDialog.prototype.logIn = function () {
     noCancel: false,
   });
 
-  this.element.showModal();
+  if (!this.element.hasAttribute('open')) {
+    this.element.showModal();
+  }
 
   return new Bluebird(function (resolve, reject) {
     this._logInResolve = resolve;
@@ -184,7 +186,9 @@ HAccountDialog.prototype.signUp = function () {
     noCancel: false,
   });
 
-  this.element.showModal();
+  if (!this.element.hasAttribute('open')) {
+    this.element.showModal();
+  }
 
   return new Bluebird(function (resolve, reject) {
     this._signUpResolve = resolve;
@@ -200,7 +204,9 @@ HAccountDialog.prototype.verifyEmail = function () {
     noCancel: true,
   });
 
-  this.element.showModal();
+  if (!this.element.hasAttribute('open')) {
+    this.element.showModal();
+  }
 
   return new Bluebird(function (resolve, reject) {
     this._verifyEmailResolve = resolve;
@@ -294,8 +300,19 @@ HAccountDialog.prototype.ensureUser = function (options) {
     })
     .catch(function (err) {
       if (err.name === 'NotLoggedIn') {
+        // user not logged in
         
         return self.logIn()
+          .then(function () {
+            // the method MUST return the current user
+            return self.hAccountClient.getCurrentUser();
+          })
+
+      } else if (err.name === 'UserNotFound') {
+        // user logged in, but for some reason the
+        // account does not exist anymore
+
+        return self.signUp()
           .then(function () {
             // the method MUST return the current user
             return self.hAccountClient.getCurrentUser();
@@ -331,7 +348,11 @@ HAccountDialog.prototype.ensureUser = function (options) {
       } else {
         return account;
       }
-    });
+    })
+    // .catch(function (err) {
+
+
+    // });
 
 };
 

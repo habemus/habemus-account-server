@@ -1,3 +1,7 @@
+// native
+const fs = require('fs');
+const path = require('path');
+
 // third-party dependencies
 const should = require('should');
 const superagent = require('superagent');
@@ -141,6 +145,16 @@ describe('User Account verification', function () {
 
             // verification should be successful
             res.statusCode.should.equal(200);
+
+            // contents of the response must be equal
+            // to the default h-account-ui
+            var successUI = fs.readFileSync(
+              path.join(__dirname, '../../../../server/routes/public/ui/static/email-verification-success.html'),
+              'utf8'
+            );
+            
+            res.text.should.eql(successUI);
+
             done();
           });
       });

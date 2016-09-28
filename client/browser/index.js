@@ -166,7 +166,8 @@ HAccountBrowserClient.prototype.getCurrentUser = function () {
 
             resolve(accountData);
 
-          }.bind(this));
+          }.bind(this))
+          .catch(reject);
       }
     }
 

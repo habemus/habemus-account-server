@@ -5,23 +5,31 @@ module.exports = function (dialog, options) {
 
   var hAccountClient = dialog.hAccountClient;
 
-  refresh.addEventListener('click', function (e) {
-
+  /**
+   * Fetches data about the account on the server
+   * and checks if the verification status has modified
+   */
+  function refreshVerificationStatus() {
     var authToken = hAccountClient.getAuthToken();
 
-    hAccountClient.getCurrentUser()
-      .then(function (user) {
-        return hAccountClient.getAccount(authToken, user.username);
-      })
-      .then(function (account) {
-        if (account.status.value === 'verified') {
-          // success!
-          dialog.resolve(account);
-        } else {
-          // not
-        }
-      });
-  });
+    if (authToken) {
+      hAccountClient.getCurrentUser()
+        .then(function (user) {
+          return hAccountClient.getAccount(authToken, user.username);
+        })
+        .then(function (account) {
+          if (account.status.value === 'verified') {
+            // success!
+            dialog.resolve(account);
+            dialog.close();
+          } else {
+            // not
+          }
+        });
+    }
+  }
+
+  refresh.addEventListener('click', refreshVerificationStatus);
 
   resend.addEventListener('click', function (e) {
 

@@ -25,7 +25,10 @@ exports.defaultOptions = {
   secret: 'fake-secret',
 
   fromEmail: 'from@dev.habem.us',
-  uiHostURI: 'http://localhost:8000',
+  // hostURI: 'http://local.dev.h-account:4000',
+  // uiHostURI: 'http://local.dev.h-account:4000/ui',
+  hostURI: 'http://localhost:4000',
+  uiHostURI: 'http://localhost:4000/ui',
 };
 
 exports.genOptions = function (opts) {

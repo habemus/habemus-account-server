@@ -8,7 +8,8 @@ const Bluebird = require('bluebird');
 // constants
 const ACTION_NAME = 'verifyAccountEmail';
 const CODE_LENGTH = 5;
-const CONSTANTS = require('../../shared/constants')
+const CONSTANTS = require('../../shared/constants');
+const TRAILING_SLASH_RE = /\/$/;
 
 module.exports = function (app, options) {
 
@@ -16,7 +17,8 @@ module.exports = function (app, options) {
 
   const Account = app.services.mongoose.models.Account;
 
-  const FROM_EMAIL = options.fromEmail;
+  const FROM_EMAIL  = options.fromEmail;
+  const HOST_URI    = options.hostURI.replace(TRAILING_SLASH_RE, '');
 
   var emailVerificationCtrl = {};
 
@@ -49,14 +51,28 @@ module.exports = function (app, options) {
       })
       .then((confirmationCode) => {
 
+        var email    = _account.get('email');
+        var name     = _account.get('name');
+        var username = _account.get('username');
+
+        /**
+         * URL that points to the h-account's host
+         * From that path, the user will be redirected according
+         * to success or failure of verification.
+         * 
+         * @type {String}
+         */
+        var confirmationURL = HOST_URI + '/account/' + username + '/verify-email?code=' + confirmationCode;
+
         return app.services.hMailer.schedule({
           from: FROM_EMAIL,
-          to: _account.get('email'),
+          to: email,
           template: 'account/email-verification.html',
           data: {
-            name: _account.get('name'),
-            email: _account.get('email'),
+            name: name,
+            email: email,
             code: confirmationCode,
+            url: confirmationURL
           }
         });
       })

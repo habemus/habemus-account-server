@@ -196,7 +196,8 @@ HAccountBrowserClient.prototype.getCurrentUser = function () {
 
             resolve(accountData);
 
-          }.bind(this));
+          }.bind(this))
+          .catch(reject);
       }
     }
 
@@ -348,23 +349,31 @@ module.exports = function (dialog, options) {
 
   var hAccountClient = dialog.hAccountClient;
 
-  refresh.addEventListener('click', function (e) {
-
+  /**
+   * Fetches data about the account on the server
+   * and checks if the verification status has modified
+   */
+  function refreshVerificationStatus() {
     var authToken = hAccountClient.getAuthToken();
 
-    hAccountClient.getCurrentUser()
-      .then(function (user) {
-        return hAccountClient.getAccount(authToken, user.username);
-      })
-      .then(function (account) {
-        if (account.status.value === 'verified') {
-          // success!
-          dialog.resolve(account);
-        } else {
-          // not
-        }
-      });
-  });
+    if (authToken) {
+      hAccountClient.getCurrentUser()
+        .then(function (user) {
+          return hAccountClient.getAccount(authToken, user.username);
+        })
+        .then(function (account) {
+          if (account.status.value === 'verified') {
+            // success!
+            dialog.resolve(account);
+            dialog.close();
+          } else {
+            // not
+          }
+        });
+    }
+  }
+
+  refresh.addEventListener('click', refreshVerificationStatus);
 
   resend.addEventListener('click', function (e) {
 
@@ -733,7 +742,9 @@ HAccountDialog.prototype.logIn = function () {
     noCancel: false,
   });
 
-  this.element.showModal();
+  if (!this.element.hasAttribute('open')) {
+    this.element.showModal();
+  }
 
   return new Bluebird(function (resolve, reject) {
     this._logInResolve = resolve;
@@ -752,7 +763,9 @@ HAccountDialog.prototype.signUp = function () {
     noCancel: false,
   });
 
-  this.element.showModal();
+  if (!this.element.hasAttribute('open')) {
+    this.element.showModal();
+  }
 
   return new Bluebird(function (resolve, reject) {
     this._signUpResolve = resolve;
@@ -768,7 +781,9 @@ HAccountDialog.prototype.verifyEmail = function () {
     noCancel: true,
   });
 
-  this.element.showModal();
+  if (!this.element.hasAttribute('open')) {
+    this.element.showModal();
+  }
 
   return new Bluebird(function (resolve, reject) {
     this._verifyEmailResolve = resolve;
@@ -862,8 +877,19 @@ HAccountDialog.prototype.ensureUser = function (options) {
     })
     .catch(function (err) {
       if (err.name === 'NotLoggedIn') {
+        // user not logged in
         
         return self.logIn()
+          .then(function () {
+            // the method MUST return the current user
+            return self.hAccountClient.getCurrentUser();
+          })
+
+      } else if (err.name === 'UserNotFound') {
+        // user logged in, but for some reason the
+        // account does not exist anymore
+
+        return self.signUp()
           .then(function () {
             // the method MUST return the current user
             return self.hAccountClient.getCurrentUser();
@@ -899,7 +925,11 @@ HAccountDialog.prototype.ensureUser = function (options) {
       } else {
         return account;
       }
-    });
+    })
+    // .catch(function (err) {
+
+
+    // });
 
 };
 
@@ -1085,8 +1115,12 @@ exports.getAccount = function (authToken, username) {
             // unauthorized
             reject(new errors.Unauthorized());
 
-          } else {
+          } else if (res && res.statusCode === 404) {
 
+            // not found
+            reject(new errors.UserNotFound());
+
+          } else {
             // unknown error
             reject(err);
           }

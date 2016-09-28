@@ -1,7 +1,17 @@
 // third-party
 const bodyParser = require('body-parser');
 
+// cosntants
+const TRAILING_SLASH_RE = /\/$/;
+
 module.exports = function (app, options) {
+
+  /**
+   * The host uri of the ui to be presented to the user upon
+   * verification success or failure
+   * @type {String}
+   */
+  const UI_HOST_URI = options.uiHostURI.replace(TRAILING_SLASH_RE, '');
 
   app.post('/account/:username/request-email-verification',
     bodyParser.json(),
@@ -32,13 +42,38 @@ module.exports = function (app, options) {
 
   app.get('/account/:username/verify-email', function (req, res, next) {
 
+    var username = req.params.username;
+
     app.controllers.emailVerification.verifyAccountEmail(
       req.params.username,
       req.query.code
-    ).then((user) => {
+    ).then((account) => {
 
-      res.status(200).send();
+      // success redirect
+      var redirectSuccessURL = [
+        UI_HOST_URI,
+        app.constants.UI_ACCOUNT_EMAIL_VERIFICATION_SUCCESS_PATH,
+        '?username=' + username
+      ].join('');
+
+      res.redirect(303, redirectSuccessURL);
     })
-    .catch(next);
+    .catch((err) => {
+
+      if (err.name === 'InvalidCredentials') {
+
+        // error redirect
+        var redirectErrorURL = [
+          UI_HOST_URI,
+          app.constants.UI_ACCOUNT_EMAIL_VERIFICATION_ERROR_PATH,
+          '?username=' + username
+        ].join('');
+
+        res.redirect(303, redirectErrorURL);
+
+      } else {
+        next(err);
+      }
+    });
   });
 };

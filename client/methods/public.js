@@ -87,8 +87,12 @@ exports.getAccount = function (authToken, username) {
             // unauthorized
             reject(new errors.Unauthorized());
 
-          } else {
+          } else if (res && res.statusCode === 404) {
 
+            // not found
+            reject(new errors.UserNotFound());
+
+          } else {
             // unknown error
             reject(err);
           }

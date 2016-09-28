@@ -17,7 +17,8 @@ const REQUIRED_OPTIONS = {
   secret: 'fake-secret',
   
   fromEmail: 'from@dev.habem.us',
-  uiHostURI: 'http://localhost:8000'
+  hostURI: 'http://localhost:8000',
+  uiHostURI: 'http://localhost:8000/ui'
 };
 
 function clone(obj) {
@@ -82,7 +83,8 @@ describe('server initialization', function () {
       secret: 'fake-secret',
       fromEmail: 'from@dev.habem.us',
 
-      uiHostURI: 'http://localhost'
+      hostURI: 'http://localhost:8000',
+      uiHostURI: 'http://localhost:8000/ui'
     });
 
     app.should.be.a.Function();

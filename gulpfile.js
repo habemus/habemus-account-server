@@ -12,6 +12,7 @@ const mocha       = require('gulp-mocha');
 const browserSync = require('browser-sync').create();
 
 const DEV_DB_URI = 'mongodb://localhost:27017/h-auth-development-db';
+const DEV_RABBIT_MQ_URI = 'amqp://192.168.99.100';
 
 // SERVER //
 
@@ -24,9 +25,12 @@ gulp.task('nodemon', function () {
     env: {
       PORT: '4000',
       MONGODB_URI: DEV_DB_URI,
+      RABBIT_MQ_URI: DEV_RABBIT_MQ_URI,
       SECRET: 'TEST_SECRET',
       CORS_WHITELIST: 'http://localhost:3000',
       FROM_EMAIL: 'simon.fan@habem.us',
+      HOST_URI: 'http://local.dev.h-account:4000',
+      UI_HOST_URI: 'http://local.dev.h-account:4000/ui',
     },
     ext: 'js',
     ignore: [
