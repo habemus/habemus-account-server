@@ -52,7 +52,7 @@ module.exports = function (app, options) {
         return app.services.hMailer.schedule({
           from: FROM_EMAIL,
           to: _account.get('email'),
-          template: 'account/verification.html',
+          template: 'account/email-verification.html',
           data: {
             name: _account.get('name'),
             email: _account.get('email'),
