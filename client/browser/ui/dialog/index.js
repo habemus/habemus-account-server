@@ -22,7 +22,9 @@ const ACTIVE_CLASS = 'active';
 
 const STATE_LOGIN = 'login';
 const STATE_SIGNUP = 'signup';
-const STATE_SIGNUP_SUCCESS = 'signup-succes';
+const STATE_SIGNUP_SUCCESS = 'signup-success';
+const STATE_PASSWORD_RESET = 'password-reset';
+const STATE_EMAIL_VERIFICATION = 'email-verification';
 
 /**
  * Auxiliary function that inserts a CSSString into the document
@@ -65,8 +67,8 @@ function _toArray(obj) {
  */
 function HAccountDialog(options) {
 
-  // instantiate auth client if none is passed as option
-  this.auth = options.auth || new HAccountClient(options);
+  // instantiate account client if none is passed as option
+  this.hAccountClient = options.hAccountClient || new HAccountClient(options);
 
   /**
    * Data store for the modal model
@@ -81,7 +83,10 @@ function HAccountDialog(options) {
   var element = _domElementFromString(dialogTemplate);
   this.element = element;
 
-  this._domSetup();
+  /**
+   * Execute the setup of the dom elements
+   */
+  domSetup(this, options);
 
   // dialog-wide state
   this.model.on('change:state', function (data) {
@@ -96,11 +101,36 @@ function HAccountDialog(options) {
 
       el.classList.toggle(ACTIVE_CLASS, isActive);
     });
-  });
+  }.bind(this));
 
-  // capture esk key cancel
+  // whether to enable cancel
+  this.model.on('change:noCancel', function (data) {
+
+    var cancelEls = _toArray(this.element.querySelectorAll('[data-action="cancel"]'));
+
+    if (data.newValue) {
+      // noCancel enabled
+      cancelEls.forEach(function (el) {
+        el.setAttribute('hidden', true);
+      });
+
+    } else {
+      // noCancel disabled
+      cancelEls.forEach(function (el) {
+        el.removeAttribute('hidden');
+      });
+    }
+  }.bind(this));
+
+  // capture esc key cancel
   this.element.addEventListener('cancel', function (e) {
-    this.reject(new errors.UserCancelled('escKey'));
+
+    if (this.model.get('noCancel')) {
+      e.preventDefault();
+    } else {
+      this.reject(new errors.UserCancelled('escKey'));
+    }
+
   }.bind(this));
 
   dialogPolyfill.registerDialog(this.element);
@@ -112,13 +142,6 @@ function HAccountDialog(options) {
     this.attach(options.containerElement);
   }
 }
-
-HAccountDialog.prototype._domSetup = function () {
-  domSetup.setupSelector(this);
-  domSetup.setupLoginForm(this);
-  domSetup.setupSignupForm(this);
-  domSetup.closeButtons(this);
-};
 
 /**
  * Attaches the dialog element to the DOM within a given
@@ -139,6 +162,7 @@ HAccountDialog.prototype.logIn = function () {
   this.model.set({
     state: STATE_LOGIN,
     action: 'logIn',
+    noCancel: false,
   });
 
   this.element.showModal();
@@ -156,7 +180,8 @@ HAccountDialog.prototype.logIn = function () {
 HAccountDialog.prototype.signUp = function () {
   this.model.set({
     state: STATE_SIGNUP,
-    action: 'signUp'
+    action: 'signUp',
+    noCancel: false,
   });
 
   this.element.showModal();
@@ -167,10 +192,32 @@ HAccountDialog.prototype.signUp = function () {
   }.bind(this));
 };
 
+HAccountDialog.prototype.verifyEmail = function () {
+
+  this.model.set({
+    state: STATE_EMAIL_VERIFICATION,
+    action: 'verifyEmail',
+    noCancel: true,
+  });
+
+  this.element.showModal();
+
+  return new Bluebird(function (resolve, reject) {
+    this._verifyEmailResolve = resolve;
+    this._verifyEmailReject  = reject;
+  }.bind(this));
+};
+
 HAccountDialog.prototype.clear = function () {
 
   _toArray(this.element.querySelectorAll('input')).forEach(function (el) {
     el.value = '';
+  });
+
+  this.model.set({
+    state: undefined,
+    action: undefined,
+    noCancel: false,
   });
 
   delete this._logInResolve;
@@ -179,23 +226,41 @@ HAccountDialog.prototype.clear = function () {
   delete this._signUpReject;
 };
 
-HAccountDialog.prototype.resolve = function (user) {
+HAccountDialog.prototype.resolve = function (result) {
   var action = this.model.get('action');
 
-  if (action === 'logIn') {
-    this._logInResolve(user);
-  } else if (action === 'signUp') {
-    this._signUpResolve(user);
+  switch (action) {
+    case 'logIn':
+      this._logInResolve(result);
+      break;
+    case 'signUp':
+      this._signUpResolve(result);
+      break;
+    case 'verifyEmail':
+      this._verifyEmailResolve(result);
+      break;
+    default:
+      console.warn('unsupported action', action);
+      break;
   }
 };
 
 HAccountDialog.prototype.reject = function (error) {
   var action = this.model.get('action');
 
-  if (action === 'logIn') {
-    this._logInReject(error);
-  } else if (action === 'signUp') {
-    this._signUpReject(error);
+  switch (action) {
+    case 'logIn':
+      this._logInReject(error);
+      break;
+    case 'signUp':
+      this._signUpReject(error);
+      break;
+    case 'verifyEmail':
+      this._verifyEmailReject(error);
+      break;
+    default:
+      console.warn('unsupported action', action);
+      break;
   }
 };
 
@@ -211,13 +276,19 @@ HAccountDialog.prototype.close = function () {
  * Ensures there is a logged in user and returns it.
  * If the user is not logged in, pops the login dialog.
  * Otherwise, simply returns the current user.
+ *
+ * @param {Object} options
+ *        - ensureEmailVerified: Boolean (false)
+ * 
  * @return {UserData}
  */
-HAccountDialog.prototype.ensureUser = function () {
+HAccountDialog.prototype.ensureUser = function (options) {
+
+  options = options || {};
 
   var self = this;
 
-  return self.auth.getCurrentUser()
+  return self.hAccountClient.getCurrentUser()
     .then(function (user) {
       return user;
     })
@@ -227,12 +298,38 @@ HAccountDialog.prototype.ensureUser = function () {
         return self.logIn()
           .then(function () {
             // the method MUST return the current user
-            return self.auth.getCurrentUser();
+            return self.hAccountClient.getCurrentUser();
           });
 
       } else {
         // normally reject original error
         return Bluebird.reject(err);
+      }
+    })
+    .then(function (account) {
+
+      if (options.ensureEmailVerified) {
+
+        var statusValue = account.status.value;
+
+        switch (statusValue) {
+          case 'unverified':
+            return self.verifyEmail();
+            break;
+          case 'verified':
+            return account;
+            break;
+          case 'cancelled':
+            return Bluebird.reject(new errors.AccountCancelled());
+            break;
+          default: 
+            // by default assume the account is at cancelled status
+            console.warn('unsupported account.status.value', account.status.value);
+            break;
+        }
+        
+      } else {
+        return account;
       }
     });
 
@@ -252,7 +349,7 @@ AUTH_PROXY_METHODS.forEach(function (method) {
   HAccountDialog.prototype[method] = function () {
     var args = Array.prototype.slice.call(arguments, 0);
 
-    return this.auth[method].apply(this.auth, args);
+    return this.hAccountClient[method].apply(this.hAccountClient, args);
   };
 });
 

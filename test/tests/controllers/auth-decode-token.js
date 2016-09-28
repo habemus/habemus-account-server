@@ -81,10 +81,12 @@ describe('authCtrl.decodeToken(token)', function () {
           .decodeToken(token);
       })
       .then((decoded) => {
-        Object.keys(decoded).length.should.equal(7);
+        Object.keys(decoded).length.should.equal(8);
 
         decoded.createdAt.should.be.instanceof(String);
         decoded.username.should.equal('test-user-1');
+        
+        decoded.status.value.should.eql('unverified');
         
         decoded.iat.should.be.instanceof(Number);
         decoded.exp.should.be.instanceof(Number);

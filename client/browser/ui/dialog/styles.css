@@ -29,14 +29,14 @@
 /**
  * Error messages
  */
-.h-auth-error-message {
+.h-account-error-message {
   color: red;
   opacity: 0;
 
   font-size: 12px;
 }
 
-.h-auth-error-message.active {
+.h-account-error-message.active {
   opacity: 1;
 }
 
@@ -54,11 +54,11 @@
 /**
  * Action selector
  */
-#h-auth-action-selector button {
+#h-account-action-selector button {
 
 }
 
-#h-auth-action-selector button.active {
+#h-account-action-selector button.active {
   background-color: green;
   color: white;
 }

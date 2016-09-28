@@ -7,10 +7,9 @@
   <button onclick="logIn()">log in</button>
   <button onclick="signUp()">sign up</button>
   <button onclick="ensureUser()">ensure user</button>
+  <button onclick="ensureVerifiedUser()">ensure verified user</button>
   <button onclick="logOut()">log out</button>
-
-  <h1 id="status"></h1>
-
+  
   <p>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis vel pellentesque tortor. Sed bibendum ullamcorper nulla a blandit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce commodo justo nec metus lobortis, rutrum cursus neque rutrum. Aliquam quis quam id urna egestas molestie sit amet a purus. Nam auctor erat metus, quis ornare metus fringilla non. Nam diam quam, hendrerit commodo libero ut, lacinia aliquam leo. Nulla a nisl efficitur, bibendum arcu id, bibendum leo. Mauris eget metus imperdiet, luctus erat eget, sodales augue. Etiam porta ullamcorper egestas.
   </p>
@@ -70,6 +69,16 @@
         })
         .catch(function (err) {
           console.warn('ensureUser error', err);
+        })
+    }
+
+    function ensureVerifiedUser() {
+      accountDialog.ensureUser({ ensureEmailVerified: true })
+        .then(function (user) {
+          console.log('ensureVerifiedUser success', user);
+        })
+        .catch(function (err) {
+          console.warn('ensureVerifiedUser error', err);
         })
     }
 

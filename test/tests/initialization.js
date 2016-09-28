@@ -16,8 +16,6 @@ const REQUIRED_OPTIONS = {
   rabbitMQURI: 'amqp://192.168.99.100',
   secret: 'fake-secret',
   fromEmail: 'from@dev.habem.us',
-
-  host: 'http://localhost'
 };
 
 function clone(obj) {
@@ -55,15 +53,6 @@ describe('server initialization', function () {
   it('should require secret', function () {
     var options = clone(REQUIRED_OPTIONS);
     delete options.secret;
-
-    assert.throws(function () {
-      hAccountApp(options);
-    });
-  });
-
-  it('should require host', function () {
-    var options = clone(REQUIRED_OPTIONS);
-    delete options.host;
 
     assert.throws(function () {
       hAccountApp(options);

@@ -1,6 +1,9 @@
+// native
+const util         = require('util');
+const EventEmitter = require('events');
+
 // third-party
-const superagent = require('superagent');
-const Bluebird   = require('bluebird');
+const Bluebird = require('bluebird');
 
 // constants
 const TRAILING_SLASH_RE = /\/$/;
@@ -10,7 +13,7 @@ const TRAILING_SLASH_RE = /\/$/;
  * @param {Object} options
  *        - serverURI
  */
-function PrivateHAccount(options) {
+function HAccount(options) {
 
   if (!options.serverURI) {
     throw new Error('serverURI is required');
@@ -19,6 +22,14 @@ function PrivateHAccount(options) {
   this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
 }
 
-Object.assign(PrivateHAccount.prototype, require('./methods/public'));
+/**
+ * Inherit from EventEmitter because we will need event-emitting functionality
+ * in the browser (stateful) client.
+ *
+ * TODO: study other options for the inheritance chain to be set
+ */
+util.inherits(HAccount, EventEmitter);
 
-module.exports = PrivateHAccount;
+Object.assign(HAccount.prototype, require('./methods/public'));
+
+module.exports = HAccount;

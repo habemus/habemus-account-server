@@ -16,3 +16,12 @@ exports.decodeJWTPayload = function (token) {
 
   return JSON.parse(atob(payload));
 };
+
+exports.toArray = function (obj) {
+  return Array.prototype.slice.call(obj, 0);
+};
+
+exports.focusAndSelectAll = function (input) {
+  input.focus();
+  input.select();
+};

@@ -1,7 +1,35 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.HAccountDialog = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// constants
+const errors = require('../errors');
+
+/**
+ * Light version that only decodes the token's Payload
+ * @param  {String|JWT} token
+ * @return {Object}
+ */
+exports.decodeJWTPayload = function (token) {
+
+  var payload = token.split('.')[1];
+
+  if (!payload) {
+    throw new errors.InvalidToken(token);
+  }
+
+  return JSON.parse(atob(payload));
+};
+
+exports.toArray = function (obj) {
+  return Array.prototype.slice.call(obj, 0);
+};
+
+exports.focusAndSelectAll = function (input) {
+  input.focus();
+  input.select();
+};
+
+},{"../errors":10}],2:[function(require,module,exports){
 // native
-const util         = require('util');
-const EventEmitter = require('events');
+const util = require('util');
 
 // third-party
 const Bluebird       = require('bluebird');
@@ -41,14 +69,17 @@ function _decodeJWTPayload(token) {
  */
 function HAccountBrowserClient(options) {
 
-  if (!options.serverURI) { throw new TypeError('serverURI is required'); }
+  // initialize HAccountClient
+  HAccountClient.call(this, options);
 
-  /**
-   * Client core defines all API communication methods.
-   * 
-   * @type {HAccountClient}
-   */
-  this.core = new HAccountClient(options);
+  // if (!options.serverURI) { throw new TypeError('serverURI is required'); }
+
+  // *
+  //  * Client core defines all API communication methods.
+  //  * 
+  //  * @type {HAccountClient}
+   
+  // this.core = new HAccountClient(options);
 
   /**
    * Prefix for storing data on localStorage
@@ -79,7 +110,7 @@ function HAccountBrowserClient(options) {
     }
   });
 }
-util.inherits(HAccountBrowserClient, EventEmitter);
+util.inherits(HAccountBrowserClient, HAccountClient);
 
 HAccountBrowserClient.prototype.constants = {
   LOGGED_IN: LOGGED_IN,
@@ -110,7 +141,7 @@ HAccountBrowserClient.prototype.getAuthToken = function () {
 HAccountBrowserClient.prototype.signUp = function (username, password, email, options) {
   options = options || {};
 
-  return this.core.createAccount({
+  return this.createAccount({
     username: username,
     email: email,
     password: password,
@@ -157,7 +188,7 @@ HAccountBrowserClient.prototype.getCurrentUser = function () {
         var tokenData = _decodeJWTPayload(token);
         var username  = tokenData.username;
 
-        this.core.getAccount(token, username)
+        this.getAccount(token, username)
           .then(function (accountData) {
 
             this._cachedUser = accountData;
@@ -193,7 +224,7 @@ HAccountBrowserClient.prototype.getCurrentUser = function () {
  */
 HAccountBrowserClient.prototype.logIn = function (username, password) {
 
-  return this.core.generateToken(username, password)
+  return this.generateToken(username, password)
     .then(function (token) {
       // save the token
       this._saveAuthToken(token);
@@ -237,7 +268,7 @@ HAccountBrowserClient.prototype.logOut = function () {
     this._destroyAuthToken();
     delete this._cachedUser;
 
-    this.core.revokeToken(token)
+    this.revokeToken(token)
       .then(function () {
 
         this._setAuthStatus(LOGGED_OUT);
@@ -290,24 +321,152 @@ HAccountBrowserClient.prototype._setAuthStatus = function (status) {
 
 module.exports = HAccountBrowserClient;
 
-},{"../errors":4,"../index":5,"bluebird":7,"cache-promise-fn":8,"events":12,"util":21}],2:[function(require,module,exports){
+},{"../errors":10,"../index":11,"bluebird":13,"cache-promise-fn":14,"util":27}],3:[function(require,module,exports){
+module.exports = function (dialog, options) {
+  dialog.element.addEventListener('click', function (e) {
+    var target = e.target;
+
+    var action = target.getAttribute('data-action');
+
+    switch (action) {
+      case 'close':
+        dialog.close();
+        break;
+      case 'cancel':
+        dialog.reject(new errors.UserCancelled('Action cancelled by the user.'));
+        dialog.close();
+        break;
+    }
+  });
+};
+
+},{}],4:[function(require,module,exports){
+module.exports = function (dialog, options) {
+  // elements
+  var refresh = dialog.element.querySelector('#verification-refresh');
+  var resend  = dialog.element.querySelector('#verification-resend');
+
+  var hAccountClient = dialog.hAccountClient;
+
+  refresh.addEventListener('click', function (e) {
+
+    var authToken = hAccountClient.getAuthToken();
+
+    hAccountClient.getCurrentUser()
+      .then(function (user) {
+        return hAccountClient.getAccount(authToken, user.username);
+      })
+      .then(function (account) {
+        if (account.status.value === 'verified') {
+          // success!
+          dialog.resolve(account);
+        } else {
+          // not
+        }
+      });
+  });
+
+  resend.addEventListener('click', function (e) {
+
+    var authToken = hAccountClient.getAuthToken();
+
+    hAccountClient.getCurrentUser()
+      .then(function (user) {
+        return hAccountClient.requestEmailVerification(authToken, user.username)
+      })
+      .then(function () {
+        console.log('verification email resent');
+      })
+      .catch(function (err) {
+        console.warn('there was an error resending the verification email', err);
+      });
+
+  });
+};
+},{}],5:[function(require,module,exports){
 // internal dependencies
-const errors = require('../../../errors');
+const errors = require('../../../../errors');
 
-function _focusAndSelectAll(input) {
-  input.focus();
-  input.select();
-}
+const setupNavigation = require('./navigation');
+const setupLoginForm  = require('./login-form');
+const setupSignupForm = require('./signup-form');
+const closeButtons           = require('./close-buttons');
+const setupEmailVerification = require('./email-verification');
 
-exports.setupSelector = function (dialog) {
+var domSetup = function (dialog, options) {
+  setupNavigation(dialog, options);
+  setupLoginForm(dialog, options);
+  setupSignupForm(dialog, options);
+  closeButtons(dialog, options);
+  setupEmailVerification(dialog, options);
+};
+
+domSetup.setupNavigation = setupNavigation;
+domSetup.setupLoginForm = setupLoginForm;
+domSetup.setupSignupForm = setupSignupForm;
+domSetup.closeButtons = closeButtons;
+domSetup.setupEmailVerification = setupEmailVerification;
+
+module.exports = domSetup;
+
+},{"../../../../errors":10,"./close-buttons":3,"./email-verification":4,"./login-form":6,"./navigation":7,"./signup-form":8}],6:[function(require,module,exports){
+const aux = require('../../../auxiliary');
+
+module.exports = function (dialog, options) {
+  /**
+   * Login form submission
+   */
+  var loginForm  = dialog.element.querySelector('#h-account-login');
+  var loginUsername = loginForm.querySelector('[name="username"]');
+  var loginPassword = loginForm.querySelector('[name="password"]');
+
+  var loginErrorMessage = loginForm.querySelector('[data-state="login-error"]');
+
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var username = loginUsername.value;
+    var password = loginPassword.value;
+
+    // set the dialog to login-loading mode
+    dialog.model.set('state', 'login-loading');
+
+    dialog.hAccountClient
+      .logIn(username, password)
+      .then(function (user) {
+
+        dialog.resolve(user);
+        dialog.close();
+
+      }, function (err) {
+
+        dialog.model.set('state', 'login-error');
+
+        if (err.name === 'InvalidCredentials') {
+          loginErrorMessage.innerHTML = 'InvalidCredentials';
+
+          aux.focusAndSelectAll(loginPassword);
+        } else {
+          loginErrorMessage.innerHTML = 'Unknown log in error';
+        }
+      });
+
+  });
+};
+
+},{"../../../auxiliary":1}],7:[function(require,module,exports){
+// own
+const aux = require('../../../auxiliary');
+
+module.exports = function (dialog, options) {
   /**
    * Toggling the action the modal shows
    */
-  var actionSelector = dialog.element.querySelector('#h-auth-action-selector');
-  actionSelector.addEventListener('click', function (e) {
+  dialog.element.addEventListener('click', function (e) {
     var target = e.target;
 
-    var state = target.getAttribute('data-value');
+    var state = target.getAttribute('data-navigate-to');
 
     if (state) {
       dialog.model.set('state', state);
@@ -330,65 +489,26 @@ exports.setupSelector = function (dialog) {
       // TODO: study this better, focus and autofocus is a bit hard
       // to reason about
       setTimeout(function () {
-        _focusAndSelectAll(focusInput);
+        aux.focusAndSelectAll(focusInput);
       }, 100);
     }
   })
 };
 
-exports.setupLoginForm = function (dialog) {
-  /**
-   * Login form submission
-   */
-  var loginForm  = dialog.element.querySelector('#h-auth-login');
-  var loginUsername = loginForm.querySelector('[name="username"]');
-  var loginPassword = loginForm.querySelector('[name="password"]');
+},{"../../../auxiliary":1}],8:[function(require,module,exports){
+// own
+const aux = require('../../../auxiliary');
 
-  var loginErrorMessage = loginForm.querySelector('[data-state="login-error"]');
-
-  loginForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    var username = loginUsername.value;
-    var password = loginPassword.value;
-
-    // set the dialog to login-loading mode
-    dialog.model.set('state', 'login-loading');
-
-    dialog.auth
-      .logIn(username, password)
-      .then(function (user) {
-
-        dialog.resolve(user);
-        dialog.close();
-
-      }, function (err) {
-
-        dialog.model.set('state', 'login-error');
-
-        if (err.name === 'InvalidCredentials') {
-          loginErrorMessage.innerHTML = 'InvalidCredentials';
-
-          _focusAndSelectAll(loginPassword);
-        } else {
-          loginErrorMessage.innerHTML = 'Unknown log in error';
-        }
-      });
-
-  });
-};
-
-exports.setupSignupForm = function (dialog) {
+module.exports = function (dialog, options) {
   // elements
-  var signupForm = dialog.element.querySelector('#h-auth-signup');
+  var signupForm = dialog.element.querySelector('#h-account-signup');
   var signupUsername = signupForm.querySelector('[name="username"]');
   var signupEmail    = signupForm.querySelector('[name="email"]');
   var signupPassword = signupForm.querySelector('[name="password"]');
   var signupPasswordConfirm = signupForm.querySelector('[name="password-confirm"]');
 
-  var signupSuccess = dialog.element.querySelector('#h-auth-signup [data-state="signup-success"]');
-  var signupErrorMessage   = dialog.element.querySelector('#h-auth-signup [data-state="signup-error"]');
+  var signupSuccess = dialog.element.querySelector('#h-account-signup [data-state="signup-success"]');
+  var signupErrorMessage   = dialog.element.querySelector('#h-account-signup [data-state="signup-error"]');
 
   var _user;
 
@@ -406,14 +526,14 @@ exports.setupSignupForm = function (dialog) {
       
       signupErrorMessage.innerHTML = 'Passwords do not match';
 
-      _focusAndSelectAll(signupPasswordConfirm);
+      aux.focusAndSelectAll(signupPasswordConfirm);
       return;
     }
 
     // set the dialog to signup-loading mode
     dialog.model.set('state', 'signup-loading');
 
-    dialog.auth
+    dialog.hAccountClient
       .signUp(username, password, email, {
         // signup and immediately logIn after signUp
         immediatelyLogIn: true,
@@ -445,25 +565,7 @@ exports.setupSignupForm = function (dialog) {
   });
 };
 
-exports.closeButtons = function (dialog) {
-  dialog.element.addEventListener('click', function (e) {
-    var target = e.target;
-
-    var action = target.getAttribute('data-action');
-
-    switch (action) {
-      case 'close':
-        dialog.close();
-        break;
-      case 'cancel':
-        dialog.reject(new errors.UserCancelled('Action cancelled by the user.'));
-        dialog.close();
-        break;
-    }
-  });
-};
-
-},{"../../../errors":4}],3:[function(require,module,exports){
+},{"../../../auxiliary":1}],9:[function(require,module,exports){
 // native
 
 const util = require('util');
@@ -475,8 +577,8 @@ const Bluebird = require('bluebird');
 
 // internal
 const HAccountClient = require('../../');
-const dialogTemplate = "<dialog id=\"h-account-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-auth-action-selector\">\n    <button data-state=\"login login-error\" data-value=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-value=\"signup\">\n      Sign up\n    </button>\n  </section>\n\n  <section data-state=\"login login-error\">\n    <form id=\"h-auth-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n  </section>\n\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-auth-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-auth-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-auth-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-auth-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-auth-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-auth-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n\n</dialog>";
-const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-account-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-account-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-account-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-auth-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-auth-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-account-dialog section[data-state] {\n  display: none;\n}\n\n#h-account-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-auth-action-selector button {\n\n}\n\n#h-auth-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-account-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-account-dialog form label > * {\n  display: block;\n}\n\n#h-account-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-account-dialog form input[type=\"text\"],\n#h-account-dialog form input[type=\"email\"],\n#h-account-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-account-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
+const dialogTemplate = "<dialog id=\"h-account-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <!-- navigation bar -->\n  <section\n    data-state=\"login login-error signup signup-error password-reset\"\n    id=\"h-account-action-selector\">\n    <button data-state=\"login login-error\" data-navigate-to=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-navigate-to=\"signup\">\n      Sign up\n    </button>\n  </section>\n  <!-- navigation bar -->\n\n  <!-- v login v -->\n  <section data-state=\"login login-error\">\n    <form id=\"h-account-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-account-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-account-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-account-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n\n    <button data-navigate-to=\"password-reset\">forgot your password?</button>\n  </section>\n  <!-- ^ login ^ -->\n\n  <!-- v signup v -->\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-account-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-account-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-account-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-account-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-account-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-account-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n  <!-- ^ signup ^ -->\n\n  <!-- password reset -->\n  <section data-state=\"password-reset\">\n\n    password reset\n  </section>\n  <!-- password reset -->\n\n  <!-- email verification -->\n  <section data-state=\"email-verification\">\n    email verification\n\n    <button id=\"verification-refresh\">refresh</button>\n    <button id=\"verification-resend\">resend</button>\n  </section>\n  <!-- email verification -->\n\n\n</dialog>";
+const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-account-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-account-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-account-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-account-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-account-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-account-dialog section[data-state] {\n  display: none;\n}\n\n#h-account-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-account-action-selector button {\n\n}\n\n#h-account-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-account-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-account-dialog form label > * {\n  display: block;\n}\n\n#h-account-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-account-dialog form input[type=\"text\"],\n#h-account-dialog form input[type=\"email\"],\n#h-account-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-account-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
 // according to brfs docs, require.resolve() may be used as well
 // https://www.npmjs.com/package/brfs#methods
 const dialogPolyfillStyles = "dialog {\n  position: absolute;\n  left: 0; right: 0;\n  width: -moz-fit-content;\n  width: -webkit-fit-content;\n  width: fit-content;\n  height: -moz-fit-content;\n  height: -webkit-fit-content;\n  height: fit-content;\n  margin: auto;\n  border: solid;\n  padding: 1em;\n  background: white;\n  color: black;\n  display: none;\n}\n\ndialog[open] {\n  display: block;\n}\n\ndialog + .backdrop {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n  background: rgba(0,0,0,0.1);\n}\n\n/* for small devices, modal dialogs go full-screen */\n@media screen and (max-width: 540px) {\n  dialog[_polyfill_modal] {  /* TODO: implement */\n    top: 0;\n    width: auto;\n    margin: 1em;\n  }\n}\n\n._dialog_overlay {\n  position: fixed;\n  top: 0; right: 0; bottom: 0; left: 0;\n}"
@@ -488,7 +590,9 @@ const ACTIVE_CLASS = 'active';
 
 const STATE_LOGIN = 'login';
 const STATE_SIGNUP = 'signup';
-const STATE_SIGNUP_SUCCESS = 'signup-succes';
+const STATE_SIGNUP_SUCCESS = 'signup-success';
+const STATE_PASSWORD_RESET = 'password-reset';
+const STATE_EMAIL_VERIFICATION = 'email-verification';
 
 /**
  * Auxiliary function that inserts a CSSString into the document
@@ -531,8 +635,8 @@ function _toArray(obj) {
  */
 function HAccountDialog(options) {
 
-  // instantiate auth client if none is passed as option
-  this.auth = options.auth || new HAccountClient(options);
+  // instantiate account client if none is passed as option
+  this.hAccountClient = options.hAccountClient || new HAccountClient(options);
 
   /**
    * Data store for the modal model
@@ -547,7 +651,10 @@ function HAccountDialog(options) {
   var element = _domElementFromString(dialogTemplate);
   this.element = element;
 
-  this._domSetup();
+  /**
+   * Execute the setup of the dom elements
+   */
+  domSetup(this, options);
 
   // dialog-wide state
   this.model.on('change:state', function (data) {
@@ -562,11 +669,36 @@ function HAccountDialog(options) {
 
       el.classList.toggle(ACTIVE_CLASS, isActive);
     });
-  });
+  }.bind(this));
 
-  // capture esk key cancel
+  // whether to enable cancel
+  this.model.on('change:noCancel', function (data) {
+
+    var cancelEls = _toArray(this.element.querySelectorAll('[data-action="cancel"]'));
+
+    if (data.newValue) {
+      // noCancel enabled
+      cancelEls.forEach(function (el) {
+        el.setAttribute('hidden', true);
+      });
+
+    } else {
+      // noCancel disabled
+      cancelEls.forEach(function (el) {
+        el.removeAttribute('hidden');
+      });
+    }
+  }.bind(this));
+
+  // capture esc key cancel
   this.element.addEventListener('cancel', function (e) {
-    this.reject(new errors.UserCancelled('escKey'));
+
+    if (this.model.get('noCancel')) {
+      e.preventDefault();
+    } else {
+      this.reject(new errors.UserCancelled('escKey'));
+    }
+
   }.bind(this));
 
   dialogPolyfill.registerDialog(this.element);
@@ -578,13 +710,6 @@ function HAccountDialog(options) {
     this.attach(options.containerElement);
   }
 }
-
-HAccountDialog.prototype._domSetup = function () {
-  domSetup.setupSelector(this);
-  domSetup.setupLoginForm(this);
-  domSetup.setupSignupForm(this);
-  domSetup.closeButtons(this);
-};
 
 /**
  * Attaches the dialog element to the DOM within a given
@@ -605,6 +730,7 @@ HAccountDialog.prototype.logIn = function () {
   this.model.set({
     state: STATE_LOGIN,
     action: 'logIn',
+    noCancel: false,
   });
 
   this.element.showModal();
@@ -622,7 +748,8 @@ HAccountDialog.prototype.logIn = function () {
 HAccountDialog.prototype.signUp = function () {
   this.model.set({
     state: STATE_SIGNUP,
-    action: 'signUp'
+    action: 'signUp',
+    noCancel: false,
   });
 
   this.element.showModal();
@@ -633,10 +760,32 @@ HAccountDialog.prototype.signUp = function () {
   }.bind(this));
 };
 
+HAccountDialog.prototype.verifyEmail = function () {
+
+  this.model.set({
+    state: STATE_EMAIL_VERIFICATION,
+    action: 'verifyEmail',
+    noCancel: true,
+  });
+
+  this.element.showModal();
+
+  return new Bluebird(function (resolve, reject) {
+    this._verifyEmailResolve = resolve;
+    this._verifyEmailReject  = reject;
+  }.bind(this));
+};
+
 HAccountDialog.prototype.clear = function () {
 
   _toArray(this.element.querySelectorAll('input')).forEach(function (el) {
     el.value = '';
+  });
+
+  this.model.set({
+    state: undefined,
+    action: undefined,
+    noCancel: false,
   });
 
   delete this._logInResolve;
@@ -645,23 +794,41 @@ HAccountDialog.prototype.clear = function () {
   delete this._signUpReject;
 };
 
-HAccountDialog.prototype.resolve = function (user) {
+HAccountDialog.prototype.resolve = function (result) {
   var action = this.model.get('action');
 
-  if (action === 'logIn') {
-    this._logInResolve(user);
-  } else if (action === 'signUp') {
-    this._signUpResolve(user);
+  switch (action) {
+    case 'logIn':
+      this._logInResolve(result);
+      break;
+    case 'signUp':
+      this._signUpResolve(result);
+      break;
+    case 'verifyEmail':
+      this._verifyEmailResolve(result);
+      break;
+    default:
+      console.warn('unsupported action', action);
+      break;
   }
 };
 
 HAccountDialog.prototype.reject = function (error) {
   var action = this.model.get('action');
 
-  if (action === 'logIn') {
-    this._logInReject(error);
-  } else if (action === 'signUp') {
-    this._signUpReject(error);
+  switch (action) {
+    case 'logIn':
+      this._logInReject(error);
+      break;
+    case 'signUp':
+      this._signUpReject(error);
+      break;
+    case 'verifyEmail':
+      this._verifyEmailReject(error);
+      break;
+    default:
+      console.warn('unsupported action', action);
+      break;
   }
 };
 
@@ -677,27 +844,60 @@ HAccountDialog.prototype.close = function () {
  * Ensures there is a logged in user and returns it.
  * If the user is not logged in, pops the login dialog.
  * Otherwise, simply returns the current user.
+ *
+ * @param {Object} options
+ *        - ensureEmailVerified: Boolean (false)
+ * 
  * @return {UserData}
  */
-HAccountDialog.prototype.ensureUser = function () {
+HAccountDialog.prototype.ensureUser = function (options) {
+
+  options = options || {};
 
   var self = this;
 
-  return self.auth.getCurrentUser()
+  return self.hAccountClient.getCurrentUser()
     .then(function (user) {
       return user;
     })
     .catch(function (err) {
       if (err.name === 'NotLoggedIn') {
+        
         return self.logIn()
           .then(function () {
             // the method MUST return the current user
-            return self.auth.getCurrentUser();
+            return self.hAccountClient.getCurrentUser();
           });
 
       } else {
         // normally reject original error
         return Bluebird.reject(err);
+      }
+    })
+    .then(function (account) {
+
+      if (options.ensureEmailVerified) {
+
+        var statusValue = account.status.value;
+
+        switch (statusValue) {
+          case 'unverified':
+            return self.verifyEmail();
+            break;
+          case 'verified':
+            return account;
+            break;
+          case 'cancelled':
+            return Bluebird.reject(new errors.AccountCancelled());
+            break;
+          default: 
+            // by default assume the account is at cancelled status
+            console.warn('unsupported account.status.value', account.status.value);
+            break;
+        }
+        
+      } else {
+        return account;
       }
     });
 
@@ -717,13 +917,13 @@ AUTH_PROXY_METHODS.forEach(function (method) {
   HAccountDialog.prototype[method] = function () {
     var args = Array.prototype.slice.call(arguments, 0);
 
-    return this.auth[method].apply(this.auth, args);
+    return this.hAccountClient[method].apply(this.hAccountClient, args);
   };
 });
 
 module.exports = HAccountDialog;
 
-},{"../../":1,"../../../errors":4,"./dom-setup":2,"bluebird":7,"data-obj":10,"dialog-polyfill":11,"util":21}],4:[function(require,module,exports){
+},{"../../":2,"../../../errors":10,"./dom-setup":5,"bluebird":13,"data-obj":16,"dialog-polyfill":17,"util":27}],10:[function(require,module,exports){
 const util = require('util');
 
 var errors = require('../shared/errors');
@@ -758,10 +958,13 @@ exports.UserCancelled = UserCancelled;
 
 Object.assign(exports, errors);
 
-},{"../shared/errors":22,"util":21}],5:[function(require,module,exports){
+},{"../shared/errors":28,"util":27}],11:[function(require,module,exports){
+// native
+const util         = require('util');
+const EventEmitter = require('events');
+
 // third-party
-const superagent = require('superagent');
-const Bluebird   = require('bluebird');
+const Bluebird = require('bluebird');
 
 // constants
 const TRAILING_SLASH_RE = /\/$/;
@@ -771,7 +974,7 @@ const TRAILING_SLASH_RE = /\/$/;
  * @param {Object} options
  *        - serverURI
  */
-function PrivateHAccount(options) {
+function HAccount(options) {
 
   if (!options.serverURI) {
     throw new Error('serverURI is required');
@@ -780,11 +983,19 @@ function PrivateHAccount(options) {
   this.serverURI = options.serverURI.replace(TRAILING_SLASH_RE, '');
 }
 
-Object.assign(PrivateHAccount.prototype, require('./methods/public'));
+/**
+ * Inherit from EventEmitter because we will need event-emitting functionality
+ * in the browser (stateful) client.
+ *
+ * TODO: study other options for the inheritance chain to be set
+ */
+util.inherits(HAccount, EventEmitter);
 
-module.exports = PrivateHAccount;
+Object.assign(HAccount.prototype, require('./methods/public'));
 
-},{"./methods/public":6,"bluebird":7,"superagent":16}],6:[function(require,module,exports){
+module.exports = HAccount;
+
+},{"./methods/public":12,"bluebird":13,"events":18,"util":27}],12:[function(require,module,exports){
 // third-party
 const Bluebird   = require('bluebird');
 const superagent = require('superagent');
@@ -973,7 +1184,59 @@ exports.revokeToken = function (token) {
 
 };
 
-},{"../errors":4,"bluebird":7,"superagent":16}],7:[function(require,module,exports){
+/**
+ * Asks the server to resend the email verification email.
+ * 
+ * @param  {String} authToken
+ * @param  {String} username
+ * @return {Bluebird -> undefined}
+ */
+exports.requestEmailVerification = function (authToken, username) {
+
+  if (!authToken) {
+    return Bluebird.reject(new errors.InvalidOption('authToken', 'required'));
+  }
+
+  if (!username) {
+    return Bluebird.reject(new errors.InvalidOption('username', 'required'));
+  }
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/account/' + username + '/request-email-verification')
+      .set({
+        'Authorization': 'Bearer ' + authToken
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.statusCode === 401) {
+
+            // invalid token
+            reject(new errors.InvalidToken(authToken));
+
+          } else if (res && res.statusCode === 403) {
+
+            // unauthorized
+            reject(new errors.Unauthorized());
+
+          } else {
+
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve();
+
+      }.bind(this));
+
+  }.bind(this));
+};
+
+},{"../errors":10,"bluebird":13,"superagent":22}],13:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -6452,7 +6715,7 @@ module.exports = ret;
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":14}],8:[function(require,module,exports){
+},{"_process":20}],14:[function(require,module,exports){
 function _toArray(obj) {
   return Array.prototype.slice.call(obj, 0);
 }
@@ -6566,7 +6829,7 @@ function cachePromiseFn(fn, options) {
 
 module.exports = cachePromiseFn;
 
-},{}],9:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -6731,7 +6994,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],10:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // native dependencies
 const util         = require('util');
 const EventEmitter = require('events');
@@ -6829,7 +7092,7 @@ DataModel.prototype.get = function (key) {
 
 module.exports = DataModel;
 
-},{"events":12,"util":21}],11:[function(require,module,exports){
+},{"events":18,"util":27}],17:[function(require,module,exports){
 (function() {
 
   var supportCustomEvent = window.CustomEvent;
@@ -7345,7 +7608,7 @@ module.exports = DataModel;
   }
 })();
 
-},{}],12:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7649,7 +7912,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],13:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7674,7 +7937,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],14:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7795,7 +8058,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],15:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -7820,7 +8083,7 @@ module.exports = function(arr, fn, initial){
   
   return curr;
 };
-},{}],16:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -8899,7 +9162,7 @@ request.put = function(url, data, fn){
   return req;
 };
 
-},{"./is-object":17,"./request":19,"./request-base":18,"emitter":9,"reduce":15}],17:[function(require,module,exports){
+},{"./is-object":23,"./request":25,"./request-base":24,"emitter":15,"reduce":21}],23:[function(require,module,exports){
 /**
  * Check if `obj` is an object.
  *
@@ -8914,7 +9177,7 @@ function isObject(obj) {
 
 module.exports = isObject;
 
-},{}],18:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * Module of mixed-in functions shared between node and client code
  */
@@ -9082,7 +9345,7 @@ exports.field = function(name, val) {
   return this;
 };
 
-},{"./is-object":17}],19:[function(require,module,exports){
+},{"./is-object":23}],25:[function(require,module,exports){
 // The node and browser modules expose versions of this with the
 // appropriate constructor function bound as first argument
 /**
@@ -9116,14 +9379,14 @@ function request(RequestConstructor, method, url) {
 
 module.exports = request;
 
-},{}],20:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],21:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9713,7 +9976,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":20,"_process":14,"inherits":13}],22:[function(require,module,exports){
+},{"./support/isBuffer":26,"_process":20,"inherits":19}],28:[function(require,module,exports){
 // native
 const util = require('util');
 
@@ -9829,5 +10092,17 @@ util.inherits(UserNotFound, HAccountError);
 UserNotFound.prototype.name = 'UserNotFound';
 exports.UserNotFound = UserNotFound;
 
-},{"util":21}]},{},[3])(3)
+/**
+ * Happens when an account has to be active
+ * for an action to be performed, but the
+ * account has been cancelled
+ */
+function AccountCancelled() {
+  HAccountError.call(this);
+}
+util.inherits(AccountCancelled, HAccountError);
+AccountCancelled.prototype.name = 'AccountCancelled';
+exports.AccountCancelled = AccountCancelled;
+
+},{"util":27}]},{},[9])(9)
 });

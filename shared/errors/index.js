@@ -112,3 +112,15 @@ function UserNotFound(identifier, message) {
 util.inherits(UserNotFound, HAccountError);
 UserNotFound.prototype.name = 'UserNotFound';
 exports.UserNotFound = UserNotFound;
+
+/**
+ * Happens when an account has to be active
+ * for an action to be performed, but the
+ * account has been cancelled
+ */
+function AccountCancelled() {
+  HAccountError.call(this);
+}
+util.inherits(AccountCancelled, HAccountError);
+AccountCancelled.prototype.name = 'AccountCancelled';
+exports.AccountCancelled = AccountCancelled;

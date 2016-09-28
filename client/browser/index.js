@@ -1,6 +1,5 @@
 // native
-const util         = require('util');
-const EventEmitter = require('events');
+const util = require('util');
 
 // third-party
 const Bluebird       = require('bluebird');
@@ -40,14 +39,17 @@ function _decodeJWTPayload(token) {
  */
 function HAccountBrowserClient(options) {
 
-  if (!options.serverURI) { throw new TypeError('serverURI is required'); }
+  // initialize HAccountClient
+  HAccountClient.call(this, options);
 
-  /**
-   * Client core defines all API communication methods.
-   * 
-   * @type {HAccountClient}
-   */
-  this.core = new HAccountClient(options);
+  // if (!options.serverURI) { throw new TypeError('serverURI is required'); }
+
+  // *
+  //  * Client core defines all API communication methods.
+  //  * 
+  //  * @type {HAccountClient}
+   
+  // this.core = new HAccountClient(options);
 
   /**
    * Prefix for storing data on localStorage
@@ -78,7 +80,7 @@ function HAccountBrowserClient(options) {
     }
   });
 }
-util.inherits(HAccountBrowserClient, EventEmitter);
+util.inherits(HAccountBrowserClient, HAccountClient);
 
 HAccountBrowserClient.prototype.constants = {
   LOGGED_IN: LOGGED_IN,
@@ -109,7 +111,7 @@ HAccountBrowserClient.prototype.getAuthToken = function () {
 HAccountBrowserClient.prototype.signUp = function (username, password, email, options) {
   options = options || {};
 
-  return this.core.createAccount({
+  return this.createAccount({
     username: username,
     email: email,
     password: password,
@@ -156,7 +158,7 @@ HAccountBrowserClient.prototype.getCurrentUser = function () {
         var tokenData = _decodeJWTPayload(token);
         var username  = tokenData.username;
 
-        this.core.getAccount(token, username)
+        this.getAccount(token, username)
           .then(function (accountData) {
 
             this._cachedUser = accountData;
@@ -192,7 +194,7 @@ HAccountBrowserClient.prototype.getCurrentUser = function () {
  */
 HAccountBrowserClient.prototype.logIn = function (username, password) {
 
-  return this.core.generateToken(username, password)
+  return this.generateToken(username, password)
     .then(function (token) {
       // save the token
       this._saveAuthToken(token);
@@ -236,7 +238,7 @@ HAccountBrowserClient.prototype.logOut = function () {
     this._destroyAuthToken();
     delete this._cachedUser;
 
-    this.core.revokeToken(token)
+    this.revokeToken(token)
       .then(function () {
 
         this._setAuthStatus(LOGGED_OUT);

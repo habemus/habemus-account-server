@@ -6,6 +6,7 @@ const path = require('path');
 const Bluebird = require('bluebird');
 const uuid     = require('uuid');
 const ms       = require('ms');
+const pwdGen   = require('password-generator');
 
 const hLock  = require('h-lock');
 
@@ -23,7 +24,7 @@ const VALID_ACTIONS = [
  * @return {String}
  */
 function _genCode(length) {
-  var code = uuid.v4().replace(/-/g, '').toUpperCase();
+  var code = pwdGen(length, false);
 
   if (length > code.length) {
     throw new Error(length + ' is not supported');

@@ -185,3 +185,55 @@ exports.revokeToken = function (token) {
     }.bind(this));
 
 };
+
+/**
+ * Asks the server to resend the email verification email.
+ * 
+ * @param  {String} authToken
+ * @param  {String} username
+ * @return {Bluebird -> undefined}
+ */
+exports.requestEmailVerification = function (authToken, username) {
+
+  if (!authToken) {
+    return Bluebird.reject(new errors.InvalidOption('authToken', 'required'));
+  }
+
+  if (!username) {
+    return Bluebird.reject(new errors.InvalidOption('username', 'required'));
+  }
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/account/' + username + '/request-email-verification')
+      .set({
+        'Authorization': 'Bearer ' + authToken
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.statusCode === 401) {
+
+            // invalid token
+            reject(new errors.InvalidToken(authToken));
+
+          } else if (res && res.statusCode === 403) {
+
+            // unauthorized
+            reject(new errors.Unauthorized());
+
+          } else {
+
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve();
+
+      }.bind(this));
+
+  }.bind(this));
+};

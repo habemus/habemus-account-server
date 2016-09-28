@@ -184,8 +184,9 @@ describe('POST /auth/token/decode', function () {
         decoded.exp.should.be.a.Number();
         decoded.jti.should.be.a.String();
         decoded.iss.should.equal('h-account');
+        decoded.status.value.should.eql('unverified')
 
-        Object.keys(decoded).length.should.equal(7);
+        Object.keys(decoded).length.should.equal(8);
 
         done();
       });

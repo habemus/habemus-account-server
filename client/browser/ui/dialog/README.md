@@ -1,6 +1,6 @@
-# HAuthDialog
+# HAccountDialog
 
-UI for authentication through h-auth.
+UI for authentication through h-account.
 
 It does not use Polymer nor any front-end framework as it is intended
 to be used in multiple environments.

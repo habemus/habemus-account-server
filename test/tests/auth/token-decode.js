@@ -155,8 +155,9 @@ describe('POST /auth/token/decode', function () {
             res.body.data.username.should.equal(ASSETS.users[0].username);
             res.body.data.iat.should.be.a.Number();
             res.body.data.exp.should.be.a.Number();
+            res.body.data.status.value.should.eql('unverified');
 
-            Object.keys(res.body.data).length.should.equal(4);
+            Object.keys(res.body.data).length.should.equal(5);
 
             done();
           });
