@@ -7,6 +7,8 @@ const Bluebird = require('bluebird');
 
 const ACTION_NAME = 'resetPassword';
 const CODE_LENGTH = 15;
+const TRAILING_SLASH_RE = /\/$/;
+const CONSTANTS = require('../../shared/constants');
 
 module.exports = function (app, options) {
 
@@ -14,50 +16,79 @@ module.exports = function (app, options) {
 
   const User = app.services.mongoose.models.User;
 
-  const FROM_EMAIL = options.fromEmail;
+  const FROM_EMAIL  = options.fromEmail;
+  const HOST_URI    = options.hostURI.replace(TRAILING_SLASH_RE, '');
+  const UI_HOST_URI = options.uiHostURI.replace(TRAILING_SLASH_RE, '');
 
   var pwdResetCtrl = {};
 
   /**
    * Creates a reset request
-   * @param  {String} userId
+   * @param  {String} email
    * @return {Bluebird}
    */
-  pwdResetCtrl.createRequest = function (username) {
+  pwdResetCtrl.createRequest = function (email) {
 
-    if (!username) {
+    if (!email) {
       return Bluebird.reject(new errors.InvalidOption(
-        'username',
+        'email',
         'required',
-        'username is required to create a password reset request'
+        'email is required to create a password reset request'
       ));
     }
 
-    var _user;
+    var _account;
 
-    // load user
-    return app.controllers.account.getByUsername(username)
-      .then((user) => {
-        // save the user for later usage
-        _user = user;
+    // load account
+    return app.controllers.account.getByEmail(email)
+      .then((account) => {
+        // save the account for later usage
+        _account = account;
 
-        var userId = user.get('_id').toString();
+        var accountId = account.get('_id').toString();
 
-        return app.controllers.protectedRequest.create(userId, ACTION_NAME, {
+        return app.controllers.protectedRequest.create(accountId, ACTION_NAME, {
           expiresIn: '1h',
           codeLength: CODE_LENGTH,
         });
       })
       .then((confirmationCode) => {
 
+        var email    = _account.get('email');
+        var name     = _account.get('name');
+        var username = _account.get('username');
+
+        /**
+         * Address to which reset data MUST be sent
+         * 
+         * @type {String}
+         */
+        var resetSubmitURL = HOST_URI + '/reset-password';
+
+        /**
+         * URL that points to the h-account's host
+         * At that page, the user will be allowed to define a
+         * new password and be redirected according to success or failure
+         *  
+         * @type {String}
+         */
+        var pwdResetUiURL = [
+          UI_HOST_URI,
+          CONSTANTS.UI_PASSWORD_RESET_PATH,
+          '?code=' + confirmationCode,
+          '&username=' + username,
+          '&submitURL=' + resetSubmitURL,
+        ].join('');
+
         return app.services.hMailer.schedule({
           from: FROM_EMAIL,
-          to: _user.get('email'),
+          to: email,
           template: 'account/password-reset.html',
           data: {
-            name: _user.get('name'),
-            email: _user.get('email'),
+            name: name,
+            email: email,
             code: confirmationCode,
+            url: pwdResetUiURL,
           },
         });
       })

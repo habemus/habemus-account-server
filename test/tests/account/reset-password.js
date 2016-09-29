@@ -117,7 +117,7 @@ describe('User Account password reset', function () {
     superagent
       .post(ASSETS.accountURI + '/request-password-reset')
       .send({
-        username: 'test-user',
+        email: 'test1@dev.habem.us',
       })
       .end(function (err, res) {
         // response should only acknowledge request was made
@@ -129,12 +129,12 @@ describe('User Account password reset', function () {
       });
   });
 
-  it('should refuse to create a password-reset request if not given a username', function (done) {
+  it('should refuse to create a password-reset request if not given an email', function (done) {
 
     superagent
       .post(ASSETS.accountURI + '/request-password-reset')
       .send({
-        username: undefined,
+        email: undefined,
       })
       .end(function (err, res) {
         // response should only acknowledge request was made
@@ -142,7 +142,7 @@ describe('User Account password reset', function () {
 
         res.body.error.errors.length.should.equal(1);
         res.body.error.name.should.equal('InvalidOption');
-        res.body.error.option.should.equal('username');
+        res.body.error.option.should.equal('email');
         res.body.error.kind.should.equal('required');
 
         done();
@@ -154,7 +154,7 @@ describe('User Account password reset', function () {
     superagent
       .post(ASSETS.accountURI + '/request-password-reset')
       .send({
-        username: 'user-that-does-not-exist',
+        email: 'does-not-exist@habem.us',
       })
       .end(function (err, res) {
         // response should only acknowledge request was made
@@ -175,7 +175,7 @@ describe('User Account password reset', function () {
     superagent
       .post(ASSETS.accountURI + '/request-password-reset')
       .send({
-        username: 'test-user',
+        email: 'test1@dev.habem.us',
       })
       .end(function (err, res) {
         if (err) { return done(err); }
@@ -231,7 +231,7 @@ describe('User Account password reset', function () {
     superagent
       .post(ASSETS.accountURI + '/request-password-reset')
       .send({
-        username: 'test-user',
+        email: 'test1@dev.habem.us',
       })
       .end(function (err, res) {
         // response should only acknowledge request was made

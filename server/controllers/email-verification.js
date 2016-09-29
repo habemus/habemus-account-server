@@ -17,8 +17,8 @@ module.exports = function (app, options) {
 
   const Account = app.services.mongoose.models.Account;
 
-  const FROM_EMAIL  = options.fromEmail;
-  const HOST_URI    = options.hostURI.replace(TRAILING_SLASH_RE, '');
+  const FROM_EMAIL = options.fromEmail;
+  const HOST_URI   = options.hostURI.replace(TRAILING_SLASH_RE, '');
 
   var emailVerificationCtrl = {};
 

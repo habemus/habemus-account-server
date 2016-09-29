@@ -5,7 +5,7 @@
 
   <!-- navigation bar -->
   <section
-    data-state="login login-error signup signup-error password-reset"
+    data-state="login login-error signup signup-error"
     id="h-account-action-selector">
     <button data-state="login login-error" data-navigate-to="login">
       Log in
@@ -111,8 +111,22 @@
 
   <!-- password reset -->
   <section data-state="password-reset">
+    <button data-navigate-to="login">back</button>
 
-    password reset
+    <form id="h-account-password-reset">
+      <label>
+        <span>e-mail</span>
+        <input
+          type="email"
+          name="email"
+          class="h-account-email"
+          placeholder="e-mail"
+          required
+          autofocus>
+      </label>
+
+      <button type="submit">reset password</button>
+    </form>
   </section>
   <!-- password reset -->
 

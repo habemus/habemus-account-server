@@ -1,3 +1,6 @@
+// internal dependencies
+const errors = require('../../../../errors');
+
 module.exports = function (dialog, options) {
   dialog.element.addEventListener('click', function (e) {
     var target = e.target;

@@ -7,10 +7,9 @@ module.exports = function (app, options) {
     bodyParser.json(),
     function (req, res, next) {
 
-      var username = req.body.username;
-
-      // find the user
-      app.controllers.passwordReset.createRequest(username)
+      var email = req.body.email;
+      
+      app.controllers.passwordReset.createRequest(email)
         .then(() => {
           res.status(204).send();
         })

@@ -89,10 +89,10 @@ describe('passwordResetCtrl', function () {
     return aux.teardown();
   });
 
-  describe('createRequest(username)', function () {
+  describe('createRequest(email)', function () {
     it('should create a `resetPassword` protectedActionRequest', function () {
       return ASSETS.accountApp.controllers.passwordReset
-        .createRequest('test-user-1')
+        .createRequest('test-1@dev.habem.us')
         .then(() => {
           arguments.length.should.equal(0);
 
@@ -116,22 +116,22 @@ describe('passwordResetCtrl', function () {
         });
     });
 
-    it('should require username to be passed as first argument', function () {
+    it('should require email to be passed as first argument', function () {
       return ASSETS.accountApp.controllers.passwordReset
         .createRequest(undefined)
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('InvalidOption');
-          err.option.should.equal('username');
+          err.option.should.equal('email');
           err.kind.should.equal('required');
         });
     });
 
     it('should fail to create a request for a user that does not exist', function () {
       return ASSETS.accountApp.controllers.passwordReset
-        .createRequest('fake-user')
+        .createRequest('fake-email@email.com')
         .then(aux.errorExpected, (err) => {
           err.name.should.equal('UserNotFound');
-          err.identifier.should.equal('fake-user');
+          err.identifier.should.equal('fake-email@email.com');
         });
     });
   });
@@ -144,7 +144,7 @@ describe('passwordResetCtrl', function () {
 
       var _passwordResetCode;
 
-      return ASSETS.accountApp.controllers.passwordReset.createRequest('test-user-1')
+      return ASSETS.accountApp.controllers.passwordReset.createRequest('test-1@dev.habem.us')
         .then(() => {
           // wait 1000 just to ensure that _passwordResetCode is available
           return _wait(1000);
@@ -199,7 +199,7 @@ describe('passwordResetCtrl', function () {
     });
 
     it('should fail to reset the password if the confirmationCode is incorrect', function () {
-      return ASSETS.accountApp.controllers.passwordReset.createRequest('test-user-1')
+      return ASSETS.accountApp.controllers.passwordReset.createRequest('test-1@dev.habem.us')
         .then(() => {
           return ASSETS.accountApp.controllers.passwordReset
             .resetPassword('test-user-1', 'obviously-wrong-code', 'new-1-password');

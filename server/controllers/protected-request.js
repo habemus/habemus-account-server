@@ -83,7 +83,7 @@ module.exports = function (app, options) {
     expiresIn = (typeof expiresIn === 'string') ? ms(expiresIn) : expiresIn;
     
     // generate a code
-    var confirmationCode = _genCode(DEFAULT_CODE_LENGTH);
+    var confirmationCode = _genCode(codeLength);
 
     // cancel all previous verification requests
     return protectedRequestCtrl.cancelUserRequests(userId, actionName, 'NewRequestMade')

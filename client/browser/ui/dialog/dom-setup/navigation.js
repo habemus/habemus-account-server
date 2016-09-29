@@ -21,10 +21,13 @@ module.exports = function (dialog, options) {
   dialog.model.on('change:state', function () {
     var state = dialog.model.get('state');
 
-    if (state === 'signup' || state === 'login') {
+    if (state === 'signup' ||
+        state === 'login' ||
+        state === 'password-reset') {
 
       var focusInput = dialog.element.querySelector(
-        '[data-state~="' + state + '"] [autofocus]');
+        '[data-state~="' + state + '"] [autofocus]'
+      );
 
       // set the focus in a timeout, to prevent browser
       // default behaviors.

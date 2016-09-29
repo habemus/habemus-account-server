@@ -241,3 +241,39 @@ exports.requestEmailVerification = function (authToken, username) {
 
   }.bind(this));
 };
+
+/**
+ * Requests a password reset.
+ * This is the first step in the workflow of resetting an
+ * account's password
+ * 
+ * @param  {String} email
+ * @return {Bluebird -> undefined}
+ */
+exports.requestPasswordReset = function (email) {
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/request-password-reset')
+      .send({
+        email: email,
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.body && res.body.error) {
+            reject(res.body.error);
+          } else {
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve();
+      });
+
+  }.bind(this));
+
+};

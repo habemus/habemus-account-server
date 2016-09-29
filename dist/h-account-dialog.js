@@ -27,7 +27,7 @@ exports.focusAndSelectAll = function (input) {
   input.select();
 };
 
-},{"../errors":10}],2:[function(require,module,exports){
+},{"../errors":11}],2:[function(require,module,exports){
 // native
 const util = require('util');
 
@@ -322,7 +322,10 @@ HAccountBrowserClient.prototype._setAuthStatus = function (status) {
 
 module.exports = HAccountBrowserClient;
 
-},{"../errors":10,"../index":11,"bluebird":13,"cache-promise-fn":14,"util":27}],3:[function(require,module,exports){
+},{"../errors":11,"../index":12,"bluebird":14,"cache-promise-fn":15,"util":28}],3:[function(require,module,exports){
+// internal dependencies
+const errors = require('../../../../errors');
+
 module.exports = function (dialog, options) {
   dialog.element.addEventListener('click', function (e) {
     var target = e.target;
@@ -341,7 +344,7 @@ module.exports = function (dialog, options) {
   });
 };
 
-},{}],4:[function(require,module,exports){
+},{"../../../../errors":11}],4:[function(require,module,exports){
 module.exports = function (dialog, options) {
   // elements
   var refresh = dialog.element.querySelector('#verification-refresh');
@@ -401,6 +404,7 @@ const setupLoginForm  = require('./login-form');
 const setupSignupForm = require('./signup-form');
 const closeButtons           = require('./close-buttons');
 const setupEmailVerification = require('./email-verification');
+const setupPasswordReset     = require('./password-reset');
 
 var domSetup = function (dialog, options) {
   setupNavigation(dialog, options);
@@ -408,6 +412,7 @@ var domSetup = function (dialog, options) {
   setupSignupForm(dialog, options);
   closeButtons(dialog, options);
   setupEmailVerification(dialog, options);
+  setupPasswordReset(dialog, options);
 };
 
 domSetup.setupNavigation = setupNavigation;
@@ -415,10 +420,11 @@ domSetup.setupLoginForm = setupLoginForm;
 domSetup.setupSignupForm = setupSignupForm;
 domSetup.closeButtons = closeButtons;
 domSetup.setupEmailVerification = setupEmailVerification;
+domSetup.setupPasswordReset = setupPasswordReset;
 
 module.exports = domSetup;
 
-},{"../../../../errors":10,"./close-buttons":3,"./email-verification":4,"./login-form":6,"./navigation":7,"./signup-form":8}],6:[function(require,module,exports){
+},{"../../../../errors":11,"./close-buttons":3,"./email-verification":4,"./login-form":6,"./navigation":7,"./password-reset":8,"./signup-form":9}],6:[function(require,module,exports){
 const aux = require('../../../auxiliary');
 
 module.exports = function (dialog, options) {
@@ -488,10 +494,13 @@ module.exports = function (dialog, options) {
   dialog.model.on('change:state', function () {
     var state = dialog.model.get('state');
 
-    if (state === 'signup' || state === 'login') {
+    if (state === 'signup' ||
+        state === 'login' ||
+        state === 'password-reset') {
 
       var focusInput = dialog.element.querySelector(
-        '[data-state~="' + state + '"] [autofocus]');
+        '[data-state~="' + state + '"] [autofocus]'
+      );
 
       // set the focus in a timeout, to prevent browser
       // default behaviors.
@@ -505,6 +514,29 @@ module.exports = function (dialog, options) {
 };
 
 },{"../../../auxiliary":1}],8:[function(require,module,exports){
+module.exports = function (dialog, options) {
+  // elements
+  var resetForm  = dialog.element.querySelector('#h-account-password-reset');
+  var resetEmail = resetForm.querySelector('[name="email"]');
+
+  var hAccountClient = dialog.hAccountClient;
+
+  resetForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var email = resetEmail.value;
+
+    hAccountClient.requestPasswordReset(email)
+      .then(function () {
+        alert('password reset request created with success. an email was sent')
+      });
+
+    console.log('resetForm submit')
+
+  });
+};
+},{}],9:[function(require,module,exports){
 // own
 const aux = require('../../../auxiliary');
 
@@ -574,7 +606,7 @@ module.exports = function (dialog, options) {
   });
 };
 
-},{"../../../auxiliary":1}],9:[function(require,module,exports){
+},{"../../../auxiliary":1}],10:[function(require,module,exports){
 // native
 
 const util = require('util');
@@ -586,7 +618,7 @@ const Bluebird = require('bluebird');
 
 // internal
 const HAccountClient = require('../../');
-const dialogTemplate = "<dialog id=\"h-account-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <!-- navigation bar -->\n  <section\n    data-state=\"login login-error signup signup-error password-reset\"\n    id=\"h-account-action-selector\">\n    <button data-state=\"login login-error\" data-navigate-to=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-navigate-to=\"signup\">\n      Sign up\n    </button>\n  </section>\n  <!-- navigation bar -->\n\n  <!-- v login v -->\n  <section data-state=\"login login-error\">\n    <form id=\"h-account-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-account-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-account-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-account-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n\n    <button data-navigate-to=\"password-reset\">forgot your password?</button>\n  </section>\n  <!-- ^ login ^ -->\n\n  <!-- v signup v -->\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-account-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-account-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-account-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-account-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-account-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-account-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n  <!-- ^ signup ^ -->\n\n  <!-- password reset -->\n  <section data-state=\"password-reset\">\n\n    password reset\n  </section>\n  <!-- password reset -->\n\n  <!-- email verification -->\n  <section data-state=\"email-verification\">\n    email verification\n\n    <button id=\"verification-refresh\">refresh</button>\n    <button id=\"verification-resend\">resend</button>\n  </section>\n  <!-- email verification -->\n\n\n</dialog>";
+const dialogTemplate = "<dialog id=\"h-account-dialog\">\n\n  <!-- todo: put icon here -->\n  <button class=\"dialog-close\" data-action=\"cancel\">cancel</button>\n\n  <!-- navigation bar -->\n  <section\n    data-state=\"login login-error signup signup-error\"\n    id=\"h-account-action-selector\">\n    <button data-state=\"login login-error\" data-navigate-to=\"login\">\n      Log in\n    </button>\n    <button data-state=\"signup signup-error\" data-navigate-to=\"signup\">\n      Sign up\n    </button>\n  </section>\n  <!-- navigation bar -->\n\n  <!-- v login v -->\n  <section data-state=\"login login-error\">\n    <form id=\"h-account-login\">\n      <label>\n        <span>username or e-mail</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-account-username\"\n          placeholder=\"username or e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-account-password\"\n          placeholder=\"password\"\n          required>\n      </label>\n\n      <label class=\"h-account-error-message\" data-state=\"login-error\">login error</label>\n\n      <button type=\"submit\">log in</button>\n    </form>\n\n    <button data-navigate-to=\"password-reset\">forgot your password?</button>\n  </section>\n  <!-- ^ login ^ -->\n\n  <!-- v signup v -->\n  <section data-state=\"signup signup-error\">\n    <form id=\"h-account-signup\">\n      <label>\n        <span>username</span>\n        <input\n          type=\"text\"\n          name=\"username\"\n          class=\"h-account-username\"\n          placeholder=\"username\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-account-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n      <label>\n        <span>password</span>\n        <input\n          type=\"password\"\n          name=\"password\"\n          class=\"h-account-password\"\n          placeholder=\"password\"\n          required\n          minlength=\"6\">\n      </label>\n      <label>\n        <span>confirm your password</span>\n        <input\n          type=\"password\"\n          name=\"password-confirm\"\n          class=\"h-account-password-confirm\"\n          placeholder=\"confirm password\"\n          required\n          minlength=\"6\">\n      </label>\n\n      <label class=\"h-account-error-message\" data-state=\"signup-error\">signup error</label>\n\n      <button type=\"submit\">sign up</button>\n\n    </form>\n  </section>\n\n  <section data-state=\"signup-loading\">\n    signup-loading\n  </section>\n\n  <section data-state=\"signup-success\">\n    signup-success\n    <button data-action=\"close\">ok</button>\n  </section>\n  <!-- ^ signup ^ -->\n\n  <!-- password reset -->\n  <section data-state=\"password-reset\">\n    <button data-navigate-to=\"login\">back</button>\n\n    <form id=\"h-account-password-reset\">\n      <label>\n        <span>e-mail</span>\n        <input\n          type=\"email\"\n          name=\"email\"\n          class=\"h-account-email\"\n          placeholder=\"e-mail\"\n          required\n          autofocus>\n      </label>\n\n      <button type=\"submit\">reset password</button>\n    </form>\n  </section>\n  <!-- password reset -->\n\n  <!-- email verification -->\n  <section data-state=\"email-verification\">\n    email verification\n\n    <button id=\"verification-refresh\">refresh</button>\n    <button id=\"verification-resend\">resend</button>\n  </section>\n  <!-- email verification -->\n\n\n</dialog>";
 const dialogStyles   = "@keyframes fadeIn {\n  to { background: rgba(0,0,0,0.9); }\n}\n\n#h-account-dialog {\n  font-family: sans-serif;\n\n  padding: 30px 30px 30px 30px;\n\n  border: none;\n}\n\n#h-account-dialog button {\n  outline: none;\n  border: none;\n\n  padding: 10px 20px 10px 20px;\n}\n\n#h-account-dialog > button.dialog-close {\n  position: absolute;\n\n  padding: 2px 2px;\n\n  top: 0px;\n  right: 0px;\n}\n\n/**\n * Error messages\n */\n.h-account-error-message {\n  color: red;\n  opacity: 0;\n\n  font-size: 12px;\n}\n\n.h-account-error-message.active {\n  opacity: 1;\n}\n\n/**\n * State management\n */\n#h-account-dialog section[data-state] {\n  display: none;\n}\n\n#h-account-dialog section[data-state].active {\n  display: block;\n}\n\n/**\n * Action selector\n */\n#h-account-action-selector button {\n\n}\n\n#h-account-action-selector button.active {\n  background-color: green;\n  color: white;\n}\n\n/**\n * Forms\n */\n#h-account-dialog form {\n  display: flex;\n  flex-direction: column;\n\n  margin-top: 20px;\n  margin-bottom: 0;\n}\n\n#h-account-dialog form label > * {\n  display: block;\n}\n\n#h-account-dialog form label > span {\n  font-size: 12px;\n}\n\n#h-account-dialog form input[type=\"text\"],\n#h-account-dialog form input[type=\"email\"],\n#h-account-dialog form input[type=\"password\"] {\n  margin-top: 10px;\n  margin-bottom: 10px;\n\n  font-size: 12px;\n  border: none;\n  outline: none;\n}\n\n#h-account-dialog form button[type=\"submit\"] {\n  margin-top: 10px;\n}";
 // according to brfs docs, require.resolve() may be used as well
 // https://www.npmjs.com/package/brfs#methods
@@ -953,7 +985,7 @@ AUTH_PROXY_METHODS.forEach(function (method) {
 
 module.exports = HAccountDialog;
 
-},{"../../":2,"../../../errors":10,"./dom-setup":5,"bluebird":13,"data-obj":16,"dialog-polyfill":17,"util":27}],10:[function(require,module,exports){
+},{"../../":2,"../../../errors":11,"./dom-setup":5,"bluebird":14,"data-obj":17,"dialog-polyfill":18,"util":28}],11:[function(require,module,exports){
 const util = require('util');
 
 var errors = require('../shared/errors');
@@ -988,7 +1020,7 @@ exports.UserCancelled = UserCancelled;
 
 Object.assign(exports, errors);
 
-},{"../shared/errors":28,"util":27}],11:[function(require,module,exports){
+},{"../shared/errors":29,"util":28}],12:[function(require,module,exports){
 // native
 const util         = require('util');
 const EventEmitter = require('events');
@@ -1025,7 +1057,7 @@ Object.assign(HAccount.prototype, require('./methods/public'));
 
 module.exports = HAccount;
 
-},{"./methods/public":12,"bluebird":13,"events":18,"util":27}],12:[function(require,module,exports){
+},{"./methods/public":13,"bluebird":14,"events":19,"util":28}],13:[function(require,module,exports){
 // third-party
 const Bluebird   = require('bluebird');
 const superagent = require('superagent');
@@ -1270,7 +1302,43 @@ exports.requestEmailVerification = function (authToken, username) {
   }.bind(this));
 };
 
-},{"../errors":10,"bluebird":13,"superagent":22}],13:[function(require,module,exports){
+/**
+ * Requests a password reset.
+ * This is the first step in the workflow of resetting an
+ * account's password
+ * 
+ * @param  {String} email
+ * @return {Bluebird -> undefined}
+ */
+exports.requestPasswordReset = function (email) {
+
+  return new Bluebird(function (resolve, reject) {
+
+    superagent
+      .post(this.serverURI + '/request-password-reset')
+      .send({
+        email: email,
+      })
+      .end(function (err, res) {
+        if (err) {
+          if (res && res.body && res.body.error) {
+            reject(res.body.error);
+          } else {
+            // unknown error
+            reject(err);
+          }
+
+          return;
+        }
+
+        resolve();
+      });
+
+  }.bind(this));
+
+};
+
+},{"../errors":11,"bluebird":14,"superagent":23}],14:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -6749,7 +6817,7 @@ module.exports = ret;
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":20}],14:[function(require,module,exports){
+},{"_process":21}],15:[function(require,module,exports){
 function _toArray(obj) {
   return Array.prototype.slice.call(obj, 0);
 }
@@ -6863,7 +6931,7 @@ function cachePromiseFn(fn, options) {
 
 module.exports = cachePromiseFn;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -7028,7 +7096,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // native dependencies
 const util         = require('util');
 const EventEmitter = require('events');
@@ -7126,7 +7194,7 @@ DataModel.prototype.get = function (key) {
 
 module.exports = DataModel;
 
-},{"events":18,"util":27}],17:[function(require,module,exports){
+},{"events":19,"util":28}],18:[function(require,module,exports){
 (function() {
 
   var supportCustomEvent = window.CustomEvent;
@@ -7642,7 +7710,7 @@ module.exports = DataModel;
   }
 })();
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7946,7 +8014,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7971,7 +8039,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -8092,7 +8160,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -8117,7 +8185,7 @@ module.exports = function(arr, fn, initial){
   
   return curr;
 };
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -9196,7 +9264,7 @@ request.put = function(url, data, fn){
   return req;
 };
 
-},{"./is-object":23,"./request":25,"./request-base":24,"emitter":15,"reduce":21}],23:[function(require,module,exports){
+},{"./is-object":24,"./request":26,"./request-base":25,"emitter":16,"reduce":22}],24:[function(require,module,exports){
 /**
  * Check if `obj` is an object.
  *
@@ -9211,7 +9279,7 @@ function isObject(obj) {
 
 module.exports = isObject;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * Module of mixed-in functions shared between node and client code
  */
@@ -9379,7 +9447,7 @@ exports.field = function(name, val) {
   return this;
 };
 
-},{"./is-object":23}],25:[function(require,module,exports){
+},{"./is-object":24}],26:[function(require,module,exports){
 // The node and browser modules expose versions of this with the
 // appropriate constructor function bound as first argument
 /**
@@ -9413,14 +9481,14 @@ function request(RequestConstructor, method, url) {
 
 module.exports = request;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10010,7 +10078,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":26,"_process":20,"inherits":19}],28:[function(require,module,exports){
+},{"./support/isBuffer":27,"_process":21,"inherits":20}],29:[function(require,module,exports){
 // native
 const util = require('util');
 
@@ -10138,5 +10206,5 @@ util.inherits(AccountCancelled, HAccountError);
 AccountCancelled.prototype.name = 'AccountCancelled';
 exports.AccountCancelled = AccountCancelled;
 
-},{"util":27}]},{},[9])(9)
+},{"util":28}]},{},[10])(10)
 });
