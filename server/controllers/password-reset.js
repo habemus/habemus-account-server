@@ -63,7 +63,19 @@ module.exports = function (app, options) {
          * 
          * @type {String}
          */
-        var resetSubmitURL = HOST_URI + '/reset-password';
+        var resetSubmitURL  = HOST_URI + '/reset-password';
+        var resetSuccessURL = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_SUCCESS_PATH;
+        var resetErrorURL   = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_ERROR_PATH;
+
+        /**
+         * Code and username are base64 encoded
+         * 
+         * @type {Buffer}
+         */
+        var data = new Buffer(JSON.stringify({
+          code: confirmationCode,
+          username: username,
+        })).toString('base64');
 
         /**
          * URL that points to the h-account's host
@@ -75,9 +87,10 @@ module.exports = function (app, options) {
         var pwdResetUiURL = [
           UI_HOST_URI,
           CONSTANTS.UI_PASSWORD_RESET_PATH,
-          '?code=' + confirmationCode,
-          '&username=' + username,
-          '&submitURL=' + resetSubmitURL,
+          '?d=' + data,
+          '&submit=' + resetSubmitURL,
+          '&success=' + resetSuccessURL,
+          '&error=' + resetErrorURL,
         ].join('');
 
         return app.services.hMailer.schedule({

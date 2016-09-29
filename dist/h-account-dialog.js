@@ -529,7 +529,7 @@ module.exports = function (dialog, options) {
 
     hAccountClient.requestPasswordReset(email)
       .then(function () {
-        alert('password reset request created with success. an email was sent')
+        alert('password reset request created with success. an email was sent');
       });
 
     console.log('resetForm submit')
