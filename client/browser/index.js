@@ -204,7 +204,9 @@ HAccountBrowserClient.prototype.logIn = function (username, password) {
       // as the _cachedUser
       var tokenData = _decodeJWTPayload(token);
 
-      this._cachedUser = tokenData;
+      // DO NOT cache the tokenData as the user's data,
+      // as it is not complete (status is not available on the token)
+
       // set authentication status
       this._setAuthStatus(LOGGED_IN);
 

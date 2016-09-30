@@ -66,7 +66,7 @@ module.exports = function (app, options) {
         var account = new Account(accountData);
 
         account.setStatus(
-          CONSTANTS.ACCOUNT_STATUSES.UNVERIFIED,
+          CONSTANTS.ACCOUNT_STATUSES.NEW,
           'NewlyCreated'
         );
 

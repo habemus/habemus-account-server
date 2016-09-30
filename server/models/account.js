@@ -2,10 +2,12 @@
 const mongoose   = require('mongoose');
 const uuid       = require('uuid');
 const makeStatus = require('mongoose-make-status');
+const Bluebird   = require('bluebird');
 
 // constants
 const Schema = mongoose.Schema;
 const CONSTANTS = require('../../shared/constants');
+const errors = require('../../shared/errors');
 
 /**
  * Verifies whether a string is in a valid email format
@@ -75,38 +77,16 @@ module.exports = function (conn, app, options) {
   makeStatus(accountSchema, {
     statuses: CONSTANTS.VALID_ACCOUNT_STATUSES
   });
-
-  // /**
-  //  * Sets the user account status to 'active';
-  //  * @param {String} reason
-  //  */
-  // accountSchema.methods.setAccountActive = function (reason) {
-  //   if (!reason) { throw new Error('reason is required'); }
-
-  //   this.status = {
-  //     value: app.constants.ACCOUNT_STATUSES.ACTIVE,
-  //     reason: reason,
-  //   };
-  // };
-
-  /**
-   * Sets the user account status to 'cancelled';
-   * @param {String} reason
-   */
-  // still not implemented
-  // accountSchema.methods.setAccountCancelled = function (reason) {
-  //   if (!reason) { throw new Error('reason is required'); }
-    
-  //   this.accountStatus = {
-  //     status: 'verified',
-  //     updatedAt: Date.now(),
-  //     reason: reason,
-  //   };
-  // };
   
   // statics
   accountSchema.statics.isEmail = isEmail;
 
+  /**
+   * Account variable will be hoisted in the script and static methods
+   * will have access to it.
+   * 
+   * @type {Model}
+   */
   var Account = conn.model('Account', accountSchema);
   
   return Account;

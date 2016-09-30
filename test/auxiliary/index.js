@@ -18,6 +18,12 @@ const TEST_RABBIT_MQ_URI = 'amqp://192.168.99.100';
 
 exports.dbURI = TEST_DB_URI;
 
+exports.wait = function (ms) {
+  return new Bluebird((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
 exports.defaultOptions = {
   apiVersion: '0.0.0',
   mongodbURI: TEST_DB_URI,

@@ -11,8 +11,13 @@ as well.
 - once a user creates an account, the account is marked as unverified
 - an account's email MUST be unique
 - an account's usernamer MUST be unique
-- the uniqueness of both account email and account username is considered
+- WRONG: the uniqueness of both account email and account username is considered
   only among unique accounts
+  - the uniqueness of account email and account username MUST be considered throughout
+    all accounts independent of their statuses because the combination of username-password/
+    email-password is used for authentication - even when the account has not yet been
+    confirmed. If the username is duplicated, the password verification will not work
+    consistently and will not be secure.
 - username and e-mail MUST NOT be modifiable after the account has been created:
   the only way of using an account with a different email OR username is for the
   user to create another account.

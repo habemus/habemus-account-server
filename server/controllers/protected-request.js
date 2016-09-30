@@ -234,60 +234,64 @@ module.exports = function (app, options) {
     var _request;
 
     // load the request that originated the verification flow
-    return Bluebird.resolve(ProtectedActionRequest.findOne(requestQuery))
-      .then((request) => {
+    return Bluebird.resolve(ProtectedActionRequest.findOne(
+      requestQuery,
+      null,
+      requestFindOptions
+    ))
+    .then((request) => {
 
-        _request = request;
+      _request = request;
 
-        if (!request) {
-          // request was not even found
-          // verification code must be invalid
-          // 
-          // this is a very special situation,
-          // when someone is trying to verify against non-existent request
-          return Bluebird.reject(new errors.InvalidCredentials());
-        }
+      if (!request) {
+        // request was not even found
+        // verification code must be invalid
+        // 
+        // this is a very special situation,
+        // when someone is trying to verify against non-existent request
+        return Bluebird.reject(new errors.InvalidCredentials());
+      }
 
-        if (request.hasExpired()) {
-          return Bluebird.reject(new errors.InvalidCredentials('CredentialsExpired'));
-        }
+      if (request.hasExpired()) {
+        return Bluebird.reject(new errors.InvalidCredentials('CredentialsExpired'));
+      }
 
-        // get the lock and attempt to unlock it
-        var lockId = request.get('lockId');
+      // get the lock and attempt to unlock it
+      var lockId = request.get('lockId');
+      
+      return app.services.verificationLock.unlock(
+        // unlock the lock
+        lockId,
+        // using code
+        confirmationCode,
+        // and let the app's default attempter be the one blamed
+        // for attempting to unlock
+        app.constants.ATTEMPTER_ID
+      );
 
-        return app.services.verificationLock.unlock(
-          // unlock the lock
-          lockId,
-          // using code
-          confirmationCode,
-          // and let the app's default attempter be the one blamed
-          // for attempting to unlock
-          app.constants.ATTEMPTER_ID
-        );
+    })
+    .then(() => {
+      // set the request's status
+      _request.setStatus(
+        app.constants.REQUEST_STATUSES.FULFILLED,
+        'VerificationSuccessful'
+      );
+      
+      return _request.save();
+    })
+    .then(() => {
+      // make sure to return nothing
+      return;
+    })
+    .catch((err) => {
 
-      })
-      .then(() => {
-        // set the request's status
-        _request.setStatus(
-          app.constants.REQUEST_STATUSES.FULFILLED,
-          'VerificationSuccessful'
-        );
-        
-        return _request.save();
-      })
-      .then(() => {
-        // make sure to return nothing
-        return;
-      })
-      .catch((err) => {
+      if (err instanceof hLock.errors.InvalidSecret) {
+        return Bluebird.reject(new errors.InvalidCredentials())
+      }
 
-        if (err instanceof hLock.errors.InvalidSecret) {
-          return Bluebird.reject(new errors.InvalidCredentials())
-        }
-
-        // default behavior is to reject with the original error
-        return Bluebird.reject(err);
-      });
+      // default behavior is to reject with the original error
+      return Bluebird.reject(err);
+    });
   };
 
   return protectedRequestCtrl;

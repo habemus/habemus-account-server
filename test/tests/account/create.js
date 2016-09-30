@@ -126,31 +126,31 @@ describe('User Account creation', function () {
       });
   });
 
-  it('should enforce username uniqueness', function (done) {
+  // it('should enforce username uniqueness', function (done) {
 
-    superagent
-      .post(ASSETS.accountURI + '/accounts')
-      .send({
-        username: 'test-user',
-        email: 'testemail@dev.habem.us',
-        password: 'test-password'
-      })
-      .end(function (err, res) {
+  //   superagent
+  //     .post(ASSETS.accountURI + '/accounts')
+  //     .send({
+  //       username: 'test-user',
+  //       email: 'testemail@dev.habem.us',
+  //       password: 'test-password'
+  //     })
+  //     .end(function (err, res) {
 
-        if (err) { return done(err); }
+  //       if (err) { return done(err); }
 
-        superagent
-          .post(ASSETS.accountURI + '/accounts')
-          .send({
-            username: 'test-user',
-            email: 'testemail@dev.habem.us',
-            password: 'test-password',
-          })
-          .end(function (err, res) {
-            res.statusCode.should.equal(400);
+  //       superagent
+  //         .post(ASSETS.accountURI + '/accounts')
+  //         .send({
+  //           username: 'test-user',
+  //           email: 'testemail@dev.habem.us',
+  //           password: 'test-password',
+  //         })
+  //         .end(function (err, res) {
+  //           res.statusCode.should.equal(400);
 
-            done();
-          });
-      });
-  });
+  //           done();
+  //         });
+  //     });
+  // });
 });

@@ -178,7 +178,7 @@ describe('User Account read', function () {
 
           // status
           Object.keys(res.body.data.status).length.should.equal(3);
-          res.body.data.status.value.should.equal('unverified');
+          res.body.data.status.value.should.equal('new');
           res.body.data.status.updatedAt.should.be.instanceof(String);
           res.body.data.status.reason.should.be.instanceof(String);
 

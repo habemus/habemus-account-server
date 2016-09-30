@@ -135,12 +135,10 @@ describe('authCtrl.generateToken(username|email, password)', function () {
       .then((token) => {
         var decoded = jwt.decode(token);
 
-        Object.keys(decoded).length.should.equal(8);
+        Object.keys(decoded).length.should.equal(7);
 
         decoded.createdAt.should.be.instanceof(String);
         decoded.username.should.equal('test-user-3');
-
-        decoded.status.value.should.eql('unverified');
         
         decoded.iat.should.be.instanceof(Number);
         decoded.exp.should.be.instanceof(Number);

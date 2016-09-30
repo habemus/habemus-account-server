@@ -49,18 +49,12 @@ module.exports = function (app, options) {
         var _accLockId = _user.get('_accLockId');
 
         return app.services.accountLock.unlock(_accLockId, password, ATTEMPTER_ID);
-
-        // return _user.validatePassword(password);
       })
       .then(() => {
 
         var userData = {
           createdAt: _user.createdAt,
           username: _user.username,
-          status: {
-            value: _user.status.value,
-            updatedAt: _user.status.updatedAt,
-          }
         };
 
         return app.services.accountToken.generate(userData, {

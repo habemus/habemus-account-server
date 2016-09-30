@@ -37,7 +37,7 @@ describe('accountCtrl.create(userData)', function () {
     .then((account) => {
 
       account.createdAt.should.be.instanceof(Date);
-      account.status.value.should.equal('unverified');
+      account.status.value.should.equal('new');
 
       account.username.should.equal('test-user');
       account.email.should.equal('test-user@dev.habem.us');
@@ -104,44 +104,61 @@ describe('accountCtrl.create(userData)', function () {
     });
   });
 
-  it('should prevent creation of an account with duplicate username', function () {
-      
-    return ASSETS.accountApp.controllers.account.create({
-      username: 'test-user',
-      password: 'test-password',
-      email: 'test-user@dev.habem.us',
-    })
-    .then((account) => {
+  describe('username uniqueness', function () {
+
+    it('should prevent two accounts with the same username from being created', function () {
+        
+      var _account1;
+      var _account2;
+
       return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
-        password: 'another-password',
-        email: 'another-email-user@dev.habem.us',
+        password: 'test-password',
+        email: 'test-user@dev.habem.us',
       })
-    })
-    .then(aux.errorExpected, (err) => {
-      err.name.should.equal('UsernameTaken');
-      err.username.should.equal('test-user');
+      .then((account1) => {
+        _account1 = account1;
+
+        return ASSETS.accountApp.controllers.account.create({
+          username: 'test-user',
+          password: 'another-password',
+          email: 'another-email-user@dev.habem.us',
+        })
+      })
+      .then(aux.errorExpected, (err) => {
+        err.name.should.equal('UsernameTaken');
+        err.username.should.equal('test-user');
+      });
     });
   });
 
-  it('should prevent creation of an account with duplicate email', function () {
-      
-    return ASSETS.accountApp.controllers.account.create({
-      username: 'test-user',
-      password: 'test-password',
-      email: 'test-user@dev.habem.us',
-    })
-    .then((account) => {
+  describe('email uniqueness', function () {
+
+    it('should prevent two accounts with the same email from being created', function () {
+
+      var _account1;
+      var _account2;
+
       return ASSETS.accountApp.controllers.account.create({
-        username: 'another-user',
-        password: 'another-password',
-        email: 'test-user@dev.habem.us',
+        username: 'test-user',
+        password: 'test-password',
+        email: 'same-email@dev.habem.us',
       })
-    })
-    .then(aux.errorExpected, (err) => {
-      err.name.should.equal('EmailTaken');
-      err.email.should.equal('test-user@dev.habem.us');
+      .then((account) => {
+        _account1 = account;
+
+        return ASSETS.accountApp.controllers.account.create({
+          username: 'another-user',
+          password: 'another-password',
+          email: 'same-email@dev.habem.us',
+        });
+      })
+      .then(aux.errorExpected, (err) => {
+        err.name.should.equal('EmailTaken');
+        err.email.should.equal('same-email@dev.habem.us');
+      });
     });
+
   });
-    
+
 });

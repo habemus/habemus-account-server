@@ -28,9 +28,23 @@ module.exports = function (app, options) {
 
       var token = req.body.token;
 
+      var _tokenData;
+
       app.controllers.auth.decodeToken(token)
         .then((decoded) => {
-          var msg = app.format.item(decoded, TOKEN_DATA);
+
+          _tokenData = decoded;
+
+          return app.controllers.account.getById(decoded.sub);
+        })
+        .then((account) => {
+
+          _tokenData.status = {
+            value: account.status.value,
+            updatedAt: account.status.updatedAt,
+          };
+
+          var msg = app.format.item(_tokenData, TOKEN_DATA);
           res.json(msg);
         })
         .catch(next);

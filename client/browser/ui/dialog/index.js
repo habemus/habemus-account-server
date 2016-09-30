@@ -330,7 +330,8 @@ HAccountDialog.prototype.ensureUser = function (options) {
         var statusValue = account.status.value;
 
         switch (statusValue) {
-          case 'unverified':
+          case 'new':
+          case 'verifying':
             return self.verifyEmail();
             break;
           case 'verified':

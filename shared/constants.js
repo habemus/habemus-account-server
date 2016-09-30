@@ -18,7 +18,8 @@ exports.REQUEST_STATUSES = {
 exports.VALID_REQUEST_STATUSES = _objValues(exports.REQUEST_STATUSES);
 
 exports.ACCOUNT_STATUSES = {
-  UNVERIFIED: 'unverified',
+  NEW: 'new',
+  VERIFYING: 'verifying',
   VERIFIED: 'verified',
   CANCELLED: 'cancelled',
 };
