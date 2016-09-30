@@ -18,6 +18,9 @@ module.exports = function (dialog, options) {
           return hAccountClient.getAccount(authToken, user.username);
         })
         .then(function (account) {
+          // update the cache
+          hAccountClient.setCachedUser(account);
+
           if (account.status.value === 'verified') {
             // success!
             dialog.resolve(account);

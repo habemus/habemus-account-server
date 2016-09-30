@@ -283,6 +283,14 @@ HAccountBrowserClient.prototype.logOut = function () {
 
 };
 
+/**
+ * Sets the cached data on the user
+ * @param {Object} user
+ */
+HAccountBrowserClient.prototype.setCachedUser = function (user) {
+  this._cachedUser = user;
+};
+
 //////////////////
 // PRIVATE METHODS
 
@@ -367,6 +375,9 @@ module.exports = function (dialog, options) {
           return hAccountClient.getAccount(authToken, user.username);
         })
         .then(function (account) {
+          // update the cache
+          hAccountClient.setCachedUser(account);
+
           if (account.status.value === 'verified') {
             // success!
             dialog.resolve(account);

@@ -253,6 +253,14 @@ HAccountBrowserClient.prototype.logOut = function () {
 
 };
 
+/**
+ * Sets the cached data on the user
+ * @param {Object} user
+ */
+HAccountBrowserClient.prototype.setCachedUser = function (user) {
+  this._cachedUser = user;
+};
+
 //////////////////
 // PRIVATE METHODS
 
