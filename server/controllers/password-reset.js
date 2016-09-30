@@ -64,8 +64,8 @@ module.exports = function (app, options) {
          * @type {String}
          */
         var resetSubmitURL  = HOST_URI + '/reset-password';
-        var resetSuccessURL = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_SUCCESS_PATH;
-        var resetErrorURL   = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_ERROR_PATH;
+        // var resetSuccessURL = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_SUCCESS_PATH;
+        // var resetErrorURL   = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_ERROR_PATH;
 
         /**
          * Code and username are base64 encoded
@@ -89,8 +89,8 @@ module.exports = function (app, options) {
           CONSTANTS.UI_PASSWORD_RESET_PATH,
           '?d=' + data,
           '&submit=' + resetSubmitURL,
-          '&success=' + resetSuccessURL,
-          '&error=' + resetErrorURL,
+          // '&success=' + resetSuccessURL,
+          // '&error=' + resetErrorURL,
         ].join('');
 
         return app.services.hMailer.schedule({

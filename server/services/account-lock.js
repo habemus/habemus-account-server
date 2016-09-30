@@ -8,6 +8,7 @@ module.exports = function (app, options) {
     lockModelName: 'HAccountAccountLock',
     mongooseConnection: app.services.mongoose.connection,
     maxUnlockFailures: 30,
+    unlockFailureCooldownCount: 20,
   });
 
   return Bluebird.resolve(accountLock);

@@ -11,12 +11,15 @@ module.exports = function (dialog, options) {
 
     var email = resetEmail.value;
 
+    // set the dialog to password-reset-loading mode
+    dialog.model.set('state', 'password-reset-loading');
+
     hAccountClient.requestPasswordReset(email)
       .then(function () {
-        alert('password reset request created with success. an email was sent');
+        dialog.model.set('state', 'password-reset-sent');
+      })
+      .catch(function () {
+        dialog.model.set('state', 'password-reset-error');
       });
-
-    console.log('resetForm submit')
-
   });
 };
