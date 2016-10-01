@@ -1,4 +1,5 @@
 // third-party dependencies
+const jwt         = require('jsonwebtoken');
 const MongoClient = require('mongodb').MongoClient;
 const gulp        = require('gulp');
 const runSequence = require('run-sequence');
@@ -13,6 +14,7 @@ const browserSync = require('browser-sync').create();
 
 const DEV_DB_URI = 'mongodb://localhost:27017/h-auth-development-db';
 const DEV_RABBIT_MQ_URI = 'amqp://192.168.99.100';
+const TEST_SECRET = 'TEST_SECRET';
 
 // SERVER //
 
@@ -26,7 +28,7 @@ gulp.task('nodemon', function () {
       PORT: '4000',
       MONGODB_URI: DEV_DB_URI,
       RABBIT_MQ_URI: DEV_RABBIT_MQ_URI,
-      SECRET: 'TEST_SECRET',
+      SECRET: TEST_SECRET,
       CORS_WHITELIST: 'http://localhost:3000',
       FROM_EMAIL: 'simon.fan@habem.us',
       HOST_URI: 'http://local.dev.h-account:4000',
@@ -39,6 +41,16 @@ gulp.task('nodemon', function () {
       'gulpfile.js',
     ],
   })
+});
+
+gulp.task('dev-api-token', function () {
+
+  var payload = {};
+
+  var token = jwt.sign(payload, TEST_SECRET);
+
+  console.log(token);
+
 });
 
 gulp.task('drop-db', function (done) {

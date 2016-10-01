@@ -5,7 +5,7 @@ const TOKEN_DATA = require('../../interfaces/token-data');
 
 module.exports = function (app, options) {
 
-  app.post('/auth/token/decode',
+  app.post('/_/auth/token/decode',
     bodyParser.json(),
     function (req, res, next) {
 

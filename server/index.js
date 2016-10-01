@@ -3,7 +3,6 @@ const http    = require('http');
 
 // external dependencies
 const express  = require('express');
-const morgan   = require('morgan');
 const cors     = require('cors');
 const mongoose = require('mongoose');
 const jsonMessage = require('json-message');
