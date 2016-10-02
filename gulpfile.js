@@ -43,7 +43,7 @@ gulp.task('nodemon', function () {
   })
 });
 
-gulp.task('dev-api-token', function () {
+gulp.task('token', function () {
 
   var payload = {};
 

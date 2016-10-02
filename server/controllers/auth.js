@@ -1,5 +1,4 @@
 // third-party
-const jwt  = require('jsonwebtoken');
 const Bluebird = require('bluebird');
 
 const hToken = require('h-token');
