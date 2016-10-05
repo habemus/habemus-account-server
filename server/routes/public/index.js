@@ -1,5 +1,30 @@
+// third-party
+const express = require('express');
+
 module.exports = function (app, options) {
-  require('./account')(app, options);
-  require('./auth')(app, options);
-  require('./ui')(app, options);
+
+  var publicApp = express();
+
+  // expose app's properties
+  publicApp.constants   = app.constants;
+  publicApp.errors      = app.errors;
+  publicApp.controllers = app.controllers;
+  publicApp.middleware  = app.middleware;
+  publicApp.services    = app.services;
+
+
+  // setup cors middleware only onto public app
+  // and before other routes
+  var _cors = app.middleware.cors({
+    corsWhitelist: options.corsWhitelist
+  });
+  publicApp.use(_cors);
+  publicApp.options('*', _cors);
+
+  require('./account')(publicApp, options);
+  require('./auth')(publicApp, options);
+  require('./ui')(publicApp, options);
+
+  // mount the public app onto the public route
+  app.use('/public', publicApp);
 };

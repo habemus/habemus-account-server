@@ -56,8 +56,9 @@ describe('accountCtrl `get` methods', function () {
       .catch(done);
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    this.timeout(5000);
+    return aux.teardown();
   });
 
   describe('accountCtrl.getByUsername(username)', function () {

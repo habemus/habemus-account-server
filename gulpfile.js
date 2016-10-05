@@ -27,8 +27,8 @@ gulp.task('nodemon', function () {
       SECRET: TEST_SECRET,
       CORS_WHITELIST: 'http://localhost:3000',
       FROM_EMAIL: 'simon.fan@habem.us',
-      HOST_URI: 'http://local.dev.h-account:4000',
-      UI_HOST_URI: 'http://local.dev.h-account:4000/ui',
+      PUBLIC_HOST_URI: 'http://local.dev.h-account:4000/public',
+      UI_HOST_URI: 'http://local.dev.h-account:4000/public/ui',
     },
     ext: 'js',
     ignore: [

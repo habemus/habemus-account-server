@@ -58,8 +58,9 @@ describe('authCtrl.decodeToken(token)', function () {
       .catch(done);
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    this.timeout(5000);
+    return aux.teardown();
   });
 
   it('should verify validity of a token and return its decoded contents', function () {

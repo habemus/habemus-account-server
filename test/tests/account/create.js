@@ -36,7 +36,7 @@ describe('User Account creation', function () {
 
   it('should require a username', function (done) {
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         // username: 'test-user',
         email: 'test-user@dev.habem.us',
@@ -56,7 +56,7 @@ describe('User Account creation', function () {
 
   it('should require an email', function (done) {
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         username: 'test-user',
         // email: 'test-user@dev.habem.us',
@@ -77,7 +77,7 @@ describe('User Account creation', function () {
 
   it('should require a password', function (done) {
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
@@ -100,7 +100,7 @@ describe('User Account creation', function () {
     this.timeout(4000);
 
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
@@ -129,7 +129,7 @@ describe('User Account creation', function () {
   // it('should enforce username uniqueness', function (done) {
 
   //   superagent
-  //     .post(ASSETS.accountURI + '/accounts')
+  //     .post(ASSETS.accountURI + '/public/accounts')
   //     .send({
   //       username: 'test-user',
   //       email: 'testemail@dev.habem.us',
@@ -140,7 +140,7 @@ describe('User Account creation', function () {
   //       if (err) { return done(err); }
 
   //       superagent
-  //         .post(ASSETS.accountURI + '/accounts')
+  //         .post(ASSETS.accountURI + '/public/accounts')
   //         .send({
   //           username: 'test-user',
   //           email: 'testemail@dev.habem.us',

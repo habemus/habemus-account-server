@@ -62,7 +62,7 @@ describe('User Account verification', function () {
 
   it('should reject verifying users that do not exist', function (done) {
     superagent
-      .post(ASSETS.accountURI + '/account/' + 'fake-username' + '/verify-email')
+      .post(ASSETS.accountURI + '/public/account/' + 'fake-username' + '/verify-email')
       .send({
         code: 'fake-code'
       })
@@ -80,7 +80,7 @@ describe('User Account verification', function () {
   it('should reject invalid verification code', function (done) {
 
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
@@ -96,7 +96,7 @@ describe('User Account verification', function () {
         res.body.data.username.should.equal('test-user');
 
         superagent
-          .post(ASSETS.accountURI + '/account/test-user/verify-email')
+          .post(ASSETS.accountURI + '/public/account/test-user/verify-email')
           .send({
             code: 'INVALID-VERIFICATION-CODE',
           })
@@ -118,7 +118,7 @@ describe('User Account verification', function () {
     var userVerificationCode;
 
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         username: 'test-user-2',
         email: 'testemail2@dev.habem.us',
@@ -136,11 +136,12 @@ describe('User Account verification', function () {
         userVerificationCode.should.be.a.String();
 
         superagent
-          .get(ASSETS.accountURI + '/account/' + res.body.data.username + '/verify-email')
+          .get(ASSETS.accountURI + '/public/account/' + res.body.data.username + '/verify-email')
           .query({
             code: userVerificationCode,
           })
           .end((err, res) => {
+
             if (err) { return done(err); }
 
             // verification should be successful
@@ -167,7 +168,7 @@ describe('User Account verification', function () {
     var userVerificationCode;
 
     superagent
-      .post(ASSETS.accountURI + '/accounts')
+      .post(ASSETS.accountURI + '/public/accounts')
       .send({
         username: 'test-user-3',
         email: 'testemail3@dev.habem.us',
@@ -187,7 +188,7 @@ describe('User Account verification', function () {
         var username = res.body.data.username;
 
         superagent
-          .post(ASSETS.accountURI + '/account/' + username + '/verify-email')
+          .post(ASSETS.accountURI + '/public/account/' + username + '/verify-email')
           .send({
             code: userVerificationCode,
           })
@@ -198,7 +199,7 @@ describe('User Account verification', function () {
             res.statusCode.should.equal(200);
 
             superagent
-              .post(ASSETS.accountURI + '/account/' + username + '/verify-email')
+              .post(ASSETS.accountURI + '/public/account/' + username + '/verify-email')
               .send({
                 code: userVerificationCode,
               })

@@ -16,9 +16,9 @@ module.exports = function (app, options) {
 
   const User = app.services.mongoose.models.User;
 
-  const FROM_EMAIL  = options.fromEmail;
-  const HOST_URI    = options.hostURI.replace(TRAILING_SLASH_RE, '');
-  const UI_HOST_URI = options.uiHostURI.replace(TRAILING_SLASH_RE, '');
+  const FROM_EMAIL      = options.fromEmail;
+  const PUBLIC_HOST_URI = options.publicHostURI.replace(TRAILING_SLASH_RE, '');
+  const UI_HOST_URI     = options.uiHostURI.replace(TRAILING_SLASH_RE, '');
 
   var pwdResetCtrl = {};
 
@@ -63,9 +63,7 @@ module.exports = function (app, options) {
          * 
          * @type {String}
          */
-        var resetSubmitURL  = HOST_URI + '/reset-password';
-        // var resetSuccessURL = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_SUCCESS_PATH;
-        // var resetErrorURL   = UI_HOST_URI + CONSTANTS.UI_PASSWORD_RESET_ERROR_PATH;
+        var resetSubmitURL  = PUBLIC_HOST_URI + '/reset-password';
 
         /**
          * Code and username are base64 encoded

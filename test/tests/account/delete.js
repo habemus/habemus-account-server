@@ -15,7 +15,7 @@ describe('User Account deletion', function () {
 
     // first retrieve the token
     superagent
-      .post(ASSETS.accountURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/public/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -44,7 +44,7 @@ describe('User Account deletion', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -59,7 +59,7 @@ describe('User Account deletion', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -91,7 +91,7 @@ describe('User Account deletion', function () {
   it('should not allow delete without any authentication', function (done) {
 
     superagent
-      .delete(ASSETS.accountURI + '/account/test-user')
+      .delete(ASSETS.accountURI + '/public/account/test-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -107,7 +107,7 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(ASSETS.accountURI + '/account/test-user')
+        .delete(ASSETS.accountURI + '/public/account/test-user')
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
@@ -126,7 +126,7 @@ describe('User Account deletion', function () {
     }, function (err, token) {
 
       superagent
-        .delete(ASSETS.accountURI + '/account/' + ASSETS.users[0].username)
+        .delete(ASSETS.accountURI + '/public/account/' + ASSETS.users[0].username)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 

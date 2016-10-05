@@ -2,7 +2,8 @@
 const bodyParser = require('body-parser');
 const Bluebird   = require('bluebird');
 
-const USER_DATA = require('../../../interfaces/user-data');
+// constants
+const interfaces = require('../../interfaces');
 
 module.exports = function (app, options) {
   
@@ -13,7 +14,7 @@ module.exports = function (app, options) {
       app.controllers.account.create(req.body)
         .then((createdUser) => {
 
-          var msg = app.format.item(createdUser, USER_DATA);
+          var msg = app.services.messageAPI.item(createdUser, interfaces.USER_DATA);
 
           res.status(201).json(msg);
         })
@@ -22,7 +23,7 @@ module.exports = function (app, options) {
   );
 
   app.get('/account/:username',
-    app.middleware.authenticate,
+    app.middleware.authenticate(),
     function (req, res, next) {
 
       app.controllers.account.getByUsername(req.params.username)
@@ -34,7 +35,7 @@ module.exports = function (app, options) {
             return;
           } else {
 
-            var msg = app.format.item(user, USER_DATA);
+            var msg = app.services.messageAPI.item(user, interfaces.USER_DATA);
             res.json(msg);
           }
         })
@@ -43,7 +44,7 @@ module.exports = function (app, options) {
   );
 
   app.delete('/account/:username',
-    app.middleware.authenticate,
+    app.middleware.authenticate(),
     function (req, res, next) {
 
       app.controllers.account.getByUsername(req.params.username)

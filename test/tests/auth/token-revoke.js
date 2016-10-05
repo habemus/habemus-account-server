@@ -30,7 +30,7 @@ describe('POST /auth/token/decode', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -45,7 +45,7 @@ describe('POST /auth/token/decode', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -79,7 +79,7 @@ describe('POST /auth/token/decode', function () {
     var token1 = new Promise(function (resolve, reject) {
 
       superagent
-        .post(ASSETS.accountURI + '/auth/token/generate')
+        .post(ASSETS.accountURI + '/public/auth/token/generate')
         .send({
           username: 'test-user',
           password: 'test-password'
@@ -95,7 +95,7 @@ describe('POST /auth/token/decode', function () {
 
     var token2 = new Promise(function (resolve, reject) {
       superagent
-        .post(ASSETS.accountURI + '/auth/token/generate')
+        .post(ASSETS.accountURI + '/public/auth/token/generate')
         .send({
           username: 'test-user-2',
           password: 'test-password-2'
@@ -119,7 +119,7 @@ describe('POST /auth/token/decode', function () {
 
         return new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/auth/token/revoke')
+            .post(ASSETS.accountURI + '/public/auth/token/revoke')
             .set({
               'Authorization': 'Bearer ' + tokens[0]
             })
@@ -137,7 +137,7 @@ describe('POST /auth/token/decode', function () {
         // try to use the revoked token
         return new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/auth/token/decode')
+            .post(ASSETS.accountURI + '/public/auth/token/decode')
             .send({ token: _tokens[0] })
             .end((err, response) => {
               if (err) {

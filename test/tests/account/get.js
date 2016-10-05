@@ -15,7 +15,7 @@ describe('User Account read', function () {
 
     // first retrieve the token
     superagent
-      .post(ASSETS.accountURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/public/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -46,7 +46,7 @@ describe('User Account read', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -61,7 +61,7 @@ describe('User Account read', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -92,7 +92,7 @@ describe('User Account read', function () {
 
   it('should return 403 when given no credentials', function (done) {
     superagent
-      .get(ASSETS.accountURI + '/account/test-user')
+      .get(ASSETS.accountURI + '/public/account/test-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -102,7 +102,7 @@ describe('User Account read', function () {
 
   it('should return 403 when given no credentials even if the username does not exist', function (done) {
     superagent
-      .get(ASSETS.accountURI + '/account/test-unexistent-user')
+      .get(ASSETS.accountURI + '/public/account/test-unexistent-user')
       .end(function (err, res) {
 
         res.statusCode.should.equal(403);
@@ -120,7 +120,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.accountURI + '/account/test-user')
+        .get(ASSETS.accountURI + '/public/account/test-user')
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
 
@@ -141,7 +141,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.accountURI + '/account/test-user')
+        .get(ASSETS.accountURI + '/public/account/test-user')
         .set('Authorization', 'Bearer' + token)
         .end(function (err, res) {
           res.statusCode.should.equal(403);
@@ -164,7 +164,7 @@ describe('User Account read', function () {
       if (err) { return done(err); }
 
       superagent
-        .get(ASSETS.accountURI + '/account/' + ASSETS.accounts[0].username)
+        .get(ASSETS.accountURI + '/public/account/' + ASSETS.accounts[0].username)
         .set('Authorization', 'Bearer ' + token)
         .end(function (err, res) {
           if (err) { return done(err); }

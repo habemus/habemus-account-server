@@ -30,7 +30,7 @@ describe('POST /auth/token/decode', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -45,7 +45,7 @@ describe('POST /auth/token/decode', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -77,7 +77,7 @@ describe('POST /auth/token/decode', function () {
   it('should require a token to be sent for decoding', function (done) {
 
     superagent
-      .post(ASSETS.accountURI + '/auth/token/decode')
+      .post(ASSETS.accountURI + '/public/auth/token/decode')
       .send({})
       .end(function (err, res) {
         res.statusCode.should.equal(400);
@@ -104,7 +104,7 @@ describe('POST /auth/token/decode', function () {
     });
 
     superagent
-      .post(ASSETS.accountURI + '/auth/token/decode')
+      .post(ASSETS.accountURI + '/public/auth/token/decode')
       .send({
         token: deceitfulToken,
       })
@@ -120,7 +120,7 @@ describe('POST /auth/token/decode', function () {
   it('should properly decode a valid token', function (done) {
     // first create the token
     superagent
-      .post(ASSETS.accountURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/public/auth/token/generate')
       .send({
         username: 'test-user',
         password: 'test-password'
@@ -131,7 +131,7 @@ describe('POST /auth/token/decode', function () {
         var token = res.body.data.token;
 
         superagent
-          .post(ASSETS.accountURI + '/auth/token/decode')
+          .post(ASSETS.accountURI + '/public/auth/token/decode')
           .send({
             token: token
           })

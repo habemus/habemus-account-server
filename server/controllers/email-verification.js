@@ -17,8 +17,8 @@ module.exports = function (app, options) {
 
   const Account = app.services.mongoose.models.Account;
 
-  const FROM_EMAIL = options.fromEmail;
-  const HOST_URI   = options.hostURI.replace(TRAILING_SLASH_RE, '');
+  const FROM_EMAIL      = options.fromEmail;
+  const PUBLIC_HOST_URI = options.publicHostURI.replace(TRAILING_SLASH_RE, '');
 
   var emailVerificationCtrl = {};
 
@@ -62,7 +62,7 @@ module.exports = function (app, options) {
          * 
          * @type {String}
          */
-        var confirmationURL = HOST_URI + '/account/' + username + '/verify-email?code=' + confirmationCode;
+        var confirmationURL = PUBLIC_HOST_URI + '/account/' + username + '/verify-email?code=' + confirmationCode;
 
         return app.services.hMailer.schedule({
           from: FROM_EMAIL,

@@ -14,7 +14,7 @@ var options = {
   secret: process.env.SECRET,
 
   fromEmail: process.env.FROM_EMAIL,
-  hostURI: process.env.HOST_URI,
+  publicHostURI: process.env.PUBLIC_HOST_URI,
   uiHostURI: process.env.UI_HOST_URI,
 
   corsWhitelist: process.env.CORS_WHITELIST,

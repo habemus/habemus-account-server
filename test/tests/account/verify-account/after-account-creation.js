@@ -53,7 +53,7 @@ describe('User Account verification after-creation', function () {
         // create one user
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -82,7 +82,7 @@ describe('User Account verification after-creation', function () {
 
   it('should create a verification request', function (done) {
     superagent
-      .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/request-email-verification')
+      .post(ASSETS.accountURI + '/public/account/' + ASSETS.user.username + '/request-email-verification')
       .end(function (err, res) {
         if (err) { return done(err); }
 
@@ -101,7 +101,7 @@ describe('User Account verification after-creation', function () {
     var accVerificationConfirmationCode;
 
     superagent
-      .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/request-email-verification')
+      .post(ASSETS.accountURI + '/public/account/' + ASSETS.user.username + '/request-email-verification')
       .end(function (err, res) {
         if (err) { return done(err); }
 
@@ -114,7 +114,7 @@ describe('User Account verification after-creation', function () {
         accVerificationConfirmationCode.should.be.instanceof(String);
 
         superagent
-          .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/verify-email')
+          .post(ASSETS.accountURI + '/public/account/' + ASSETS.user.username + '/verify-email')
           .send({
             code: accVerificationConfirmationCode,
           })
@@ -126,7 +126,7 @@ describe('User Account verification after-creation', function () {
 
             // it should not be possible to verify again
             superagent
-              .post(ASSETS.accountURI + '/account/' + ASSETS.user.username + '/verify-email')
+              .post(ASSETS.accountURI + '/public/account/' + ASSETS.user.username + '/verify-email')
               .send({
                 code: accVerificationConfirmationCode,
               })

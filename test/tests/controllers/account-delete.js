@@ -50,6 +50,7 @@ describe('accountCtrl.delete(username)', function () {
   });
 
   afterEach(function () {
+    this.timeout(5000);
     return aux.teardown();
   });
 

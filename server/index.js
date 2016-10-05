@@ -1,15 +1,5 @@
-// native dependencies
-const http    = require('http');
-
 // external dependencies
 const express  = require('express');
-const cors     = require('cors');
-const mongoose = require('mongoose');
-const jsonMessage = require('json-message');
-
-// h-dependencies
-const hToken = require('h-token');
-const hLock  = require('h-lock');
 
 // own dependencies
 const errors = require('../shared/errors');
@@ -26,7 +16,7 @@ function hAccount(options) {
 
   // mailing
   if (!options.fromEmail) { throw new Error('fromEmail is required'); }
-  if (!options.hostURI)   { throw new Error('hostURI is required'); }
+  if (!options.publicHostURI) { throw new Error('publicHostURI is required'); }
   if (!options.uiHostURI) { throw new Error('uiHostURI is required'); }
 
   // create express app instance
@@ -49,13 +39,12 @@ function hAccount(options) {
 
     // instantiate middleware for usage in routes
     app.middleware = {};
-    app.middleware.authenticate = require('./middleware/authenticate')(app, options);
-
-    require('./setup/middleware')(app, options);
+    app.middleware.cors = require('./middleware/cors').bind(null, app);
+    app.middleware.authenticate = require('./middleware/authenticate').bind(null, app);
 
     // define description route
     app.get('/who', function (req, res) {
-      var msg = app.format.item({ name: 'h-account' }, { name: true });
+      var msg = app.services.messageAPI.item({ name: 'h-account' }, { name: true });
       res.json(msg);
     });
 

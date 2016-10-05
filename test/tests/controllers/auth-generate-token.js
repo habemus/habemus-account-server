@@ -57,8 +57,9 @@ describe('authCtrl.generateToken(username|email, password)', function () {
       .catch(done);
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    this.timeout(5000);
+    return aux.teardown();
   });
 
   it('should generate the token using username and password', function () {

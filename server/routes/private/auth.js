@@ -1,11 +1,12 @@
 // third-party
 const bodyParser = require('body-parser');
 
-const TOKEN_DATA = require('../../interfaces/token-data');
+// constants
+const interfaces = require('../interfaces');
 
 module.exports = function (app, options) {
 
-  app.post('/_/auth/token/decode',
+  app.post('/auth/token/decode',
     bodyParser.json(),
     function (req, res, next) {
 
@@ -29,7 +30,7 @@ module.exports = function (app, options) {
             updatedAt: account.status.updatedAt,
           };
 
-          var msg = app.format.item(_tokenData, TOKEN_DATA);
+          var msg = app.services.messageAPI.item(_tokenData, interfaces.TOKEN_DATA);
           res.json(msg);
         })
         .catch(next);

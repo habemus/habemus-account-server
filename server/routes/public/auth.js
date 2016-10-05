@@ -1,7 +1,8 @@
 // third-party
 const bodyParser = require('body-parser');
 
-const TOKEN_DATA = require('../../interfaces/token-data');
+// constants
+const interfaces = require('../interfaces');
 
 module.exports = function (app, options) {
 
@@ -15,7 +16,7 @@ module.exports = function (app, options) {
       app.controllers.auth.generateToken(username, password)
         .then((token) => {
           
-          var msg = app.format.item({ token: token }, { token: true });
+          var msg = app.services.messageAPI.item({ token: token }, { token: true });
           res.status(201).json(msg);
         })
         .catch(next);
@@ -44,7 +45,7 @@ module.exports = function (app, options) {
             updatedAt: account.status.updatedAt,
           };
 
-          var msg = app.format.item(_tokenData, TOKEN_DATA);
+          var msg = app.services.messageAPI.item(_tokenData, interfaces.TOKEN_DATA);
           res.json(msg);
         })
         .catch(next);
@@ -52,13 +53,13 @@ module.exports = function (app, options) {
   );
 
   app.post('/auth/token/revoke',
-    app.middleware.authenticate,
+    app.middleware.authenticate(),
     bodyParser.json(),
     function (req, res, next) {
       // revoke the token used to authenticate
       app.controllers.auth.revokeToken(req.token.jti)
         .then((revocation) => {
-          var msg = app.format.item(revocation, { tokenId: true });
+          var msg = app.services.messageAPI.item(revocation, { tokenId: true });
           res.json(msg);
         })
         .catch(next);

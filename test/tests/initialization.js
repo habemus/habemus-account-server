@@ -17,7 +17,7 @@ const REQUIRED_OPTIONS = {
   secret: 'fake-secret',
   
   fromEmail: 'from@dev.habem.us',
-  hostURI: 'http://localhost:8000',
+  publicHostURI: 'http://localhost:8000',
   uiHostURI: 'http://localhost:8000/ui'
 };
 
@@ -83,7 +83,7 @@ describe('server initialization', function () {
       secret: 'fake-secret',
       fromEmail: 'from@dev.habem.us',
 
-      hostURI: 'http://localhost:8000',
+      publicHostURI: 'http://localhost:8000',
       uiHostURI: 'http://localhost:8000/ui'
     });
 

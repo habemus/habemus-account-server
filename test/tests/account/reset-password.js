@@ -17,7 +17,7 @@ describe('User Account password reset', function () {
 
     // first retrieve the token
     superagent
-      .post(ASSETS.accountURI + '/auth/token/generate')
+      .post(ASSETS.accountURI + '/public/auth/token/generate')
       .send(credentials)
       .end(function (err, res) {
         if (err) { return callback(err); }
@@ -69,7 +69,7 @@ describe('User Account password reset', function () {
         
         var u1Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
@@ -84,7 +84,7 @@ describe('User Account password reset', function () {
 
         var u2Promise = new Promise((resolve, reject) => {
           superagent
-            .post(ASSETS.accountURI + '/accounts')
+            .post(ASSETS.accountURI + '/public/accounts')
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
@@ -115,7 +115,7 @@ describe('User Account password reset', function () {
   it('should first create a request for password reset', function (done) {
 
     superagent
-      .post(ASSETS.accountURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/public/request-password-reset')
       .send({
         email: 'test1@dev.habem.us',
       })
@@ -132,7 +132,7 @@ describe('User Account password reset', function () {
   it('should refuse to create a password-reset request if not given an email', function (done) {
 
     superagent
-      .post(ASSETS.accountURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/public/request-password-reset')
       .send({
         email: undefined,
       })
@@ -152,7 +152,7 @@ describe('User Account password reset', function () {
   it('should refuse to create a password-reset request for a user that does not exist', function (done) {
 
     superagent
-      .post(ASSETS.accountURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/public/request-password-reset')
       .send({
         email: 'does-not-exist@habem.us',
       })
@@ -173,7 +173,7 @@ describe('User Account password reset', function () {
     var pwdResetConfirmationCode;
 
     superagent
-      .post(ASSETS.accountURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/public/request-password-reset')
       .send({
         email: 'test1@dev.habem.us',
       })
@@ -188,7 +188,7 @@ describe('User Account password reset', function () {
         pwdResetConfirmationCode.should.be.a.String();
 
         superagent
-          .post(ASSETS.accountURI + '/reset-password')
+          .post(ASSETS.accountURI + '/public/reset-password')
           .send({
             username: 'test-user',
             code: pwdResetConfirmationCode,
@@ -202,7 +202,7 @@ describe('User Account password reset', function () {
 
             // it should be possible to login using the new password
             superagent
-              .post(ASSETS.accountURI + '/auth/token/generate')
+              .post(ASSETS.accountURI + '/public/auth/token/generate')
               .send({
                 username: 'test-user',
                 password: 'new-different-password'
@@ -229,7 +229,7 @@ describe('User Account password reset', function () {
     var NEW_PWD = 'new-different-password';
 
     superagent
-      .post(ASSETS.accountURI + '/request-password-reset')
+      .post(ASSETS.accountURI + '/public/request-password-reset')
       .send({
         email: 'test1@dev.habem.us',
       })
@@ -238,7 +238,7 @@ describe('User Account password reset', function () {
         res.statusCode.should.equal(204);
 
         superagent
-          .post(ASSETS.accountURI + '/reset-password')
+          .post(ASSETS.accountURI + '/public/reset-password')
           .send({
             username: 'test-user',
             code: 'wrong-code',
@@ -252,7 +252,7 @@ describe('User Account password reset', function () {
 
             // it should not be possible to login using the new password
             superagent
-              .post(ASSETS.accountURI + '/auth/token/generate')
+              .post(ASSETS.accountURI + '/public/auth/token/generate')
               .send({
                 username: 'test-user',
                 password: NEW_PWD
@@ -265,7 +265,7 @@ describe('User Account password reset', function () {
 
                 // it should still be possible to login using original password
                 superagent
-                  .post(ASSETS.accountURI + '/auth/token/generate')
+                  .post(ASSETS.accountURI + '/public/auth/token/generate')
                   .send({
                     username: 'test-user',
                     password: 'test-password',

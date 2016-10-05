@@ -55,8 +55,9 @@ describe('authCtrl.revokeToken(token)', function () {
       .catch(done);
   });
 
-  afterEach(function (done) {
-    aux.teardown().then(done).catch(done);
+  afterEach(function () {
+    this.timeout(5000);
+    return aux.teardown();
   });
 
   it('should revoke a token, invalidating it for further requests', function () {

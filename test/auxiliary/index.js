@@ -31,10 +31,10 @@ exports.defaultOptions = {
   secret: 'fake-secret',
 
   fromEmail: 'from@dev.habem.us',
-  // hostURI: 'http://local.dev.h-account:4000',
+  // publicHostURI: 'http://local.dev.h-account:4000',
   // uiHostURI: 'http://local.dev.h-account:4000/ui',
-  hostURI: 'http://localhost:4000',
-  uiHostURI: 'http://localhost:4000/ui',
+  publicHostURI: 'http://localhost:4000/public',
+  uiHostURI: 'http://localhost:4000/public/ui',
 };
 
 exports.genOptions = function (opts) {

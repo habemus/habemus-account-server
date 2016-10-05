@@ -84,6 +84,7 @@ describe('passwordResetCtrl', function () {
   });
 
   afterEach(function () {
+    this.timeout(5000);
     mockery.disable();
 
     return aux.teardown();
