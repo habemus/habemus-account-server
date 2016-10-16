@@ -1,9 +1,8 @@
 {
   "name": "h-account",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "",
   "main": "index.js",
-  "browser": "client/index.js",
   "scripts": {
     "start": "node ./cli/start.js",
     "test": "mocha test/tests/**/*"
@@ -11,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "express-api-mock": "0.0.2",
     "gulp": "^3.9.0",
     "gulp-istanbul": "^0.10.4",
     "gulp-mocha": "^2.2.0",
@@ -24,6 +22,7 @@
     "superagent": "^2.3.0"
   },
   "dependencies": {
+    "@habemus/env-options": "^0.2.0",
     "@habemus/url-whitelist": "^1.0.0",
     "amqplib": "^0.4.2",
     "bluebird": "^3.4.0",
