@@ -8,15 +8,22 @@ const envOptions = require('@habemus/env-options');
 const createHabemusAuth = require('../');
 
 var options = envOptions({
-  apiVersion:    'pkg:version',
-  corsWhitelist: 'list:CORS_WHITELIST',
-  fromEmail:     'env:FROM_EMAIL',
-  mongodbURI:    'fs:MONGODB_URI_PATH',
-  port:          'env:PORT',
-  publicHostURI: 'env:PUBLIC_HOST_URI',
-  rabbitMQURI:   'fs:RABBIT_MQ_URI_PATH',
-  secret:        'fs:SECRET_PATH',
-  uiHostURI:     'env:UI_HOST_URI',
+  port:             'env:PORT',
+
+  apiVersion:       'pkg:version',
+  corsWhitelist:    'list:CORS_WHITELIST',
+  fromEmail:        'env:FROM_EMAIL',
+
+  mongodbURI:       'fs:MONGODB_URI_PATH',
+  rabbitMQURI:      'fs:RABBIT_MQ_URI_PATH',
+
+  publicHostURI:    'env:PUBLIC_HOST_URI',
+  uiHostURI:        'env:UI_HOST_URI',
+
+  authSecret:       'fs:AUTH_SECRET_PATH',
+
+  enablePrivateAPI: 'bool?:ENABLE_PRIVATE_API',
+  privateAPISecret: 'fs?:PRIVATE_API_SECRET_PATH',
 });
 
 // instantiate the app

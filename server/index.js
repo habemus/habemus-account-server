@@ -12,7 +12,7 @@ function hAccount(options) {
   if (!options.apiVersion) { throw new Error('apiVersion is required'); }  
   if (!options.mongodbURI) { throw new Error('mongodbURI is required'); }
   if (!options.rabbitMQURI) { throw new Error('rabbitMQURI is required'); }
-  if (!options.secret) { throw new Error('secret is required'); }
+  if (!options.authSecret) { throw new Error('authSecret is required'); }
 
   // mailing
   if (!options.fromEmail) { throw new Error('fromEmail is required'); }
@@ -29,6 +29,7 @@ function hAccount(options) {
   app.constants = require('../shared/constants');
 
   app.ready = setupServices(app, options).then(() => {
+
     // instantiate controllers
     app.controllers = {};
     app.controllers.account = require('./controllers/account')(app, options);
@@ -41,6 +42,7 @@ function hAccount(options) {
     app.middleware = {};
     app.middleware.cors = require('./middleware/cors').bind(null, app);
     app.middleware.authenticate = require('./middleware/authenticate').bind(null, app);
+    app.middleware.authenticatePrivate = require('./middleware/authenticate-private').bind(null, app);
 
     // define description route
     app.get('/who', function (req, res) {
@@ -50,7 +52,13 @@ function hAccount(options) {
 
     // load routes
     require('./routes/public')(app, options);
-    require('./routes/private')(app, options);
+    if (options.enablePrivateAPI) {
+      if (!options.privateAPISecret) {
+        throw new Error('privateAPISecret is required for enablePrivateAPI = true');
+      }
+      
+      require('./routes/private')(app, options);
+    }
 
     // load error-handlers
     require('./error-handlers/h-account-error')(app, options);

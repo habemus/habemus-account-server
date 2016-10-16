@@ -15,5 +15,8 @@ module.exports = function (app, options) {
   require('./auth')(privateApp, options);
 
   // mount the private app onto the private route
-  app.use('/_', privateApp);
+  app.use('/_',
+    app.middleware.authenticatePrivate(options),
+    privateApp
+  );
 };

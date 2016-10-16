@@ -7,7 +7,7 @@ module.exports = function (app, options) {
     tokenModelName: 'HAccountToken',
     issuer: 'h-account',
     mongooseConnection: app.services.mongoose.connection,
-    secret: options.secret,
+    secret: options.authSecret,
     defaultTokenExpiry: '30d',
   });
 
