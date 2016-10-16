@@ -1,28 +1,23 @@
 // native dependencies
-const fs   = require('fs');
-const path = require('path');
 const http = require('http');
 
+// third-party
+const envOptions = require('@habemus/env-options');
+
 // internal dependencies
-const pkg = require('../package.json');
 const createHabemusAuth = require('../');
 
-if (!process.env.MONGODB_URI_PATH) { throw new Error('MONGODB_URI_PATH is required'); }
-const MONGODB_URI = fs.readFileSync(process.env.MONGODB_URI_PATH, 'utf8');
-
-if (!process.env.SECRET_PATH) { throw new Error('SECRET_PATH is required'); }
-const SECRET = fs.readFileSync(process.env.SECRET_PATH, 'utf8');
-
-var options = {
-  apiVersion: pkg.version,
-  port: process.env.PORT,
-  fromEmail: process.env.FROM_EMAIL,
-  corsWhitelist: process.env.CORS_WHITELIST,
-
-  mongodbURI: MONGODB_URI,
-  rabbitMQURI: process.env.RABBIT_MQ_URI,
-  secret: SECRET,
-};
+var options = envOptions({
+  apiVersion:    'pkg:version',
+  corsWhitelist: 'list:CORS_WHITELIST',
+  fromEmail:     'env:FROM_EMAIL',
+  mongodbURI:    'fs:MONGODB_URI_PATH',
+  port:          'env:PORT',
+  publicHostURI: 'env:PUBLIC_HOST_URI',
+  rabbitMQURI:   'fs:RABBIT_MQ_URI_PATH',
+  secret:        'fs:SECRET_PATH',
+  uiHostURI:     'env:UI_HOST_URI',
+});
 
 // instantiate the app
 var app = createHabemusAuth(options);
