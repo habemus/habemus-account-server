@@ -1,7 +1,7 @@
 // third-party
 const Bluebird = require('bluebird');
 
-const CONSTANTS = require('../../shared/constants');
+const CONSTANTS = require('../../../shared/constants');
 
 const usersData = require('./raw-data/_User.json').results;
 
@@ -32,6 +32,10 @@ module.exports = function (hAccount) {
           username: userData.username,
           email: userData.email || userData.username,
           _accLockId: lock._id,
+
+          meta: {
+            parseObjectId: userData.objectId,
+          },
         });
 
         account.setStatus(

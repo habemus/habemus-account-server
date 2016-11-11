@@ -1,11 +1,9 @@
-// native dependencies
-const http = require('http');
-
 // third-party
 const envOptions = require('@habemus/env-options');
 
 // internal dependencies
-const createHAccount = require('../');
+const createHAccount = require('../../');
+const doMigration = require('./do');
 
 var options = envOptions({
   port:             'env:PORT',
@@ -29,18 +27,4 @@ var options = envOptions({
 // instantiate the app
 var app = createHAccount(options);
 
-app.ready.then(() => {
-  console.log('h-account ready');
-})
-.catch((err) => {
-  console.warn('h-account setup error', err);
-  process.exit(1);
-});
-
-// create http server and pass express app as callback
-var server = http.createServer(app);
-
-// start listening
-server.listen(options.port, function () {
-  console.log('h-account listening at port %s', options.port);
-});
+doMigration(app);

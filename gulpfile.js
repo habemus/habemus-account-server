@@ -49,21 +49,6 @@ gulp.task('token', function () {
 
 });
 
-gulp.task('drop-db', function (done) {
-  // connect
-  var _db;
-
-  MongoClient.connect(DEV_DB_URI)
-    .then((db) => {
-      _db = db;
-      return db.dropDatabase();
-    })
-    .then(() => {
-      return _db.close(true, done);
-    })
-    .catch(done);
-});
-
 gulp.task('pre-test', function () {
   return gulp.src(['server/**/*.js', 'shared/**/*.js'])
     // Covering files
@@ -82,4 +67,26 @@ gulp.task('test', ['pre-test'], function () {
     .on('error', (err) => {
       this.emit('error', err);
     });
+});
+
+/**
+ * Migration
+ */
+gulp.task('drop-db', function (done) {
+  // connect
+  var _db;
+
+  MongoClient.connect(DEV_DB_URI)
+    .then((db) => {
+      _db = db;
+      return db.dropDatabase();
+    })
+    .then(() => {
+      return _db.close(true, done);
+    })
+    .catch(done);
+});
+
+gulp.task('migrate', function () {
+
 });

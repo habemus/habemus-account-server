@@ -43,11 +43,6 @@ module.exports = function (conn, app, options) {
       default: Date.now
     },
 
-    // status: {
-    //   type: Status,
-    //   required: true,
-    // },
-
     verifiedAt: {
       type: Date
     },
@@ -72,6 +67,8 @@ module.exports = function (conn, app, options) {
       type: String,
       required: true
     },
+
+    meta: Object,
   });
 
   makeStatus(accountSchema, {
