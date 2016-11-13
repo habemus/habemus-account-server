@@ -3,7 +3,7 @@ const envOptions = require('@habemus/env-options');
 
 // internal dependencies
 const createHAccount = require('../../');
-const doMigration = require('./do');
+const migration = require('../../migrations/2016-11-parse');
 
 var options = envOptions({
   port:             'env:PORT',
@@ -27,4 +27,4 @@ var options = envOptions({
 // instantiate the app
 var app = createHAccount(options);
 
-doMigration(app);
+migration.migrate(app);

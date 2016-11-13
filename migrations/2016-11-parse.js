@@ -1,24 +1,31 @@
 // third-party
 const Bluebird = require('bluebird');
 
-const CONSTANTS = require('../../../shared/constants');
+const CONSTANTS = require('../shared/constants');
 
-const usersData = require('./raw-data/_User.json').results;
+exports.migrate = function (hAccount, options) {
 
-module.exports = function (hAccount) {
+  var users = options.users;
+
+  if (!users) {
+    throw new Error('options.users is required');
+  }
+
+  var migratedAccounts = [];
 
   return hAccount.ready.then(() => {
-    console.log('hAccount ready');
 
     const AccountLock = hAccount.services.accountLock.models.Lock;
     const Account     = hAccount.services.mongoose.models.Account;
 
-    return usersData.reduce((lastPromise, userData) => {
+    return users.reduce((lastPromise, userData) => {
 
       return lastPromise.then(() => {
-
         var lock = new AccountLock({
           _hash: userData.bcryptPassword,
+          meta: {
+            migratedFromParse: true,
+          }
         });
 
         return lock.save();
@@ -43,17 +50,22 @@ module.exports = function (hAccount) {
           'MigratedFromParse'
         );
 
-        return account.save();
+        return account.save().then((account) => {
+          migratedAccounts.push(account);
+
+          console.log('.');
+        });
       });
 
     }, Bluebird.resolve());
 
   })
   .then(() => {
-    console.log('migration succeeded');
-  })
-  .catch((err) => {
-    console.warn('error', err);
+    return 'Successfully migrated ' + migratedAccounts.length + ' user accounts';
   });
 
+};
+
+exports.undo = function (hAccount) {
+  
 };
