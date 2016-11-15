@@ -73,7 +73,11 @@ describe('User Account password reset', function () {
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
-              password: 'test-password'
+              password: 'test-password',
+              ownerData: {
+                givenName: 'João',
+                familyName: 'Sauro',
+              }
             })
             .end(function (err, res) {
               if (err) { return reject(err); }
@@ -88,7 +92,11 @@ describe('User Account password reset', function () {
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
-              password: 'test-password-2'
+              password: 'test-password-2',
+              ownerData: {
+                givenName: 'João',
+                familyName: 'Sauro',
+              }
             })
             .end(function (err, res) {
               if (err) { return reject(err); }

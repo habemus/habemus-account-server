@@ -14,7 +14,7 @@ module.exports = function (app, options) {
       app.controllers.account.create(req.body)
         .then((createdUser) => {
 
-          var msg = app.services.messageAPI.item(createdUser, interfaces.USER_DATA);
+          var msg = app.services.messageAPI.item(createdUser, interfaces.ACCOUNT_DATA);
 
           res.status(201).json(msg);
         })
@@ -24,46 +24,39 @@ module.exports = function (app, options) {
 
   app.get('/account/:username',
     app.middleware.authenticate(),
+    app.middleware.loadAccount({
+      identifierProp: 'username',
+      identifier: function (req) {
+        return req.params.username;
+      },
+    }),
+    app.middleware.authorizeSelf(),
     function (req, res, next) {
-
-      app.controllers.account.getByUsername(req.params.username)
-        .then((user) => {
-          // check that the authenticated user
-          // is the one that the request refers to
-          if (req.token.sub !== user._id) {
-            next(new app.errors.Unauthorized());
-            return;
-          } else {
-
-            var msg = app.services.messageAPI.item(user, interfaces.USER_DATA);
-            res.json(msg);
-          }
-        })
-        .catch(next);
+      var msg = app.services.messageAPI.item(req.account, interfaces.ACCOUNT_DATA);
+      res.json(msg);
     }
   );
 
   app.delete('/account/:username',
     app.middleware.authenticate(),
+    app.middleware.loadAccount({
+      identifierProp: 'username',
+      identifier: function (req) {
+        return req.params.username;
+      },
+    }),
+    app.middleware.authorizeSelf(),
     function (req, res, next) {
 
-      app.controllers.account.getByUsername(req.params.username)
-        .then((user) => {
-          // check that the authenticated user
-          // is the one that the request refers to
-          if (req.token.sub !== user._id) {
-            return Bluebird.reject(new app.errors.Unauthorized());
-          } else {
-            return app.controllers.account.delete(req.params.username);
-          }
-        })
+      return app.controllers.account.delete(req.params.username)
         .then((deletedUserData) => {
           res.status(204).send();
         })
         .catch(next);
     }
   );
-
+  
   require('./email-verification')(app, options);
   require('./password-reset')(app, options);
+  require('./update')(app, options);
 };

@@ -57,7 +57,11 @@ describe('User Account verification after-creation', function () {
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
-              password: 'test-password'
+              password: 'test-password',
+              ownerData: {
+                givenName: 'João',
+                familyName: 'Sauro',
+              }
             })
             .end(function (err, res) {
               if (err) { return reject(err); }

@@ -36,3 +36,9 @@ exports.UI_ACCOUNT_EMAIL_VERIFICATION_ERROR_PATH   = '/email-verification-error'
 exports.UI_PASSWORD_RESET_PATH         = '/password-reset';
 exports.UI_PASSWORD_RESET_SUCCESS_PATH = '/password-reset-success';
 exports.UI_PASSWORD_RESET_ERROR_PATH   = '/password-reset-error'
+
+exports.APPLICATION_IDS = {
+  DASHBOARD: 'dashboard',
+  WORKSPACE: 'workspace',
+};
+exports.VALID_APPLICATION_IDS = _objValues(exports.APPLICATION_IDS);

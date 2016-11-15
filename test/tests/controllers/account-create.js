@@ -33,6 +33,12 @@ describe('accountCtrl.create(userData)', function () {
       username: 'test-user',
       password: 'test-password',
       email: 'test-user@dev.habem.us',
+
+      ownerData: {
+        givenName: 'João',
+        familyName: 'Sauro',
+        additionalName: 'Silva',
+      }
     })
     .then((account) => {
 
@@ -57,6 +63,11 @@ describe('accountCtrl.create(userData)', function () {
       // username: 'test-user',
       password: 'test-password',
       email: 'test-user@dev.habem.us',
+      ownerData: {
+        givenName: 'João',
+        familyName: 'Sauro',
+        additionalName: 'Silva',
+      }
     })
     .then(aux.errorExpected, (err) => {
       err.name.should.equal('InvalidOption');
@@ -70,6 +81,11 @@ describe('accountCtrl.create(userData)', function () {
       username: 'test-user',
       // password: 'test-password',
       email: 'test-user@dev.habem.us',
+      ownerData: {
+        givenName: 'João',
+        familyName: 'Sauro',
+        additionalName: 'Silva',
+      }
     })
     .then(aux.errorExpected, (err) => {
       err.name.should.equal('InvalidOption');
@@ -83,6 +99,11 @@ describe('accountCtrl.create(userData)', function () {
       username: 'test-user',
       password: 'test-password',
       // email: 'test-user@dev.habem.us',
+      ownerData: {
+        givenName: 'João',
+        familyName: 'Sauro',
+        additionalName: 'Silva',
+      }
     })
     .then(aux.errorExpected, (err) => {
       err.name.should.equal('InvalidOption');
@@ -96,6 +117,11 @@ describe('accountCtrl.create(userData)', function () {
       username: 'test-user',
       password: 'test-password',
       email: 'not-an-email@',
+      ownerData: {
+        givenName: 'João',
+        familyName: 'Sauro',
+        additionalName: 'Silva',
+      }
     })
     .then(aux.errorExpected, (err) => {
       err.name.should.equal('InvalidOption');
@@ -115,6 +141,11 @@ describe('accountCtrl.create(userData)', function () {
         username: 'test-user',
         password: 'test-password',
         email: 'test-user@dev.habem.us',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+          additionalName: 'Silva',
+        }
       })
       .then((account1) => {
         _account1 = account1;
@@ -123,6 +154,11 @@ describe('accountCtrl.create(userData)', function () {
           username: 'test-user',
           password: 'another-password',
           email: 'another-email-user@dev.habem.us',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         })
       })
       .then(aux.errorExpected, (err) => {
@@ -143,6 +179,11 @@ describe('accountCtrl.create(userData)', function () {
         username: 'test-user',
         password: 'test-password',
         email: 'same-email@dev.habem.us',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+          additionalName: 'Silva',
+        }
       })
       .then((account) => {
         _account1 = account;
@@ -151,6 +192,11 @@ describe('accountCtrl.create(userData)', function () {
           username: 'another-user',
           password: 'another-password',
           email: 'same-email@dev.habem.us',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
       })
       .then(aux.errorExpected, (err) => {

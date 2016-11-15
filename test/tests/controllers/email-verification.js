@@ -70,6 +70,10 @@ describe('emailVerificationCtrl', function () {
         username: 'test-user',
         email: 'test-user@dev.habem.us',
         password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .then((user) => {
         _user = user;
@@ -103,7 +107,11 @@ describe('emailVerificationCtrl', function () {
       return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .then((user) => {
 
@@ -149,7 +157,11 @@ describe('emailVerificationCtrl', function () {
       return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .then((user) => {
         return ASSETS.accountApp.controllers.emailVerification
@@ -169,7 +181,11 @@ describe('emailVerificationCtrl', function () {
       return ASSETS.accountApp.controllers.account.create({
         username: 'test-user',
         email: 'test-user@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .then((user) => {
 
@@ -199,13 +215,21 @@ describe('emailVerificationCtrl', function () {
       var create1 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-1',
         email: 'test-user-1@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       });
 
       var create2 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-2',
         email: 'test-user-2@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       });
 
       return Bluebird.all([
@@ -292,13 +316,21 @@ describe('emailVerificationCtrl', function () {
       var create1 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-1',
         email: 'test-user-1@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       });
 
       var create2 = ASSETS.accountApp.controllers.account.create({
         username: 'test-user-2',
         email: 'test-user-2@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       });
 
       return Bluebird.all([
@@ -320,7 +352,11 @@ describe('emailVerificationCtrl', function () {
       return ASSETS.accountApp.controllers.account.create({
         username: 'test-user-3',
         email: 'test-user-3@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .then((user) => {
 

@@ -84,7 +84,11 @@ describe('User Account verification', function () {
       .send({
         username: 'test-user',
         email: 'testemail@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .end(function (err, res) {
 
@@ -122,7 +126,11 @@ describe('User Account verification', function () {
       .send({
         username: 'test-user-2',
         email: 'testemail2@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .end(function (err, res) {
 
@@ -172,7 +180,11 @@ describe('User Account verification', function () {
       .send({
         username: 'test-user-3',
         email: 'testemail3@dev.habem.us',
-        password: 'test-password'
+        password: 'test-password',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+        }
       })
       .end(function (err, res) {
 

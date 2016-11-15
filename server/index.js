@@ -42,6 +42,8 @@ function hAccount(options) {
     app.middleware = {};
     app.middleware.cors = require('./middleware/cors').bind(null, app);
     app.middleware.authenticate = require('./middleware/authenticate').bind(null, app);
+    app.middleware.loadAccount = require('./middleware/load-account').bind(null, app);
+    app.middleware.authorizeSelf = require('./middleware/authorize-self').bind(null, app);
     app.middleware.authenticatePrivate = require('./middleware/authenticate-private').bind(null, app);
 
     // define description route
@@ -62,6 +64,7 @@ function hAccount(options) {
 
     // load error-handlers
     require('./error-handlers/h-account-error')(app, options);
+    require('./error-handlers/mongoose-validation-error')(app, options);
   });
 
   return app;

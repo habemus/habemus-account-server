@@ -38,6 +38,16 @@ module.exports = function (conn, app, options) {
       default: uuid.v4,
     },
 
+    /**
+     * Id of the lock used for authenticate the account.
+     * 
+     * @type {Object}
+     */
+    _accLockId: {
+      type: String,
+      required: true
+    },
+
     createdAt: {
       type: Date,
       default: Date.now
@@ -63,11 +73,129 @@ module.exports = function (conn, app, options) {
       }
     },
 
-    _accLockId: {
-      type: String,
-      required: true
+    /**
+     * Data related to the account's owner
+     *
+     * Store the data in a scoped object so
+     * that it is clear that the changes are not
+     * overriding the account's special information.
+     * 
+     * @type {SchemaOrg/Person}
+     */
+    ownerData: {
+      /**
+       * Taken from schema.org
+       * https://schema.org/Person
+       * 
+       * @type {Object}
+       */
+      givenName: {
+        type: String,
+        required: true,
+      },
+
+      /**
+       * Family name. In the U.S., the last name of an Person.
+       * This can be used along with givenName instead of the name property.
+       * @type {String}
+       */
+      familyName: {
+        type: String,
+        required: true,
+      },
+
+      /**
+       * An additional name for a Person, can be used for a middle name.
+       * @type {String}
+       */
+      additionalName: {
+        type: String,
+      },
+
+      /**
+       * An image of the item. This can be a URL or a fully described ImageObject.
+       * @type {URL}
+       */
+      image: {
+        type: String,
+      }
     },
 
+    /**
+     * Account preferences.
+     * These preferences are not related specifically
+     * to any application.
+     * 
+     * @type {Object}
+     */
+    preferences: {
+      language: {
+        type: String,
+        default: 'en-US',
+      }
+    },
+
+    /**
+     * Application-specific configurations
+     * keyed by application name.
+     * 
+     * @type {Object}
+     */
+    applicationConfig: {
+
+      dashboard: {
+        language: {
+          type: String,
+          default: 'en-US',
+        },
+        version: {
+          type: String,
+          default: 'v1',
+        },
+        guides: {
+          type: Object,
+          default: {
+            'dashboard': 'unseeen',
+            'project-general': 'unseeen',
+            'project-history': 'unseeen',
+            'project-domain': 'unseeen',
+            'project-billing': 'unseeen',
+          }
+        }
+      },
+
+      workspace: {
+        language: {
+          type: String,
+          default: 'en-US',
+        },
+        version: {
+          type: String,
+          default: 'disabled',
+        },
+        guides: {
+          type: Object,
+          default: {
+            'editor': 'unseeen',
+            'preview': 'unseeen',
+          }
+        },
+      }
+    },
+
+    /**
+     * Data on how the user has found out about Habemus.
+     * 
+     * @type {Object}
+     */
+    referrer: Object,
+
+    /**
+     * Meta data. Meant for storing internal data,
+     * not user-configurable data.
+     * 
+     * @type {Object}
+     */
     meta: Object,
   });
 
@@ -77,6 +205,44 @@ module.exports = function (conn, app, options) {
   
   // statics
   accountSchema.statics.isEmail = isEmail;
+
+  // methods
+  /**
+   * Set account owner data
+   * @param {Object} ownerData
+   */
+  accountSchema.methods.setOwnerData = function (ownerData) {
+    for (var ownerDataKey in ownerData) {
+      this.set('ownerData.' + ownerDataKey, ownerData[ownerDataKey]);
+    }
+  };
+  
+  /**
+   * Set account preferences
+   * @param {Object} preferences
+   */
+  accountSchema.methods.setPreferences = function (preferences) {
+    for (var preferenceName in preferences) {
+      this.set('preferences.' + preferenceName, preferences[preferenceName]);
+    }
+  };
+
+  /**
+   * Set applicationId configurations
+   * @param {String} applicationId
+   * @param {Object} config
+   */
+  accountSchema.methods.setApplicationConfig = function (applicationId, config) {
+
+    if (app.constants.VALID_APPLICATION_IDS.indexOf(applicationId) === -1) {
+      throw new app.errors.InvalidOption('applicationId', 'invalid');
+      return;
+    }
+
+    for (var configName in config) {
+      this.set('applicationConfig.' + applicationId + '.' + configName, config[configName]);
+    }
+  };
 
   /**
    * Account variable will be hoisted in the script and static methods

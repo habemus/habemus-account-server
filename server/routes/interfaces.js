@@ -7,10 +7,16 @@ exports.TOKEN_DATA = {
   exp: true,
 };
 
-exports.USER_DATA = {
+exports.ACCOUNT_DATA = {
   username: true,
+  // email: true,
   createdAt: true,
   'status.value': true,
   'status.reason': true,
-  'status.updatedAt': true
+  'status.updatedAt': true,
+
+  ownerData: true,
+
+  'preferences': true,
+  'applicationConfig': true,
 };

@@ -14,7 +14,7 @@ const REQUIRED_OPTIONS = {
   apiVersion: '0.0.0',
   mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
   rabbitMQURI: 'amqp://192.168.99.100',
-  secret: 'fake-secret',
+  authSecret: 'fake-secret',
   
   fromEmail: 'from@dev.habem.us',
   publicHostURI: 'http://localhost:8000',
@@ -53,9 +53,9 @@ describe('server initialization', function () {
     });
   });
 
-  it('should require secret', function () {
+  it('should require authSecret', function () {
     var options = clone(REQUIRED_OPTIONS);
-    delete options.secret;
+    delete options.authSecret;
 
     assert.throws(function () {
       hAccountApp(options);
@@ -80,7 +80,7 @@ describe('server initialization', function () {
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
       rabbitMQURI: 'amqp://192.168.99.100',
-      secret: 'fake-secret',
+      authSecret: 'fake-secret',
       fromEmail: 'from@dev.habem.us',
 
       publicHostURI: 'http://localhost:8000',

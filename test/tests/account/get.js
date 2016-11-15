@@ -50,7 +50,11 @@ describe('User Account read', function () {
             .send({
               username: 'test-user',
               email: 'test1@dev.habem.us',
-              password: 'test-password'
+              password: 'test-password',
+              ownerData: {
+                givenName: 'João',
+                familyName: 'Sauro',
+              }
             })
             .end(function (err, res) {
               if (err) { return reject(err); }
@@ -65,7 +69,11 @@ describe('User Account read', function () {
             .send({
               username: 'test-user-2',
               email: 'test2@dev.habem.us',
-              password: 'test-password-2'
+              password: 'test-password-2',
+              ownerData: {
+                givenName: 'João',
+                familyName: 'Sauro',
+              }
             })
             .end(function (err, res) {
               if (err) { return reject(err); }
@@ -171,10 +179,17 @@ describe('User Account read', function () {
 
           res.statusCode.should.equal(200);
 
-          // make sure the user data only returns 3 properties
-          Object.keys(res.body.data).length.should.equal(3);
+          // make sure the user data only returns 6 properties
+          Object.keys(res.body.data).length.should.equal(6);
           res.body.data.username.should.equal('test-user');
           res.body.data.createdAt.should.be.a.String();
+          res.body.data.preferences.should.be.an.Object();
+          res.body.data.applicationConfig.should.be.an.Object();
+          res.body.data.ownerData.should.be.an.Object();
+
+          // owner
+          res.body.data.ownerData.givenName.should.be.a.String();
+          res.body.data.ownerData.familyName.should.be.a.String();
 
           // status
           Object.keys(res.body.data.status).length.should.equal(3);

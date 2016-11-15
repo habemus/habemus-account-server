@@ -28,7 +28,7 @@ exports.defaultOptions = {
   apiVersion: '0.0.0',
   mongodbURI: TEST_DB_URI,
   rabbitMQURI: TEST_RABBIT_MQ_URI,
-  secret: 'fake-secret',
+  authSecret: 'fake-secret',
 
   fromEmail: 'from@dev.habem.us',
   // publicHostURI: 'http://local.dev.h-account:4000',

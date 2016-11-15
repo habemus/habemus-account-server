@@ -14,6 +14,9 @@ describe('authCtrl.generateToken(username|email, password)', function () {
   var ASSETS;
 
   beforeEach(function (done) {
+
+    this.timeout(10000);
+
     aux.setup()
       .then((assets) => {
         ASSETS = assets;
@@ -29,16 +32,31 @@ describe('authCtrl.generateToken(username|email, password)', function () {
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password-1',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
         var create2 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password-2',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
         var create3 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password-3',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
 
         return Bluebird.all([

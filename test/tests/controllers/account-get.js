@@ -28,16 +28,31 @@ describe('accountCtrl `get` methods', function () {
           username: 'test-user-1',
           email: 'test-1@dev.habem.us',
           password: 'test-password',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
         var create2 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-2',
           email: 'test-2@dev.habem.us',
           password: 'test-password',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
         var create3 = ASSETS.accountApp.controllers.account.create({
           username: 'test-user-3',
           email: 'test-3@dev.habem.us',
           password: 'test-password',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         });
 
         return Bluebird.all([
@@ -168,6 +183,11 @@ describe('accountCtrl `get` methods', function () {
           username: 'email-like@username.com',
           email: 'some-email@dev.habem.us',
           password: 'test-password',
+          ownerData: {
+            givenName: 'João',
+            familyName: 'Sauro',
+            additionalName: 'Silva',
+          }
         })
         .then((user) => {
           return ASSETS.accountApp.controllers.account.getByUsernameOrEmail('email-like@username.com')
