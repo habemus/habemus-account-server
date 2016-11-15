@@ -101,7 +101,6 @@ module.exports = function (conn, app, options) {
        */
       familyName: {
         type: String,
-        required: true,
       },
 
       /**

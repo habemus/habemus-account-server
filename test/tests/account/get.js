@@ -179,9 +179,10 @@ describe('User Account read', function () {
 
           res.statusCode.should.equal(200);
 
-          // make sure the user data only returns 6 properties
-          Object.keys(res.body.data).length.should.equal(6);
+          // make sure the user data only returns 7 properties
+          Object.keys(res.body.data).length.should.equal(7);
           res.body.data.username.should.equal('test-user');
+          res.body.data.email.should.equal('test1@dev.habem.us');
           res.body.data.createdAt.should.be.a.String();
           res.body.data.preferences.should.be.an.Object();
           res.body.data.applicationConfig.should.be.an.Object();

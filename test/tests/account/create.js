@@ -130,30 +130,6 @@ describe('User Account creation', function () {
       });
   });
 
-  it('should require a ownerData.familyName', function (done) {
-    superagent
-      .post(ASSETS.accountURI + '/public/accounts')
-      .send({
-        username: 'test-user',
-        email: 'test-user@dev.habem.us',
-        password: 'test-password',
-        ownerData: {
-          givenName: 'João',
-          // familyName: 'Sauro',
-        }
-      })
-      .end(function (err, res) {
-        res.statusCode.should.equal(400);
-
-        res.body.error.errors.length.should.equal(1);
-        res.body.error.name.should.equal('InvalidOption');
-        res.body.error.option.should.equal('ownerData.familyName');
-        res.body.error.kind.should.equal('invalid');
-
-        done();
-      });
-  });
-
   it('should create a new user', function (done) {
 
     this.timeout(4000);
