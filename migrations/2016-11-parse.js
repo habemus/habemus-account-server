@@ -32,8 +32,32 @@ exports.migrate = function (hAccount, options) {
       })
       .then((lock) => {
 
+        var nameSplit = userData.name.split(/\s+/);
+
+        var givenName = nameSplit[0];
+        var familyName = nameSplit.length > 1 ? nameSplit[nameSplit.length - 1] : undefined;
+        var additionalName;
+        if (nameSplit.length > 2) {
+          additionalName = nameSplit.reduce((res, name, index) => {
+
+            var isFirst = index === 0;
+            var isLast  = index === nameSplit.length - 1;
+
+            if (!isFirst && !isLast) {
+              res.push(name);
+            }
+
+            return res;
+
+          }, []).join(' ');
+        }
+
         var account = new Account({
-          name: userData.name,
+          ownerData: {
+            givenName: givenName,
+            familyName: familyName
+            additionalName: additionalName,
+          },
           createdAt: userData.createdAt,
           verifiedAt: userData.updatedAt,
           username: userData.username,
