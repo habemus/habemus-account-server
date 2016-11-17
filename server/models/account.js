@@ -36,6 +36,7 @@ module.exports = function (conn, app, options) {
     _id: {
       type: String,
       default: uuid.v4,
+      unique: true,
     },
 
     /**
@@ -154,11 +155,11 @@ module.exports = function (conn, app, options) {
         guides: {
           type: Object,
           default: {
-            'dashboard': 'unseeen',
-            'project-general': 'unseeen',
-            'project-history': 'unseeen',
-            'project-domain': 'unseeen',
-            'project-billing': 'unseeen',
+            'dashboard': 'new',
+            'project-general': 'new',
+            'project-history': 'new',
+            'project-domain': 'new',
+            'project-billing': 'new',
           }
         }
       },
@@ -175,8 +176,8 @@ module.exports = function (conn, app, options) {
         guides: {
           type: Object,
           default: {
-            'editor': 'unseeen',
-            'preview': 'unseeen',
+            'editor': 'new',
+            'preview': 'new',
           }
         },
       }
