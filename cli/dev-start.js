@@ -10,7 +10,7 @@ var options = {
   port: process.env.PORT,
   mongodbURI: process.env.MONGODB_URI,
   rabbitMQURI: process.env.RABBIT_MQ_URI,
-  secret: process.env.SECRET,
+  authSecret: process.env.AUTH_SECRET,
 
   fromEmail: process.env.FROM_EMAIL,
   publicHostURI: process.env.PUBLIC_HOST_URI,

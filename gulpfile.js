@@ -24,7 +24,7 @@ gulp.task('nodemon', function () {
       PORT: '4000',
       MONGODB_URI: DEV_DB_URI,
       RABBIT_MQ_URI: DEV_RABBIT_MQ_URI,
-      SECRET: TEST_SECRET,
+      AUTH_SECRET: TEST_SECRET,
       CORS_WHITELIST: 'http://localhost:3000',
       FROM_EMAIL: 'simon.fan@habem.us',
       PUBLIC_HOST_URI: 'http://local.dev.h-account:4000/public',
