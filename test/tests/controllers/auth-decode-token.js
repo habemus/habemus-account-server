@@ -34,6 +34,11 @@ describe('authCtrl.decodeToken(token)', function () {
             givenName: 'João',
             familyName: 'Sauro',
             additionalName: 'Silva',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
         var create2 = ASSETS.accountApp.controllers.account.create({
@@ -44,6 +49,11 @@ describe('authCtrl.decodeToken(token)', function () {
             givenName: 'João',
             familyName: 'Sauro',
             additionalName: 'Silva',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
         var create3 = ASSETS.accountApp.controllers.account.create({
@@ -54,6 +64,11 @@ describe('authCtrl.decodeToken(token)', function () {
             givenName: 'João',
             familyName: 'Sauro',
             additionalName: 'Silva',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
 

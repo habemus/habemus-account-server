@@ -38,6 +38,11 @@ describe('POST /auth/token/decode', function () {
               ownerData: {
                 givenName: 'João',
                 familyName: 'Sauro',
+              },
+              legal: {
+                termsOfService: {
+                  agreed: true,
+                }
               }
             })
             .end(function (err, res) {
@@ -57,6 +62,11 @@ describe('POST /auth/token/decode', function () {
               ownerData: {
                 givenName: 'João',
                 familyName: 'Sauro',
+              },
+              legal: {
+                termsOfService: {
+                  agreed: true,
+                }
               }
             })
             .end(function (err, res) {

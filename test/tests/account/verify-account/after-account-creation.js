@@ -61,6 +61,11 @@ describe('User Account verification after-creation', function () {
               ownerData: {
                 givenName: 'João',
                 familyName: 'Sauro',
+              },
+              legal: {
+                termsOfService: {
+                  agreed: true,
+                }
               }
             })
             .end(function (err, res) {

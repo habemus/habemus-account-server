@@ -191,6 +191,33 @@ module.exports = function (conn, app, options) {
     referrer: Object,
 
     /**
+     * Legal data objects
+     * @type {Object}
+     */
+    legal: {
+      termsOfService: {
+        agreed: {
+          type: Boolean,
+          required: true,
+          validate: {
+            validator: function (accepted) {
+              if (!accepted) {
+                return false;
+              } else {
+                return true;
+              }
+            },
+            message: 'InvalidEmail',
+          }
+        },
+        version: {
+          type: String,
+          default: 'v1',
+        }
+      },
+    },
+
+    /**
      * Meta data. Meant for storing internal data,
      * not user-configurable data.
      * 
@@ -236,7 +263,6 @@ module.exports = function (conn, app, options) {
 
     if (app.constants.VALID_APPLICATION_IDS.indexOf(applicationId) === -1) {
       throw new app.errors.InvalidOption('applicationId', 'invalid');
-      return;
     }
 
     for (var configName in config) {
