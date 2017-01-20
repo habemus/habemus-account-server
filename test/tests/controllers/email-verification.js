@@ -73,6 +73,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((user) => {
@@ -111,6 +116,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((user) => {
@@ -161,6 +171,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((user) => {
@@ -185,6 +200,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((user) => {
@@ -219,6 +239,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       });
 
@@ -229,6 +254,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       });
 
@@ -320,6 +350,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       });
 
@@ -330,6 +365,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       });
 
@@ -356,6 +396,11 @@ describe('emailVerificationCtrl', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((user) => {

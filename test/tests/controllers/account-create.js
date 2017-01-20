@@ -38,6 +38,11 @@ describe('accountCtrl.create(userData)', function () {
         givenName: 'João',
         familyName: 'Sauro',
         additionalName: 'Silva',
+      },
+      legal: {
+        termsOfService: {
+          agreed: true,
+        }
       }
     })
     .then((account) => {
@@ -67,6 +72,11 @@ describe('accountCtrl.create(userData)', function () {
         givenName: 'João',
         familyName: 'Sauro',
         additionalName: 'Silva',
+      },
+      legal: {
+        termsOfService: {
+          agreed: true,
+        }
       }
     })
     .then(aux.errorExpected, (err) => {
@@ -103,6 +113,11 @@ describe('accountCtrl.create(userData)', function () {
         givenName: 'João',
         familyName: 'Sauro',
         additionalName: 'Silva',
+      },
+      legal: {
+        termsOfService: {
+          agreed: true,
+        }
       }
     })
     .then(aux.errorExpected, (err) => {
@@ -121,6 +136,11 @@ describe('accountCtrl.create(userData)', function () {
         givenName: 'João',
         familyName: 'Sauro',
         additionalName: 'Silva',
+      },
+      legal: {
+        termsOfService: {
+          agreed: true,
+        }
       }
     })
     .then(aux.errorExpected, (err) => {
@@ -145,6 +165,11 @@ describe('accountCtrl.create(userData)', function () {
           givenName: 'João',
           familyName: 'Sauro',
           additionalName: 'Silva',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((account1) => {
@@ -158,6 +183,11 @@ describe('accountCtrl.create(userData)', function () {
             givenName: 'João',
             familyName: 'Sauro',
             additionalName: 'Silva',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         })
       })
@@ -183,6 +213,11 @@ describe('accountCtrl.create(userData)', function () {
           givenName: 'João',
           familyName: 'Sauro',
           additionalName: 'Silva',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .then((account) => {
@@ -196,6 +231,11 @@ describe('accountCtrl.create(userData)', function () {
             givenName: 'João',
             familyName: 'Sauro',
             additionalName: 'Silva',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
       })

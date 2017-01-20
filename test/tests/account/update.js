@@ -52,6 +52,11 @@ describe('User Account updating', function () {
               ownerData: {
                 givenName: 'João',
                 familyName: 'Sauro',
+              },
+              legal: {
+                termsOfService: {
+                  agreed: true,
+                }
               }
             })
             .end(function (err, res) {
@@ -71,6 +76,11 @@ describe('User Account updating', function () {
               ownerData: {
                 givenName: 'João',
                 familyName: 'Sauro',
+              },
+              legal: {
+                termsOfService: {
+                  agreed: true,
+                }
               }
             })
             .end(function (err, res) {

@@ -41,6 +41,11 @@ describe('protectedRequestCtrl', function () {
           ownerData: {
             givenName: 'João',
             familyName: 'Sauro',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
         var create2 = ASSETS.accountApp.controllers.account.create({
@@ -50,6 +55,11 @@ describe('protectedRequestCtrl', function () {
           ownerData: {
             givenName: 'João',
             familyName: 'Sauro',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
         var create3 = ASSETS.accountApp.controllers.account.create({
@@ -59,6 +69,11 @@ describe('protectedRequestCtrl', function () {
           ownerData: {
             givenName: 'João',
             familyName: 'Sauro',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
 

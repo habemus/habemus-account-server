@@ -61,6 +61,11 @@ describe('passwordResetCtrl', function () {
           ownerData: {
             givenName: 'João',
             familyName: 'Sauro',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
         var create2 = ASSETS.accountApp.controllers.account.create({
@@ -70,6 +75,11 @@ describe('passwordResetCtrl', function () {
           ownerData: {
             givenName: 'João',
             familyName: 'Sauro',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
         var create3 = ASSETS.accountApp.controllers.account.create({
@@ -79,6 +89,11 @@ describe('passwordResetCtrl', function () {
           ownerData: {
             givenName: 'João',
             familyName: 'Sauro',
+          },
+          legal: {
+            termsOfService: {
+              agreed: true,
+            }
           }
         });
 

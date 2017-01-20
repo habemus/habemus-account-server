@@ -68,6 +68,11 @@ describe('User Account creation', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .end(function (err, res) {
@@ -92,6 +97,11 @@ describe('User Account creation', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .end(function (err, res) {
@@ -116,6 +126,11 @@ describe('User Account creation', function () {
         ownerData: {
           // givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .end(function (err, res) {
@@ -143,6 +158,11 @@ describe('User Account creation', function () {
         ownerData: {
           givenName: 'João',
           familyName: 'Sauro',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
         }
       })
       .end(function (err, res) {

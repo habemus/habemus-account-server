@@ -5,3 +5,5 @@
 - update mock
 
 - HANDLE TOKEN EXPIRED!!!
+
+- migration for TermsOfService
