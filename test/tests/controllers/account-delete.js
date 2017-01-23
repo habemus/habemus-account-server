@@ -2,6 +2,7 @@
 const should = require('should');
 const superagent = require('superagent');
 const Bluebird = require('bluebird');
+const mongoose = require('mongoose');
 
 // auxiliary
 const aux = require('../../auxiliary');
@@ -84,19 +85,24 @@ describe('accountCtrl.delete(account)', function () {
     return aux.teardown();
   });
 
-  it('should delete an account from the database', function () {
+  it('should delete an account and all associated resources from the database', function () {
+
+    var _account;
 
     return ASSETS.accountApp.controllers.account.getByUsername('test-user-2')
       .then((account) => {
+        _account = account;
         return ASSETS.accountApp.controllers.account.delete(account);
       })
       .then(() => {
         arguments.length.should.equal(0);
 
-        return new Promise((resolve, reject) => {
+        var accountsPromise = new Promise((resolve, reject) => {
           ASSETS.db
           .collection('accounts')
-          .find()
+          .find({
+            _id: _account._id,
+          })
           .toArray((err, res) => {
             if (err) {
               reject(err);
@@ -104,13 +110,55 @@ describe('accountCtrl.delete(account)', function () {
               resolve(res);
             }
           });
-        })
-      })
-      .then((accounts) => {
-        accounts.length.should.equal(2);
+        });
 
-        accounts.forEach((account) => {
-          account.username.should.not.equal('test-user-2');
+        var locksPromise = new Promise((resolve, reject) => {
+          ASSETS.db
+          .collection('haccountaccountlocks')
+          .find({
+            _id: new require('mongodb').ObjectID(_account._accLockId),
+          })
+          .toArray((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(res);
+            }
+          });
+        });
+
+        var protectedRequestsPromise = new Promise((resolve, reject) => {
+          ASSETS.db
+          .collection('protectedactionrequests')
+          .find({
+            userId: _account._id,
+          })
+          .toArray((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(res);
+            }
+          });
+        });
+
+        return Promise.all([
+          accountsPromise,
+          locksPromise,
+          protectedRequestsPromise
+        ]);
+      })
+      .then((results) => {
+        var accounts = results[0];
+        var accountLocks = results[1];
+        var protectedActionRequests = results[2];
+
+        accounts.length.should.equal(0);
+        accountLocks.length.should.equal(0);
+
+        protectedActionRequests.forEach((req) => {
+          req.status.value.should.eql('cancelled');
+          req.status.reason.should.eql('AccountDeleted');
         });
       });
 

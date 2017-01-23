@@ -27,7 +27,7 @@ module.exports = function (app, options) {
 
     var query = {
       createdAt: {
-        $lte: moment().subtract(ACCOUNT_VERIFICATION_DURATION, ms).toDate(),
+        $lte: moment().subtract(ACCOUNT_VERIFICATION_DURATION, 'ms').toDate(),
       }
     };
 
@@ -48,7 +48,9 @@ module.exports = function (app, options) {
         unverifiedAccounts = unverifiedAccounts.slice(0, 50);
 
         if (unverifiedAccounts.length > 0) {
-          console.log('remove-unverified-accounts: remove accounts unverified for over the allowed time period ', unverifiedAccounts);
+          console.log('remove-unverified-accounts: remove accounts unverified for over the allowed time period ', unverifiedAccounts.map((account) => {
+            return account.username;
+          }));
           
           return Bluebird.all(unverifiedAccounts.map((account) => {
             return app.controllers.account.delete(account);

@@ -126,6 +126,14 @@ module.exports = function (app, options) {
       });
   };
   
+  /**
+   * Removes an account and all related resources:
+   *   - accountLock
+   *   - auxiliaryLocks
+   * 
+   * @param  {Account} account
+   * @return {Bluebird}
+   */
   accountCtrl.delete = function (account) {
 
     if (!account) {
@@ -136,7 +144,29 @@ module.exports = function (app, options) {
       ));
     }
 
-    return account.remove();
+    account.setStatus(
+      app.constants.ACCOUNT_STATUSES.CANCELLED,
+      'Deleted'
+    );
+
+    var _account;
+
+    return account.save().then((acc) => {
+      _account = acc;
+
+      return Bluebird.all([
+        app.services.accountLock.destroy(_account._accLockId),
+        app.controllers.emailVerification.cancelUserRequests(_account.username, 'AccountDeleted'),
+        app.controllers.passwordReset.cancelUserRequests(_account.username, 'AccountDeleted'),
+
+        // TODO: revoke tokens associated to the account
+        // TODO: inform other systems of the account deletion, so that they may
+        // remove resources associated to the account
+      ]);
+    })
+    .then(() => {
+      return _account.remove();
+    });
   };
 
   accountCtrl.getById = function (id) {

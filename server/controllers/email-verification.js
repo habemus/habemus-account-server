@@ -143,5 +143,22 @@ module.exports = function (app, options) {
       });
   };
 
+  /**
+   * Cancels all user requests associated to the username.
+   * 
+   * @param  {String} username
+   * @return {Bluebird}
+   */
+  emailVerificationCtrl.cancelUserRequests = function (username, reason) {
+    // load account
+    return app.controllers.account.getByUsername(username).then((account) => {
+      return app.controllers.protectedRequest.cancelUserRequests(
+        account._id,
+        ACTION_NAME,
+        reason
+      );
+    });
+  };
+
   return emailVerificationCtrl;
 };
