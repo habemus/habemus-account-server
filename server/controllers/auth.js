@@ -92,6 +92,7 @@ module.exports = function (app, options) {
 
       }, (err) => {
         if (err instanceof hToken.errors.InvalidTokenError) {
+          // TODO: inform client of reason for invalid token
           return Bluebird.reject(new errors.InvalidToken());
         }
 

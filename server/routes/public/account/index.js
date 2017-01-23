@@ -37,24 +37,24 @@ module.exports = function (app, options) {
     }
   );
 
-  app.delete('/account/:username',
-    app.middleware.authenticate(),
-    app.middleware.loadAccount({
-      identifierProp: 'username',
-      identifier: function (req) {
-        return req.params.username;
-      },
-    }),
-    app.middleware.authorizeSelf(),
-    function (req, res, next) {
+  // app.delete('/account/:username',
+  //   app.middleware.authenticate(),
+  //   app.middleware.loadAccount({
+  //     identifierProp: 'username',
+  //     identifier: function (req) {
+  //       return req.params.username;
+  //     },
+  //   }),
+  //   app.middleware.authorizeSelf(),
+  //   function (req, res, next) {
 
-      return app.controllers.account.delete(req.params.username)
-        .then((deletedUserData) => {
-          res.status(204).send();
-        })
-        .catch(next);
-    }
-  );
+  //     return app.controllers.account.delete(req.params.username)
+  //       .then((deletedUserData) => {
+  //         res.status(204).send();
+  //       })
+  //       .catch(next);
+  //   }
+  // );
   
   require('./email-verification')(app, options);
   require('./password-reset')(app, options);

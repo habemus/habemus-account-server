@@ -3,7 +3,7 @@ const http = require('http');
 
 // internal dependencies
 const pkg = require('../package.json');
-const createHabemusAuth = require('../');
+const createHAccount = require('../');
 
 var options = {
   apiVersion: pkg.version,
@@ -20,12 +20,23 @@ var options = {
 };
 
 // instantiate the app
-var app = createHabemusAuth(options);
+var app = createHAccount(options);
 
 // create http server and pass express app as callback
 var server = http.createServer(app);
 
-// start listening
-server.listen(options.port, function () {
-  console.log('HabemusAuth listening at port %s', options.port);
+console.log('waiting for h-account to become ready');
+
+app.ready.then(() => {
+  console.log('h-account ready');
+
+  // start listening
+  server.listen(options.port, function () {
+    console.log('h-account listening at port %s', options.port);
+  });
+
+})
+.catch((err) => {
+  console.warn('h-account setup error', err);
+  process.exit(1);
 });

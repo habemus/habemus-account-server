@@ -7,7 +7,7 @@ const aux = require('../../auxiliary');
 
 const hAccount = require('../../../server');
 
-describe('User Account deletion', function () {
+describe.skip('User Account deletion', function () {
 
   var ASSETS;
 

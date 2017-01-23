@@ -8,7 +8,7 @@ const aux = require('../../auxiliary');
 
 const hAccount = require('../../../server');
 
-describe('accountCtrl.delete(username)', function () {
+describe('accountCtrl.delete(account)', function () {
 
   var ASSETS;
 
@@ -86,7 +86,10 @@ describe('accountCtrl.delete(username)', function () {
 
   it('should delete an account from the database', function () {
 
-    return ASSETS.accountApp.controllers.account.delete('test-user-2')
+    return ASSETS.accountApp.controllers.account.getByUsername('test-user-2')
+      .then((account) => {
+        return ASSETS.accountApp.controllers.account.delete(account);
+      })
       .then(() => {
         arguments.length.should.equal(0);
 
@@ -113,11 +116,11 @@ describe('accountCtrl.delete(username)', function () {
 
   });
 
-  it('should require username as the first argument', function () {
+  it('should require account as the first argument', function () {
     return ASSETS.accountApp.controllers.account.delete(undefined)
       .then(aux.errorExpected, (err) => {
         err.name.should.equal('InvalidOption');
-        err.option.should.equal('username');
+        err.option.should.equal('account');
         err.kind.should.equal('required');
       });
   });

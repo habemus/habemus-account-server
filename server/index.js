@@ -65,6 +65,10 @@ function hAccount(options) {
     // load error-handlers
     require('./error-handlers/h-account-error')(app, options);
     require('./error-handlers/mongoose-validation-error')(app, options);
+
+    // load cron jobs
+    app.cron = {};
+    app.cron.removeUnverifiedAccounts = require('./cron/remove-unverified-accounts')(app, options);
   });
 
   return app;

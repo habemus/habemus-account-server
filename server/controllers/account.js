@@ -126,21 +126,17 @@ module.exports = function (app, options) {
       });
   };
   
-  accountCtrl.delete = function (username) {
+  accountCtrl.delete = function (account) {
 
-    if (!username) {
+    if (!account) {
       return Bluebird.reject(new errors.InvalidOption(
-        'username',
+        'account',
         'required',
-        'username is required to delete user account'
+        'account is required to delete user account'
       ));
     }
 
-    return Bluebird.resolve(Account.findOneAndRemove({ username: username }))
-      .then((user) => {
-        // make sure to return nothing
-        return;
-      });
+    return account.remove();
   };
 
   accountCtrl.getById = function (id) {

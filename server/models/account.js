@@ -36,7 +36,6 @@ module.exports = function (conn, app, options) {
     _id: {
       type: String,
       default: uuid.v4,
-      unique: true,
     },
 
     /**

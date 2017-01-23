@@ -26,21 +26,25 @@ var options = envOptions({
   privateAPISecret: 'fs?:PRIVATE_API_SECRET_PATH',
 });
 
+
 // instantiate the app
 var app = createHAccount(options);
-
-app.ready.then(() => {
-  console.log('h-account ready');
-})
-.catch((err) => {
-  console.warn('h-account setup error', err);
-  process.exit(1);
-});
 
 // create http server and pass express app as callback
 var server = http.createServer(app);
 
-// start listening
-server.listen(options.port, function () {
-  console.log('h-account listening at port %s', options.port);
+console.log('waiting for h-account to become ready');
+
+app.ready.then(() => {
+  console.log('h-account ready');
+
+  // start listening
+  server.listen(options.port, function () {
+    console.log('h-account listening at port %s', options.port);
+  });
+
+})
+.catch((err) => {
+  console.warn('h-account setup error', err);
+  process.exit(1);
 });
