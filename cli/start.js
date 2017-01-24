@@ -45,6 +45,15 @@ app.ready.then(() => {
     console.log('h-account listening at port %s', options.port);
   });
 
+  /**
+   * Kill process in case h-mailer connection closes.
+   * Let environment deal with reconnection.
+   */
+  app.services.hMailer.on('channel-close', (e) {
+    console.warn('h-account hMailer channel close', e);
+    process.exit(1);
+  });
+
 })
 .catch((err) => {
   console.warn('h-account setup error', err);
