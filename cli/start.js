@@ -49,7 +49,7 @@ app.ready.then(() => {
    * Kill process in case h-mailer connection closes.
    * Let environment deal with reconnection.
    */
-  app.services.hMailer.on('channel-close', (e) {
+  app.services.hMailer.on('channel-close', (e) => {
     console.warn('h-account hMailer channel close', e);
     process.exit(1);
   });
