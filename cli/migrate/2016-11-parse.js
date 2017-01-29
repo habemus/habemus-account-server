@@ -22,9 +22,14 @@ var options = envOptions({
 
   enablePrivateAPI: 'bool?:ENABLE_PRIVATE_API',
   privateAPISecret: 'fs?:PRIVATE_API_SECRET_PATH',
+
+  // 
+  migrationUsersJSON: 'fs:MIGRATION_USERS_JSON',
 });
 
 // instantiate the app
 var app = createHAccount(options);
 
-migration.migrate(app);
+migration.migrate(app, {
+  users: JSON.parse(options.migrationUsersJSON),
+});
