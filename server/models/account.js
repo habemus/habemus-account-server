@@ -170,7 +170,7 @@ module.exports = function (conn, app, options) {
         },
         version: {
           type: String,
-          default: 'disabled',
+          default: 'beta',
         },
         guides: {
           type: Object,
