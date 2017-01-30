@@ -99,7 +99,7 @@ exports.migrate = function (hAccount, options) {
           },
 
           meta: {
-            parseObjectId: userData.objectId,
+            parseObjectId: userData._id,
           },
         });
 
