@@ -198,6 +198,34 @@ describe('accountCtrl.create(userData)', function () {
     });
   });
 
+  describe('alphanumeric-only usernames', function () {
+    it('should ensure the username contains only alphanumeric characters', function () {
+        
+      var _account1;
+      var _account2;
+
+      return ASSETS.accountApp.controllers.account.create({
+        username: 'test user',
+        password: 'test-password',
+        email: 'test-user@dev.habem.us',
+        ownerData: {
+          givenName: 'João',
+          familyName: 'Sauro',
+          additionalName: 'Silva',
+        },
+        legal: {
+          termsOfService: {
+            agreed: true,
+          }
+        }
+      })
+      .then(aux.errorExpected, (err) => {
+        err.name.should.equal('ValidationError');
+        err.errors.username.message.should.eql('InvalidUsername');
+      });
+    });
+  });
+
   describe('email uniqueness', function () {
 
     it('should prevent two accounts with the same email from being created', function () {

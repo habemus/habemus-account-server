@@ -19,6 +19,15 @@ function isEmail(str) {
   return EMAIL_REGEXP.test(str);
 }
 
+const ALPHANUMERIC_REGEXP = /^[A-Za-z0-9_\-]+$/;
+function isAlphanumeric(str) {
+  return ALPHANUMERIC_REGEXP.test(str);
+}
+
+function isValidUsername(str) {
+  return isAlphanumeric(str) || isEmail(str);
+}
+
 module.exports = function (conn, app, options) {
 
   var accountSchema = new Schema({
@@ -61,6 +70,10 @@ module.exports = function (conn, app, options) {
       type: String,
       required: true,
       unique: true,
+      validate: {
+        validator: isValidUsername,
+        message: 'InvalidUsername',
+      }
     },
 
     email: {
