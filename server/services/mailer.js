@@ -1,11 +1,11 @@
 // third-party
 const Bluebird = require('bluebird');
 
-const HMailerClient = require('h-mailer/client');
+const MailerClient = require('habemus-platform-mailer/client');
 
 module.exports = function (app, options) {
 
-  var hMailer = new HMailerClient();
+  var hMailer = new MailerClient();
 
   return hMailer.connect(app.services.rabbitMQ.connection)
     .then(() => {

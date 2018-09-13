@@ -36,7 +36,7 @@ describe('User Account password reset', function () {
       useCleanCache: true
     });
 
-    // mock h-mailer/client
+    // mock habemus-platform-mailer/client
     function HMailerClient() {}
     HMailerClient.prototype.connect = function () {
       return Bluebird.resolve();
@@ -50,7 +50,7 @@ describe('User Account password reset', function () {
       // console.log('SCHEDULED MAIL:', data);
     };
     HMailerClient.prototype.on = function () {};
-    mockery.registerMock('h-mailer/client', HMailerClient);
+    mockery.registerMock('habemus-platform-mailer/client', HMailerClient);
 
     return aux.setup()
       .then((assets) => {

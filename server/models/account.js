@@ -1,7 +1,7 @@
 // third-party
 const mongoose   = require('mongoose');
 const uuid       = require('uuid');
-const makeStatus = require('mongoose-make-status');
+const mongoosePluginStatus = require('@habemus/mongoose-plugin-status');
 const Bluebird   = require('bluebird');
 
 // constants
@@ -225,7 +225,7 @@ module.exports = function (conn, app, options) {
     meta: Object,
   });
 
-  makeStatus(accountSchema, {
+  mongoosePluginStatus(accountSchema, {
     statuses: CONSTANTS.VALID_ACCOUNT_STATUSES
   });
   

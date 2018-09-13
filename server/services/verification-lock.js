@@ -1,10 +1,10 @@
 // third-party
 const Bluebird = require('bluebird');
-const hLock    = require('h-lock');
+const mongooseLock = require('@habemus/mongoose-lock');
 
 module.exports = function (app, options) {
 
-  var verificationLock = hLock({
+  var verificationLock = mongooseLock({
     lockModelName: 'HAccountAuxiliaryLock',
     mongooseConnection: app.services.mongoose.connection,
 
