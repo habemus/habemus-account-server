@@ -1,9 +1,9 @@
 const Bluebird = require('bluebird');
-const hToken   = require('h-token');
+const mongooseToken = require('@habemus/mongoose-token');
 
 module.exports = function (app, options) {
 
-  var accountToken = hToken({
+  var accountToken = mongooseToken({
     tokenModelName: 'HAccountToken',
     issuer: 'h-account',
     mongooseConnection: app.services.mongoose.connection,

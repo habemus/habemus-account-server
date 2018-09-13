@@ -3,7 +3,7 @@ const should = require('should');
 const superagent = require('superagent');
 const Bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
-const uuid = require('node-uuid');
+const uuid = require('uuid');
 
 // auxiliary
 const aux = require('../../auxiliary');

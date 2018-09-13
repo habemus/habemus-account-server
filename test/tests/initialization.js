@@ -13,7 +13,7 @@ const hAccountApp = require('../../');
 const REQUIRED_OPTIONS = {
   apiVersion: '0.0.0',
   mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
-  rabbitMQURI: 'amqp://192.168.99.100',
+  rabbitMQURI: 'amqp://localhost',
   authSecret: 'fake-secret',
   
   fromEmail: 'from@dev.habem.us',
@@ -79,7 +79,7 @@ describe('server initialization', function () {
     var app = hAccountApp({
       apiVersion: '0.0.0',
       mongodbURI: 'mongodb://localhost:27017/h-auth-test-db',
-      rabbitMQURI: 'amqp://192.168.99.100',
+      rabbitMQURI: 'amqp://localhost',
       authSecret: 'fake-secret',
       fromEmail: 'from@dev.habem.us',
 

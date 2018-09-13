@@ -25,7 +25,7 @@ module.exports = function (app, options) {
     // account-lock requires mongoose
     // verification-lock requires mongoose
     return Bluebird.all([
-      require('./h-mailer')(app, options),
+      require('./mailer')(app, options),
       require('./account-token')(app, options),
       require('./account-lock')(app, options),
       require('./verification-lock')(app, options),

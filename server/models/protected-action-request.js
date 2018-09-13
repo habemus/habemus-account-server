@@ -1,6 +1,6 @@
 // third-party
 const mongoose   = require('mongoose');
-const makeStatus = require('mongoose-make-status');
+const mongoosePluginStatus = require('@habemus/mongoose-plugin-status');
 
 // constants
 const Schema = mongoose.Schema;
@@ -53,7 +53,7 @@ var protectedActionRequestSchema = new Schema({
   }
 });
 
-makeStatus(protectedActionRequestSchema, {
+mongoosePluginStatus(protectedActionRequestSchema, {
   statuses: CONSTANTS.VALID_REQUEST_STATUSES
 });
 

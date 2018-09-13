@@ -1,6 +1,6 @@
 {
-  "name": "h-account",
-  "version": "2.2.3",
+  "name": "habemus-account-server",
+  "version": "3.0.0-beta",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,9 @@
   },
   "dependencies": {
     "@habemus/env-options": "^0.2.0",
+    "@habemus/mongoose-lock": "^1.0.0",
+    "@habemus/mongoose-plugin-status": "^1.0.0",
+    "@habemus/mongoose-token": "^1.0.0",
     "@habemus/url-whitelist": "^1.0.0",
     "amqplib": "^0.4.2",
     "bluebird": "^3.4.0",
@@ -32,13 +35,10 @@
     "cron": "^1.2.1",
     "express": "^4.13.3",
     "express-jwt": "^5.1.0",
-    "h-lock": "git+ssh://git@bitbucket.org/habemus-tutti/h-lock.git",
-    "h-mailer": "git+ssh://git@bitbucket.org/habemus-tutti/h-mailer.git",
-    "h-token": "git+ssh://git@bitbucket.org/habemus-tutti/h-token.git",
+    "habemus-platform-mailer": "git+https://github.com/habemus/habemus-platform-mailer.git",
     "json-message": "^2.0.0-beta.2",
     "moment": "^2.17.1",
     "mongoose": "^4.4.12",
-    "mongoose-make-status": "git+ssh://git@bitbucket.org/habemus-tutti/mongoose-make-status.git",
     "ms": "^0.7.2",
     "password-generator": "^2.0.2",
     "uuid": "^2.0.3"

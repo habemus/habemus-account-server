@@ -1,8 +1,8 @@
 // third-party
 const Bluebird = require('bluebird');
 
-const hToken = require('h-token');
-const hLock  = require('h-lock');
+const mongooseToken = require('@habemus/mongoose-token');
+const mongooseLock  = require('@habemus/mongoose-lock');
 
 const ATTEMPTER_ID = 'h-auth-attempter';
 
@@ -61,7 +61,7 @@ module.exports = function (app, options) {
         });
       })
       .catch((err) => {
-        if (err instanceof hLock.errors.InvalidSecret) {
+        if (err instanceof mongooseLock.errors.InvalidSecret) {
           return Bluebird.reject(new errors.InvalidCredentials());
         }
 
@@ -91,7 +91,7 @@ module.exports = function (app, options) {
         return decoded;
 
       }, (err) => {
-        if (err instanceof hToken.errors.InvalidTokenError) {
+        if (err instanceof mongooseToken.errors.InvalidTokenError) {
           // TODO: inform client of reason for invalid token
           return Bluebird.reject(new errors.InvalidToken());
         }

@@ -8,7 +8,7 @@ const uuid     = require('uuid');
 const ms       = require('ms');
 const pwdGen   = require('password-generator');
 
-const hLock  = require('h-lock');
+const mongooseLock = require('@habemus/mongoose-lock');
 
 const DEFAULT_CODE_LENGTH = 7;
 const DEFAULT_VERIFICATION_EXPIRY = ms('1d');
@@ -285,7 +285,7 @@ module.exports = function (app, options) {
     })
     .catch((err) => {
 
-      if (err instanceof hLock.errors.InvalidSecret) {
+      if (err instanceof mongooseLock.errors.InvalidSecret) {
         return Bluebird.reject(new errors.InvalidCredentials())
       }
 
